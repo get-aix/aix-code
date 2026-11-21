@@ -65,7 +65,7 @@ describe("chatThreadActions", () => {
         carrySourceDraftId: null,
         destinationDraftId: "draft-new",
         scope: "personal",
-        providers: [{ instanceId: WORK_CARRIED_SELECTION.instanceId }],
+        providers: [{ instanceId: WORK_CARRIED_SELECTION.instanceId, aixProfile: "team" }],
       }),
     ).toBeNull();
   });

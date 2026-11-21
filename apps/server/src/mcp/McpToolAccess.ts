@@ -431,6 +431,20 @@ const linksUnavailable = new OrchestratorMcpFailure({
  * environment, which checks the rest. The handler here never sees
  * `environmentId`, so it cannot leak into what it writes.
  */
+const BUILT_IN_PERSONAL_INSTANCES = new Set<string>([
+  "antigravity",
+  "claudeAgent",
+  "codex",
+  "cursor",
+  "devReplay",
+  "fx",
+  "grok",
+  "kiro",
+  "muse",
+  "opencode",
+  "pi",
+]);
+
 const routed = Effect.fn("McpToolAccess.routed")(function* <Tools extends Record<string, Tool.Any>>(
   toolkit: Toolkit.Toolkit<Tools>,
   declarations: Handlers<Tools>,
@@ -479,7 +493,7 @@ const routed = Effect.fn("McpToolAccess.routed")(function* <Tools extends Record
             typeof selection.instanceId === "string"
               ? selection.instanceId
               : undefined;
-          if (instanceId !== undefined) {
+          if (instanceId !== undefined && !BUILT_IN_PERSONAL_INSTANCES.has(instanceId)) {
             const capabilities = yield* forwarding.value.call(
               scope,
               RemoteCapabilitiesTool,
