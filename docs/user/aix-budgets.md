@@ -1,65 +1,80 @@
-# Gateway budgets
+# Gateway budgets and thread costs
 
-When your gateway gives an [aix profile](./aix-profiles.md)'s key a dollar budget, T3 Code shows it:
-what you've spent, the budget, and when it resets. Your team's gateway project budget appears
-alongside it.
+When your AI gateway assigns a dollar budget to an [aix profile](./aix-profiles.md)'s key, T3 Code
+reads it through `aix spend` and shows what you've spent, how much is left, and when the budget
+resets—right alongside your team's shared gateway project budget. For threads running on an aix
+profile, T3 Code also shows a live dollar breakdown of the thread and its subagents.
 
 <p align="center">
-  <img src="../../.github/readme/fork/usage-budgets.png" width="100%" alt="Usage, Limits, in the Work scope: $80.60 spent this month, the Acme project at $512.75 of $1,500.00, the Acme key at $68.20 of $200.00, and the Research Lab key under No project">
+  <img src="../../.github/readme/fork/usage-budgets.png" width="100%" alt="Usage, Limits, in the Work scope showing monthly spend, gateway project budget, and per-key budget bars">
 </p>
 
-## See your budgets
+## See your gateway budgets
 
-1. Open **Usage** from the sidebar.
-2. Choose **Limits**.
-3. If you have usage in both scopes, choose **Work**.
+1. Open **Usage** from the bottom of the sidebar.
+2. Select **Limits**.
+3. If you have usage in both scopes, switch to **Work**.
 
-The top card shows this month, the next reset date, and what all your Work keys have spent. The bar
-under it splits that spend by gateway project.
+The summary card at the top shows the current month, the earliest reset date across your keys, and
+your combined Work spend, with a stacked bar breaking that spend down by gateway project.
 
 Below the card, keys are grouped by gateway project:
 
-- **The project heading** shows the project's own budget, such as **$512.75 of $1,500.00 · 34%**.
-  That's everyone's spend on the project, not just yours.
-- **Each key** shows its spend and budget, such as **$68.20 / $200.00**, with a bar. A tick on the bar
-  marks where you'd be if you spent evenly until the reset.
-- **Near limit** and **Over pace** labels flag keys close to their budget, or spending faster than
-  the period allows.
-- **No project** lists keys that don't belong to a gateway project.
+- **Project heading:** shows the shared project budget (for example, **$512.75 of $1,500.00 · 34%**).
+  That total reflects everyone's spend on the project, not just yours.
+- **Key card:** shows your key's spend and budget (for example, **$68.20 / $200.00**) with a
+  progress bar. The tick mark on the bar shows where even daily spending would put you today.
+- **Pace badges:** **Near limit** flags a key close to its cap, and **Over pace** flags one
+  spending faster than the period allows.
+- **No project:** groups keys that aren't tied to a gateway project.
 
-When the gateway doesn't name a project, the group is named after the key that spent the most.
+If the gateway doesn't report a project name, the group is named after the key that spent the most.
 
 ## When budgets reset
 
-Each key shows its reset time when the gateway reports one. If the gateway reports only when the
-budget period started, T3 assumes it resets monthly. The top card shows the earliest reset across
-your keys.
+Each key displays the reset timestamp reported by the gateway. If a gateway only reports when the
+budget period began, T3 Code assumes a monthly reset. The summary card at the top shows the earliest
+reset date across all of your Work keys.
+
+## See what a thread cost
+
+Threads running on an aix profile replace the subscription limit bars in the **Thread details**
+panel with a **Thread cost** section:
+
+- The top row shows the thread's total calculated cost in USD.
+- Expand **Details** to see the split between the **Main thread** and each **Subagent**.
+- Costs are calculated from recorded turn token usage using the prices your gateway lists for each
+  model (your custom model prices still take precedence).
+- The total refreshes automatically whenever a turn settles.
+
+If any turn in the thread has usage that cannot be priced, T3 Code falls back to the regular limits
+view instead of showing an incomplete total.
 
 ## Check budgets from a thread
 
-Pick `/usage-limits` from the composer's command menu to see your limits without leaving the
-thread. A **Usage limits** banner opens above the composer:
+Run `/usage-limits` from the composer's slash menu to check your budgets without leaving the
+conversation. A **Usage limits** banner opens above the composer:
 
-- In a Work thread, it names the thread's gateway project or key, then **Work** and the reset date.
-  The thread's own key comes first, then the other keys in its project.
-- When you have both Personal and Work limits, the banner says **Personal and Work**, and a toggle in
-  it switches between them.
+- In a Work thread, it names the thread's gateway project or key, **Work**, and the reset date,
+  listing the thread's own key first followed by other keys in the same project.
+- When you have limits in both scopes, the banner shows a **Personal / Work** toggle so you can
+  check either side.
 
 The banner uses the same reading as **Usage → Limits** and closes when you dismiss it or send your
-next message. To keep limits in view, turn on **Usage limits** in **Settings → Appearance → Thread
-details**. See [Usage and limits](./usage.md#track-subscription-limits) for how limits work for
-your own subscriptions.
+next message. To keep limits always visible, turn on **Usage limits** in **Settings → Appearance →
+Thread details**. See [Usage and limits](./usage.md#track-subscription-limits) for how limits work
+for your personal subscriptions.
 
 ## Personal and Work on the Usage page
 
-The Usage page counts Work projects' Codex and Claude usage under Work, and the rest under Personal.
-**Cost** and **Tokens** follow the same split. The Personal/Work toggle appears only when both scopes
-have usage; with only one, the page shows that one.
+The Usage page attributes Codex and Claude usage from Work projects to **Work**, and everything else
+to **Personal**. **Cost** and **Tokens** follow the same split. The Personal/Work toggle only
+appears when both scopes have usage.
 
 ## Keys without a budget
 
-A key without a budget on the gateway shows no budget, and a direct Anthropic API profile shows
-none either. Their cost and tokens still count under **Cost** and **Tokens**.
+A gateway key without a configured budget (or a direct Anthropic API profile) shows no budget card
+under **Limits**, though its tokens and costs still appear under **Cost** and **Tokens**.
 
-If budgets look out of date, refresh **Limits**. T3 checks again at most every five minutes on its
-own.
+If a budget looks stale, press **Refresh** on **Usage → Limits**. On its own, T3 Code re-reads
+budgets at most every five minutes (backed by aix's own cache).

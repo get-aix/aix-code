@@ -5,7 +5,7 @@
 - [The get-aix/t3code fork: install, updates, and what it changes](./user/fork.md)
 - [aix profiles](./user/aix-profiles.md)
 - [Personal and Work](./user/work-personal.md)
-- [Gateway budgets](./user/aix-budgets.md)
+- [Gateway budgets and thread costs](./user/aix-budgets.md)
 - [Install T3 Code](./user/install.md)
 - [Messages and context](./user/composer.md)
 - [Working with threads](./user/thread-sidebar.md)

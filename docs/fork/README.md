@@ -78,7 +78,8 @@ skipped until it contains every upstream commit already present in fork `main`.
 
 Fork changes stay out of upstream-owned files and seams so these syncs merge cleanly; see the
 [soft-fork guardrails](./soft-fork-guardrails.md) before changing migrations, caches, workflows, or
-UI copy.
+UI copy, and keep fork documentation updated in the same PR using the
+[`fork-docs` skill](../../.agents/skills/fork-docs/SKILL.md).
 
 The fork keeps the upstream application version values. The `Fork Release` workflow from
 `main` checks all five `Fork CI` jobs on the exact source commit, confirms the application manifests

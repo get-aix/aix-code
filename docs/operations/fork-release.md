@@ -82,8 +82,8 @@ vp test run
 node --test scripts/upstream-stable-sync.test.mjs
 ```
 
-Each package also has `vp run typecheck`. Web browser tests on NixOS need the
-[devenv shell](./devenv.md).
+Each package also has `vp run typecheck`. On NixOS, you can use the minimal
+[devenv shell](./devenv.md) for Node.js, pnpm, and native build libraries.
 
 ## Fork fixes between upstream releases
 

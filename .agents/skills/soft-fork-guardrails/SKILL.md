@@ -42,15 +42,19 @@ making a change that matches one of the triggers in the description.
   `apps/mobile/src/i18n/translations/`, with placeholders in the same order as English. Never commit
   English text into a non-English catalog.
 - **Collation:** keep the fixed `"en"` locale in `ModelCatalog.ts`.
+- **Fork docs:** whenever a change alters user-visible or operational fork behavior (aix profiles,
+  Work/Personal scopes, Work keys and lane approvals, budgets or thread cost, `fork-eject`,
+  `flake.nix`, or fork CI/release workflows), activate `fork-docs` and update the mapped fork docs
+  in the same PR.
 
 ## Before pushing or syncing
 
 - Run `vp run check:changed` as [AGENTS.md](../../../AGENTS.md#verifying) describes. Use
   `./node_modules/.bin/vp` for format checks.
 - Confirm the automated checks that cover your change still pass:
-  `node --test scripts/fork-invariants.test.mjs .github/scripts/fork-ci-checks.test.cjs scripts/upstream-stable-sync.test.mjs scripts/update-flake-pnpm-hash.test.mjs`,
-  plus `apps/server/src/provider/AgentContextBudget.test.ts` and
-  `apps/server/src/persistence/ForkEject.test.ts`.
+  `node --test scripts/fork-invariants.test.mjs scripts/check-fork-docs.test.mjs .github/scripts/fork-ci-checks.test.cjs scripts/upstream-stable-sync.test.mjs scripts/update-flake-pnpm-hash.test.mjs`,
+  plus `node scripts/check-fork-docs.mjs`, `apps/server/src/provider/AgentContextBudget.test.ts`,
+  and `apps/server/src/persistence/ForkEject.test.ts`.
 - If upstream added workflow files in a sync, run `bash scripts/configure-fork-github.sh --dry-run`,
   then the same command without `--dry-run`, to disable them in the repository settings.
 - Keep `flake.nix` with exactly one `hash = "sha256-..."` line so `update-flake-pnpm-hash.mjs` and

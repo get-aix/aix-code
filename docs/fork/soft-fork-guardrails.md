@@ -122,22 +122,38 @@ Each rule names the reason it exists; if a reason stops holding, change the rule
 - Use the repo-pinned `./node_modules/.bin/vp`. A global `vp` can be a different version and produce
   formatting or lint output that CI rejects.
 
+## 7. Self-updating fork documentation
+
+- Update fork-owned documentation **in the same pull request** whenever a change adds, changes, or
+  removes a user-visible or operational fork feature (aix profiles, Work/Personal scopes, Work keys
+  and lane approvals, budgets or thread cost, `t3 fork-eject`, `flake.nix` options, or fork
+  CI/release workflows). Follow the code-to-doc map and screenshot refresh guide in the
+  [`fork-docs` skill](../../.agents/skills/fork-docs/SKILL.md).
+- Keep upstream-owned documentation clean: update only fork-owned docs and the dedicated fork
+  sections in `docs/README.md`, `docs/user/install.md`, `docs/user/usage.md`, and
+  `docs/user/providers-opencode.md`.
+- `scripts/fork-invariants.test.mjs` fails CI if any local link or screenshot in fork docs breaks,
+  if a `flake.nix` output or `.override` toggle is undocumented, or if stale workflow names reappear.
+  On pull requests, `scripts/check-fork-docs.mjs` also posts a step-summary reminder whenever mapped
+  fork code changes without a matching doc edit.
+
 ## Automated enforcement
 
 These checks run without a human remembering the rule. Extend the existing test when a rule gains a
 new case.
 
-| Guardrail                                                                                                                                | Enforced by                                                                               |
-| ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Translations complete                                                                                                                    | `vp run i18n:check` in `Fork Quality`                                                     |
-| Unused exports and dependencies                                                                                                          | `vp run knip:check` in `Fork Quality`                                                     |
-| Lint and unused disable directives                                                                                                       | `vp lint --report-unused-disable-directives` in `Fork Quality`                            |
-| Workflow isolation, migration ledger, cache namespace, `aix-`/SQL heuristics, endpoint guard, `T3CODE_AIX`, flake hash, `@public` export | [`fork-invariants.test.mjs`](../../scripts/fork-invariants.test.mjs) in `Fork Quality`    |
-| Required checks match sync expectations                                                                                                  | [`fork-ci-checks.test.cjs`](../../.github/scripts/fork-ci-checks.test.cjs)                |
-| Sync branch shape and merge gating                                                                                                       | [`upstream-stable-sync.test.mjs`](../../scripts/upstream-stable-sync.test.mjs)            |
-| Single flake hash on lockfile updates                                                                                                    | [`update-flake-pnpm-hash.test.mjs`](../../scripts/update-flake-pnpm-hash.test.mjs)        |
-| Context budget matches upstream plus allowance                                                                                           | [`AgentContextBudget.test.ts`](../../apps/server/src/provider/AgentContextBudget.test.ts) |
-| Fork-only schema is ejectable                                                                                                            | [`ForkEject.test.ts`](../../apps/server/src/persistence/ForkEject.test.ts)                |
+| Guardrail                                                                                                                                | Enforced by                                                                                                                                         |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Translations complete                                                                                                                    | `vp run i18n:check` in `Fork Quality`                                                                                                               |
+| Unused exports and dependencies                                                                                                          | `vp run knip:check` in `Fork Quality`                                                                                                               |
+| Lint and unused disable directives                                                                                                       | `vp lint --report-unused-disable-directives` in `Fork Quality`                                                                                      |
+| Workflow isolation, migration ledger, cache namespace, `aix-`/SQL heuristics, endpoint guard, `T3CODE_AIX`, flake hash, `@public` export | [`fork-invariants.test.mjs`](../../scripts/fork-invariants.test.mjs) in `Fork Quality`                                                              |
+| Fork doc links, screenshot paths, `flake.nix` option coverage, and PR doc-sync reminders                                                 | [`fork-invariants.test.mjs`](../../scripts/fork-invariants.test.mjs) & [`check-fork-docs.mjs`](../../scripts/check-fork-docs.mjs) in `Fork Quality` |
+| Required checks match sync expectations                                                                                                  | [`fork-ci-checks.test.cjs`](../../.github/scripts/fork-ci-checks.test.cjs)                                                                          |
+| Sync branch shape and merge gating                                                                                                       | [`upstream-stable-sync.test.mjs`](../../scripts/upstream-stable-sync.test.mjs)                                                                      |
+| Single flake hash on lockfile updates                                                                                                    | [`update-flake-pnpm-hash.test.mjs`](../../scripts/update-flake-pnpm-hash.test.mjs)                                                                  |
+| Context budget matches upstream plus allowance                                                                                           | [`AgentContextBudget.test.ts`](../../apps/server/src/provider/AgentContextBudget.test.ts)                                                           |
+| Fork-only schema is ejectable                                                                                                            | [`ForkEject.test.ts`](../../apps/server/src/persistence/ForkEject.test.ts)                                                                          |
 
 These cannot be fully checked statically, so review must still catch them: English text copied into
 non-English catalogs or swapped placeholders, large inline blocks added to upstream hot files

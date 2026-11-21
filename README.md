@@ -2,7 +2,7 @@
 
 <h1 align="center">T3 Code with aix</h1>
 
-<p align="center">Run Claude Code, Codex, and OpenCode on your team's AI gateway, next to your own subscriptions, in one app.</p>
+<p align="center">Run Claude Code, Codex, and OpenCode on your team's AI gateway—right alongside your personal subscriptions—in one fast app.</p>
 
 <p align="center">
   <a href="https://github.com/get-aix/t3code/releases/latest"><img src="https://img.shields.io/github/v/release/get-aix/t3code?label=release" alt="Latest release"></a>
@@ -12,37 +12,39 @@
 </p>
 
 > [!NOTE]
-> **This is a fork, not the official T3 Code.** It is a soft fork of
-> [pingdotgg/t3code](https://github.com/pingdotgg/t3code) that follows upstream's stable releases.
-> It uses the same app name and data directory, so install it **instead of** T3 Code, not next to it.
+> **This is a community soft fork, not the official T3 Code.** It tracks
+> [pingdotgg/t3code](https://github.com/pingdotgg/t3code) stable releases and uses the same app name
+> and `~/.t3` data directory—install it **instead of** T3 Code, not next to it. You can return to
+> upstream cleanly at any time with `t3 fork-eject`.
 
 <p align="center">
   <img src="./.github/readme/fork/hero.png" width="100%" alt="T3 Code showing a finished agent thread in a Work project, with the Personal/Work switch at the top of the sidebar">
 </p>
 
-**T3 Code** is a fast, open-source app for running coding agents on your machine, from your
-desktop, the browser, or your phone. This fork connects it to [aix](https://github.com/get-aix/aix):
-every API-key profile you configure in aix becomes a set of agents in T3, routed through your AI
-gateway with its budgets and model details. A Personal/Work switch keeps work projects, their
-gateway models, and their spend apart from your own.
+**T3 Code** is a fast, open-source interface for running coding agents on your machine from desktop,
+web, or mobile. This fork wires it directly into [aix](https://github.com/get-aix/aix): every
+API-key profile in aix automatically shows up as Claude Code, Codex, and OpenCode agents—complete
+with gateway model catalogs, pricing, dollar budgets, per-thread cost breakdowns, and a
+**Personal / Work** boundary that keeps work keys and spend strictly separated from your personal
+subscriptions.
 
-## Why
+## Why this fork exists
 
-Many teams give developers an API key for a LiteLLM gateway instead of a seat in each agent's
-subscription. The agents can use it, but each one wants different variables, the key lives in a
-password manager, and nothing tells you which models the gateway serves, what they cost, or how
-much of the budget is left. Meanwhile your personal Claude or ChatGPT subscription sits in the same
-tools, and it is easy to run work on the wrong account.
+Many teams hand out a single LiteLLM gateway key instead of individual subscriptions for every
+coding agent. Using that key manually means juggling per-tool environment variables, pulling secrets
+from a password manager, and flying blind on which models are available, what they cost, and how
+much budget is left—while your personal Claude or ChatGPT login sits right next to work repos.
 
-This fork moves all of that into the app:
+This fork brings the whole workflow into T3 Code:
 
 ```
-aix profile → gateway catalog → Claude Code / Codex / OpenCode → your thread
+aix profile → gateway catalog & budgets → Claude Code / Codex / OpenCode → your thread
 ```
 
-## Example
+## How it looks in practice
 
-You have two aix profiles, `acme` for your employer's gateway and `research` for a lab project:
+Suppose you have two aix profiles—`acme` for your company's gateway and `research` for a lab
+project:
 
 ```toml
 # ~/.config/aix/aix.toml
@@ -57,102 +59,115 @@ base_url = "https://llm.lab.example"
 api_key = { env = "LAB_LLM_KEY" }
 ```
 
-Start the fork with aix on its `PATH`. The desktop app does this for you. Open a Work project,
-then pick a model:
+Start T3 Code with `aix` on your `PATH`. Open a **Work** project, pick a profile, and choose a
+model:
 
 <p align="center">
-  <img src="./.github/readme/fork/model-details.png" width="600" alt="Model picker in a Work project on the Acme profile, with the details card for Claude Opus 5.5 showing context window, max output, prices, and reasoning levels">
+  <img src="./.github/readme/fork/model-details.png" width="600" alt="Model picker in a Work project on the Acme profile, showing the details card for Claude Opus 5.5 with context window, max output, prices, and reasoning levels">
 </p>
 
-Claude Opus 5.5 on the Acme gateway runs in Claude Code, GPT-6 runs in Codex, and Qwen3 Coder
-runs in an OpenCode that T3 configures for you. Switch to a Personal project, and the same picker
-offers your own Claude and Codex sign-ins instead.
+Claude Opus 5.5 runs in Claude Code, GPT-6 runs in Codex, and Qwen3 Coder or `gpt-oss` runs in an
+OpenCode instance T3 configures for you. Flip to **Personal**, and the same picker shows your own
+Claude and ChatGPT sign-ins instead.
 
-## Features
+## What's included
 
-- **aix profiles as agents.** Each API-key profile becomes Claude Code, Codex, and OpenCode
-  providers named after the profile, such as `Acme · Claude Code`. Keys stay on the server.
-- **Every model in the right agent.** Claude models run in Claude Code, GPT models in Codex, and
-  `gpt-oss`, Gemma, Qwen, and other chat models in OpenCode. Embedding, image, and audio models
-  are left out. If a model stops working, the turn fails; T3 never quietly swaps in another one.
-- **Model details.** Family, context window, max output, input and output prices, and reasoning
-  levels, as the gateway reports them.
-- **Fresh catalogs.** Catalogs reload daily and on demand. If the gateway is down, you keep the
-  last catalog, marked stale.
-- **Gateway budgets.** The Usage page shows each key's dollar budget, what's spent, and when it
-  resets, grouped by gateway project.
-- **Personal and Work.** Every project is Personal or Work. The sidebar, the model picker, Settings,
-  and the Usage page all follow the switch.
-- **Switch mid-thread.** Change profile or model in a running thread; the next agent picks up
-  the conversation.
-- **Everything else from T3 Code.** Worktrees, diffs, checkpoints, remote access, T3 Connect, and
-  all of T3's other providers work as before.
-- **Fork builds for supported platforms.** Windows (with WSL support), Apple Silicon macOS,
-  NixOS / Nix, and an Android app. Desktop apps update themselves from fork releases.
+- **aix profiles as native agents:** every API-key profile becomes `Acme · Claude Code`,
+  `Acme · Codex`, and `Acme · OpenCode`. Keys never leave the server, and `T3CODE_AIX=0` opts out
+  cleanly.
+- **Smart model routing, zero silent fallbacks:** Claude models go to Claude Code, GPT models go to
+  Codex, and `gpt-oss`, Gemma, Qwen, and other chat models go to OpenCode. Non-chat models are
+  filtered out, and if a model fails, T3 tells you instead of silently swapping models.
+- **Rich model details & Free badges:** inspect family, context window, max output, input/output
+  pricing, and reasoning levels directly from the picker. Catalogs refresh daily and on demand.
+- **Personal and Work scopes:** every project is Personal or Work. The sidebar, search, model
+  picker, Settings, and Usage page all follow the switch on web, desktop, and Android.
+- **Work keys & cross-key approvals:** assign a default **Work key** to each Work project. Sending
+  on another key asks to confirm first; agents asking to use another key pause with an interactive
+  approval card (**Deny**, **Allow this task**, or **Allow for this thread**); and you can
+  pre-approve keys right on a draft or thread.
+- **Gateway budgets & per-thread cost breakdown:** **Usage → Limits** and `/usage-limits` show key
+  and gateway-project dollar budgets, pace, and reset dates. In any aix thread, **Thread details**
+  displays the live **Thread cost** broken down by **Main thread** and each **Subagent**.
+- **Switch models mid-thread:** switch profile or model in a running thread and hand off the
+  conversation cleanly.
+- **Clean, reversible soft fork:** fork database changes live in a separate `fork_migrations` ledger
+  and `t3 fork-eject` strips fork state cleanly if you ever return to upstream T3 Code.
+- **Cross-platform builds:** self-updating installers for Windows x64 (with WSL support) and Apple
+  Silicon macOS, a customizable Nix flake (`t3code-browser`, `t3code-android`, `t3code-full`), and
+  an Android APK.
 
 ## Installation
 
-Download from the [latest release](https://github.com/get-aix/t3code/releases/latest).
+Grab the [latest release](https://github.com/get-aix/t3code/releases/latest):
 
-| Platform              | How                                                                                                              |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Windows x64           | `irm https://github.com/get-aix/t3code/releases/latest/download/install-windows.ps1 \| iex` in PowerShell        |
-| macOS (Apple Silicon) | `curl -fsSL https://github.com/get-aix/t3code/releases/latest/download/install-macos.sh \| bash`                 |
-| Nix / NixOS           | `nix profile add 'github:get-aix/t3code/release'`, or the [flake input](./docs/user/install.md#t3-code-fork-nix) |
-| Android               | Install `T3-Code-<version>.apk`. It replaces the Play Store T3 Code app, so uninstall that first.                |
+| Platform              | Command or file                                                                                  |
+| --------------------- | ------------------------------------------------------------------------------------------------ |
+| Windows x64           | `irm https://github.com/get-aix/t3code/releases/latest/download/install-windows.ps1 \| iex`      |
+| macOS (Apple Silicon) | `curl -fsSL https://github.com/get-aix/t3code/releases/latest/download/install-macos.sh \| bash` |
+| Nix / NixOS           | `nix profile add 'github:get-aix/t3code/release'`                                                |
+| Android               | Install `T3-Code-<version>.apk` (uninstall the Play Store app first)                             |
 
-The macOS script is the only supported way to install on a Mac, because the app is not notarized.
-It checks the download's SHA-256 and installs **T3 Code** into `/Applications`. On Windows, the
-script installs for your user without admin rights and without the SmartScreen prompt that the
-unsigned `.exe` gets when you download it in a browser. Desktop apps update
-themselves; Nix installs update through Nix. There is no fork iOS app.
+- **macOS:** use the script above—because the app is self-signed rather than notarized, Gatekeeper
+  blocks zips downloaded in a browser. The script verifies the SHA-256 checksum and installs **T3
+  Code** into `/Applications`.
+- **Windows:** run the script in a regular (non-admin) PowerShell window to verify the checksum and
+  install for your user without SmartScreen prompts.
+- **Updates:** desktop apps update automatically from fork releases; Nix updates via Nix. There is
+  no fork iOS app (the official App Store app still connects to a fork server).
 
-[Install and update the fork](./docs/user/fork.md#install) has the details, including how to
-switch over from upstream T3 Code.
+See [Install and update the fork](./docs/user/fork.md#install) for full details, including switching
+from—or back to—upstream T3 Code.
 
 ## Quick start
 
-1. Install [aix](https://github.com/get-aix/aix#installation) on the machine that runs T3. With
-   the desktop app, that's your computer.
+1. Install [aix](https://github.com/get-aix/aix#installation) on the machine running T3 Code:
 
    ```sh
    curl -fsSL https://github.com/get-aix/aix/releases/latest/download/install.sh | sh
    ```
 
-2. Add an API-key profile to aix (see aix's
-   [configuration guide](https://github.com/get-aix/aix#quick-start)), then check it:
+2. Add an API-key profile in aix (see the
+   [aix quick start](https://github.com/get-aix/aix#quick-start)) and verify it:
 
    ```sh
    aix profiles
    aix status acme
    ```
 
-3. Start T3 Code. aix integration is on by default (set `T3CODE_AIX=0` to disable it). Restart T3
-   after installing aix so it finds the command.
-
-4. Add a project, then move it to Work from the command palette (`Ctrl+K` / `⌘K`, **Move project
-   to Work**) or **Project settings → Project scope**.
-
-5. Open the model picker in that project, pick a profile from the footer, and choose a model.
+3. Start (or restart) T3 Code so it picks up `aix` on its `PATH`. aix integration is on by default
+   (set `T3CODE_AIX=0` to disable).
+4. Add a project, move it to **Work** (`Ctrl+K` / `⌘K` → **Move project to Work**, or **Project
+   settings → Project scope**), and optionally set its default **Work key**.
+5. Open the model picker, choose your profile in the footer, and start a thread.
 
 <p align="center">
-  <img src="./.github/readme/fork/provider-settings.png" width="100%" alt="Settings, Providers, with the Work scope and Acme profile selected, listing Codex, Claude, and OpenCode as Ready and the two Codex models aix supplies">
+  <img src="./.github/readme/fork/provider-settings.png" width="100%" alt="Settings, Providers, with Work and the Acme profile selected, listing Codex, Claude, and OpenCode as Ready">
 </p>
 
 ## Documentation
 
-|                                                   |                                                                                         |
-| ------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| [aix profiles](./docs/user/aix-profiles.md)       | Turning aix on, model routing, model details, refresh, key rotation, switching profiles |
-| [Personal and Work](./docs/user/work-personal.md) | Project scopes, moving projects, what the switch filters, and what it doesn't           |
-| [Gateway budgets](./docs/user/aix-budgets.md)     | Budgets on the Usage page, project grouping, reset times, the composer limits panel     |
-| [The fork](./docs/user/fork.md)                   | Install, updates, the Android app, releases, running from source, what changed          |
-| [Install T3 Code](./docs/user/install.md)         | Every platform, provider sign-in, WSL, Nix and Home Manager                             |
-| [Remote access](./docs/user/remote-access.md)     | Use T3 from a phone or another machine                                                  |
-| [All T3 Code docs](./docs/README.md)              | Threads, worktrees, source control, keyboard shortcuts, and more                        |
+### User guides
 
-Working on the fork itself? See the [development runbook](./docs/operations/development.md#first-checkout)
-and the [fork release runbook](./docs/operations/fork-release.md).
+| Guide                                                        | What it covers                                                                        |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| [aix profiles](./docs/user/aix-profiles.md)                  | Setup, model routing, model details, catalog refresh, key rotation, mid-thread switch |
+| [Personal and Work](./docs/user/work-personal.md)            | Project scopes, Work keys, cross-key approval cards, pre-approving keys on drafts     |
+| [Gateway budgets & thread costs](./docs/user/aix-budgets.md) | Usage → Limits, gateway project budgets, `/usage-limits`, per-thread cost breakdown   |
+| [The fork](./docs/user/fork.md)                              | Install, updates, Android APK, `t3 fork-eject`, running from source, full changelog   |
+| [Install T3 Code](./docs/user/install.md)                    | Every platform, provider sign-in, WSL, Nix flake outputs and `.override` toggles      |
+| [Remote access](./docs/user/remote-access.md)                | Use T3 Code from a phone or another machine                                           |
+| [All T3 Code docs](./docs/README.md)                         | Threads, worktrees, source control, keyboard shortcuts, and more                      |
+
+### Maintainers & contributors
+
+- [Fork repository & CI overview](./docs/fork/README.md)
+- [Soft-fork guardrails](./docs/fork/soft-fork-guardrails.md) — rules and automated checks that keep
+  upstream stable syncs conflict-free
+- [Fork release & upstream sync runbook](./docs/operations/fork-release.md)
+- [Android APK signing & builds](./docs/operations/android-fork-apk.md)
+- [Development runbook](./docs/operations/development.md#first-checkout) and
+  [NixOS devenv shell](./docs/operations/devenv.md)
 
 ## License
 
@@ -160,7 +175,7 @@ and the [fork release runbook](./docs/operations/fork-release.md).
 
 ## Original T3 Code README
 
-The following is the complete upstream README from [`pingdotgg/t3code` revision `c2e54e3ac9c8c0d5ceaf7df5acd4f4374fa19b6f`](https://github.com/pingdotgg/t3code/commit/c2e54e3ac9c8c0d5ceaf7df5acd4f4374fa19b6f). Its install and download links are for **original T3 Code**, not this fork.
+The following is the complete upstream README from [`pingdotgg/t3code` revision `59651c1761`](https://github.com/pingdotgg/t3code/commit/59651c1761) (`v0.1.11`). Its install and download links are for **original T3 Code**, not this fork.
 
 <details>
 <summary>Show the full upstream README</summary>

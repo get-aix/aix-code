@@ -1,104 +1,114 @@
 # aix profiles
 
-[aix](https://github.com/get-aix/aix) keeps your AI gateway profiles in one place: each profile has
-a gateway URL and an API key, stored in your password manager or environment. This fork turns every
-API-key profile into agents in T3 Code. An `acme` profile labelled **Acme** becomes three providers:
+[aix](https://github.com/get-aix/aix) keeps your AI gateway profiles in one place: each profile
+pairs a gateway URL with an API key from your password manager or environment. This fork turns every
+API-key profile in aix into ready-to-use agents in T3 Code. For example, an `acme` profile labeled
+**Acme** becomes three providers:
 
 - **Acme · Claude Code** for Claude models
 - **Acme · Codex** for GPT models
 - **Acme · OpenCode** for every other chat model
 
-They appear in Work projects next to your regular providers, with the models your gateway serves.
+They appear in **Work** projects alongside their gateway model catalogs, pricing, and budgets—all
+read directly from aix.
 
 <p align="center">
-  <img src="../../.github/readme/fork/work-picker.png" width="600" alt="The model picker in a Work project, showing the Acme profile's Codex models GPT-6 Luna and GPT-6">
+  <img src="../../.github/readme/fork/work-picker.png" width="600" alt="The model picker in a Work project showing the Acme profile, allowed keys, and gateway models">
 </p>
 
-## Turn on aix
+## Set up aix
 
-1. [Install aix](https://github.com/get-aix/aix#installation) on the machine that runs the T3
-   server. With the desktop app, that's your computer. With a remote server, it's the server.
-2. Add an API-key profile and check that it works:
+1. [Install aix](https://github.com/get-aix/aix#installation) on the machine running the T3 server.
+   With the desktop app, that's your computer; with a remote server, it's the server host.
+2. Add an API-key profile and verify it works:
 
    ```sh
    aix profiles
    aix status acme
    ```
 
-3. Restart T3 after installing aix, so it finds the `aix` command on its `PATH`.
+3. Restart T3 Code if you installed aix while T3 was already running, so the server picks up `aix`
+   on its `PATH`.
 
-Your keys stay on the server. T3 asks aix for each profile's endpoint and key when it starts an
-agent. It never writes them to T3 settings or sends them to clients, including remote browsers and
-phones.
+aix integration is enabled by default. To turn it off without uninstalling the fork, set
+`T3CODE_AIX=0` on the server (or disable individual aix providers in **Settings → Providers**).
 
-ChatGPT sign-in profiles aren't supported. Keep using the regular Codex provider for a ChatGPT
-subscription.
+Your API keys never leave the server. T3 asks aix for a profile's endpoint and key only when
+launching an agent, and never writes them to T3 settings or sends them to web, desktop, or mobile
+clients.
+
+> [!NOTE]
+> ChatGPT sign-in profiles in aix aren't supported here. Keep using T3's built-in Codex provider for
+> a personal ChatGPT subscription.
 
 ## Pick a model
 
-aix models show up in **Work** projects. Personal projects show your own subscriptions; see
-[Personal and Work](./work-personal.md).
+aix models live in the **Work** scope so they stay separate from your personal subscriptions (see
+[Personal and Work](./work-personal.md)).
 
-1. Open a thread in a Work project.
+1. Open a thread (or start a new draft) in a Work project.
 2. Open the model picker under the composer.
-3. Choose a profile in the picker's footer. With several profiles, the footer lists each one.
-4. Choose an agent tab (Codex, Claude, OpenCode), then a model.
+3. Choose an aix profile in the picker's footer (for example, **Acme** or **Research Lab**).
+4. Pick an agent tab (**Codex**, **Claude**, or **OpenCode**), then select a model.
 
 <p align="center">
-  <img src="../../.github/readme/fork/profile-menu.png" width="600" alt="The model picker's profile menu listing the Acme and Research Lab profiles, with the OpenCode tab showing Qwen3 Coder and gpt-oss models">
+  <img src="../../.github/readme/fork/profile-menu.png" width="600" alt="The model picker's profile menu listing Acme and Research Lab, with OpenCode models including Qwen3 Coder and free models">
 </p>
 
-Press the details button beside a model to see its details:
+Models priced at `$0` on the gateway are marked **Free**. Press the info (**i**) button beside any
+model to inspect its full details:
 
 - **Family**, such as Claude, GPT, or Qwen
 - **Context window** and **max output** in tokens
 - **Input** and **output price** per million tokens
 - **Reasoning levels** the model accepts
+- **Exact model ID** with a copy button
 
-Values the gateway doesn't report show as **Unknown**.
+Any field your gateway doesn't report shows as **Unknown**.
 
 <p align="center">
-  <img src="../../.github/readme/fork/model-details.png" width="600" alt="The details card for Claude Opus 5.5 on the Acme profile: Claude family, context window, max output, prices, and reasoning levels">
+  <img src="../../.github/readme/fork/model-details.png" width="600" alt="The details card for Claude Opus 5.5 on the Acme profile showing family, context window, max output, prices, and reasoning levels">
 </p>
 
-New threads start with the project's last selection, like any other provider.
+New threads inherit the project's last selection and respect the project's **Work key** (see
+[Work keys and approvals](./work-personal.md#work-keys-and-approvals)).
 
 ## Which agent runs a model
 
-T3 picks the agent from the model's family:
+T3 routes each gateway model to the agent built for it:
 
-| Model                                              | Agent       |
-| -------------------------------------------------- | ----------- |
-| Claude models, from a gateway or the Anthropic API | Claude Code |
-| GPT models from a LiteLLM gateway                  | Codex       |
-| Open-weight `gpt-oss` models                       | OpenCode    |
-| Other chat models, such as Gemma, Qwen, or Llama   | OpenCode    |
+| Model                                            | Agent       |
+| ------------------------------------------------ | ----------- |
+| Claude models (from a gateway or Anthropic API)  | Claude Code |
+| GPT models from a LiteLLM gateway                | Codex       |
+| Open-weight `gpt-oss` models                     | OpenCode    |
+| Other chat models, such as Gemma, Qwen, or Llama | OpenCode    |
 
 - A direct Anthropic API profile offers Claude models only.
-- T3 configures OpenCode for each profile. You don't need an OpenCode login or config file.
-- Embedding, image, audio, and wildcard routes aren't listed.
-- T3 sends the gateway the model's original ID.
+- T3 configures OpenCode automatically for each aix profile—no separate OpenCode login or config
+  file is needed.
+- Embedding, image, audio, and wildcard routes are filtered out.
+- T3 always sends the gateway the model's exact ID.
 
-If a model or profile stops working, the turn fails with an error. T3 never switches to another
-model or agent for you.
+If a model or profile stops working, the turn fails with a clear error. T3 never silently swaps in a
+different model or agent behind your back.
 
-## See aix providers in Settings
+## Manage aix providers in Settings
 
-**Settings → Providers** lists every provider instance. Choose **Work** at the top, then a profile
-from **Work profile**, to see that profile's Codex, Claude, and OpenCode instances, their status,
-and their models. You can turn an instance off there. It stays off, even after the profile reloads.
+Open **Settings → Providers**, choose **Work** at the top, and select a profile under **Work
+profile** to inspect its Codex, Claude, and OpenCode instances, connection status, and models. If
+you toggle an instance off, T3 remembers that choice across reloads.
 
 <p align="center">
-  <img src="../../.github/readme/fork/provider-settings.png" width="100%" alt="Settings, Providers, with Work and the Acme profile selected, showing Codex, Claude, and OpenCode as Ready">
+  <img src="../../.github/readme/fork/provider-settings.png" width="100%" alt="Settings, Providers, with Work and the Acme profile selected, showing Codex, Claude, and OpenCode instances">
 </p>
 
 ## Refresh catalogs and rotate keys
 
-T3 loads your profiles and each gateway's model catalog when the server starts, then reloads them
-once a day. To reload right away, for example after adding a profile or after your gateway adds a
-model:
+T3 loads your profiles and model catalogs through `aix models --detailed` on startup and refreshes
+them daily. To pull new profiles or newly added gateway models right away:
 
-- Press **Refresh** in the model picker, next to the profile's catalog status, or
+- Press **Refresh** in the model picker next to the profile's catalog status, or
 - Open the command palette (`Ctrl+K` / `⌘K`) and run **Refresh aix catalogs**.
 
 <p align="center">
@@ -107,34 +117,32 @@ model:
 
 What happens on reload:
 
-- **A new profile** gets its providers.
-- **A deleted profile** has its providers disabled. They come back if the profile returns, unless you
-  turned them off yourself.
-- **A failed reload** keeps the last catalog. The picker shows **Stale catalog** with the error.
+- **New profile:** its Codex, Claude, and OpenCode providers are created automatically.
+- **Removed profile:** its providers are disabled (and come back if the profile returns, unless you
+  disabled them manually).
+- **Failed reload:** T3 keeps the last working catalog and marks it **Stale catalog** with the
+  error.
 
-A rotated key needs no reload. T3 asks aix for the key each time it starts an agent, so the next
-agent uses the new key. A turn that's already running keeps the process it started with.
+Key rotation needs no reload. T3 resolves credentials from aix each time it launches an agent, so
+the next turn automatically uses the rotated key while any in-progress turn finishes cleanly.
 
-## Switch profile or model in a thread
+## Switch profile or model mid-thread
 
-Pick another aix model in a thread's model picker, from the same profile or another one. The next
-agent gets the conversation through a [portable handoff](./portable-handoffs.md) and continues from
-there; it doesn't resume the previous agent's session.
+Pick a different model—from the same aix profile or another one—at any point in a thread. The next
+agent receives the conversation via a [portable handoff](./portable-handoffs.md) and continues from
+there without trying to resume the previous agent's native session.
 
-A change made while a turn runs applies from your next message. It doesn't stop the running turn.
+If you switch while a turn is running, the new selection takes effect on your next message.
 
 ## Troubleshooting
 
-**No aix models in the picker.** Check that the project is in Work, and that the footer shows a
-profile. Then check that aix works for the user that runs T3: `aix profiles` lists the profile and
-`aix status <profile>` succeeds. Restart T3 if you installed aix after starting it.
-
-**Stale catalog or Catalog unavailable.** The last reload couldn't reach the gateway or read the
-key. Fix the cause shown in the message, then press **Refresh**.
-
-**Provider shows as unavailable in Settings.** Press **Refresh provider status** in Settings →
-Providers. A check can time out while the machine is busy starting up.
-
-**A turn fails right away.** The model may have been removed from the gateway, or the key may have
-run out of budget. Check the error, the key's budget on the [Usage page](./aix-budgets.md), and
-`aix status <profile>`.
+- **No aix models in the picker:** make sure the project is in **Work** and the picker footer shows
+  a profile. Then verify aix works for the user running T3 (`aix profiles` and
+  `aix status <profile>`). Restart T3 if you installed aix after starting it.
+- **Stale catalog or Catalog unavailable:** the last reload couldn't reach the gateway or resolve
+  the key. Fix the cause shown in the message, then press **Refresh**.
+- **Provider shows as unavailable in Settings:** press **Refresh provider status** in **Settings →
+  Providers**. Startup probes can occasionally time out under heavy load.
+- **A turn fails right away:** the model may have been removed from the gateway or the key may have
+  hit its budget cap. Check the error, your key's budget on the [Usage page](./aix-budgets.md), and
+  `aix status <profile>`.

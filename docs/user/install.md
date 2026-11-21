@@ -190,6 +190,7 @@ Supported `.override` toggles cover upstream nixpkgs provider and source-control
 `enableGitHub`, `enableGitLab`, `enableJujutsu`, `enableBitbucket`, `enableAzureDevOps`,
 `enableResourceMonitor`) plus `enableCloudflared`, `enableXdgUtils`, `enablePi`, `enableKiro`,
 `enableForgejo`, `enableTailscale`, `enableSsh`, `enable1Password`, `withBrowser`, `withAndroid`,
+`androidPlatformVersions`, `androidSystemImageTypes`, `androidAbiVersions`,
 `extraRuntimePackages`, and `extraWrapArgs`.
 
 For the moving input, `nix flake update t3code` records the latest release branch commit in the lock
@@ -223,19 +224,19 @@ SmartScreen prompts the unsigned `.exe` gets when downloaded in a browser. Quit 
 `$env:T3CODE_VERSION = "<version>"` to install a specific release.
 
 Before a public fork release is authorized, collaborators can get installable test builds from the
-fork's GitHub Actions. Open **Actions → Release**, run it from `main` with channel `stable`, and
-leave **publish** unchecked. If the selected source has no upstream sync marker, enter the full
+fork's GitHub Actions. Open **Actions → Fork Release**, run it from `main` with channel `stable`,
+and leave **publish** unchecked. If the selected source has no upstream sync marker, enter the full
 40-character upstream commit in `upstream_base`. Download the combined artifact named
-`t3-code-installers-<version>-<12-character-commit>` from that run. It contains
-the Windows, macOS, Android, and Linux installers, SHA-256 files, update feeds, and metadata. Check the matching
-checksum before installing. `windows-metadata.json` reports whether the Windows installer has an
-Authenticode signature; current fork builds are expected to be unsigned. Its metadata and
-`BUILD-INFO.md` identify the fork integration commit that was built and the upstream stable tag plus
-peeled base SHA. The release tag points to the fork integration commit, whose tree includes fork
-changes and upstream through that stable tag. Fork `main` takes only stable upstream tags and never
-merges upstream `main`; its first release can use only a stable tag containing every upstream commit
-already present in `main`. After an authorized public
-release exists, use its matching assets from the fork's GitHub Releases page instead. See the
+`t3-code-installers-<version>-<12-character-commit>` from that run. It contains the Windows x64
+installer, macOS arm64 zip, Android APK, Linux x64 CLI runtime (for Windows WSL), SHA-256 files,
+update feeds, and metadata. Check the matching checksum before installing. `windows-metadata.json`
+reports whether the Windows installer has an Authenticode signature; current fork builds are
+expected to be unsigned. Its metadata and `BUILD-INFO.md` identify the fork integration commit that
+was built and the upstream stable tag plus peeled base SHA. The release tag points to the fork
+integration commit, whose tree includes fork changes and upstream through that stable tag. Fork
+`main` takes only stable upstream tags and never merges upstream `main`; its first release can use
+only a stable tag containing every upstream commit already present in `main`. After an authorized
+public release exists, use its matching assets from the fork's GitHub Releases page instead. See the
 [fork release guide](../operations/fork-release.md) for the build and release process.
 
 Launch the desktop app with `t3code-desktop` or run the server with `t3 serve`. The fork uses the

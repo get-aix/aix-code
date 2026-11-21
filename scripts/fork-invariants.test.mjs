@@ -215,3 +215,79 @@ NodeTest.test("flake has one pnpm hash assignment and the restored public usage 
     /\/\*\*\s*@public\s*\*\/\s*export function collectLimitNotices\(/,
   );
 });
+
+const forkDocFiles = [
+  "README.md",
+  "docs/user/fork.md",
+  "docs/user/aix-profiles.md",
+  "docs/user/work-personal.md",
+  "docs/user/aix-budgets.md",
+  "docs/fork/README.md",
+  "docs/fork/soft-fork-guardrails.md",
+  "docs/operations/fork-release.md",
+  "docs/operations/android-fork-apk.md",
+  "docs/operations/devenv.md",
+];
+
+NodeTest.test("fork documentation links, images, and flake options stay in sync", () => {
+  const linkPattern = /(?:\[[^\]]*\]\(([^)]+)\)|<img\b[^>]*\bsrc="([^"]+)")/g;
+
+  for (const docPath of forkDocFiles) {
+    const content = read(docPath);
+    const docDir = NodePath.dirname(NodePath.join(root, docPath));
+    for (const match of content.matchAll(linkPattern)) {
+      const rawTarget = (match[1] ?? match[2] ?? "").trim();
+      if (
+        !rawTarget ||
+        rawTarget.startsWith("#") ||
+        rawTarget.startsWith("http://") ||
+        rawTarget.startsWith("https://") ||
+        rawTarget.startsWith("mailto:")
+      ) {
+        continue;
+      }
+      const [filePart] = rawTarget.split("#");
+      if (!filePart) continue;
+      const resolved = NodePath.resolve(docDir, filePart);
+      NodeAssert.ok(
+        NodeFS.existsSync(resolved),
+        `${docPath} references missing file ${JSON.stringify(rawTarget)} (resolved to ${resolved})`,
+      );
+    }
+  }
+
+  const flake = read("flake.nix");
+  const installDoc = read("docs/user/install.md");
+  const overridableBlock = flake.match(
+    /mkT3Code\s*=\s*lib\.makeOverridable\s*\(\s*\{([\s\S]*?)\}:/,
+  )?.[1];
+  NodeAssert.ok(overridableBlock, "flake.nix must define mkT3Code = lib.makeOverridable");
+  const overrideParams = [...overridableBlock.matchAll(/^\s*([a-zA-Z0-9_]+)\s*\?/gm)].map(
+    (match) => match[1],
+  );
+  NodeAssert.ok(overrideParams.length > 0, "flake.nix must expose .override parameters");
+  for (const param of overrideParams) {
+    NodeAssert.ok(
+      installDoc.includes(`\`${param}\``),
+      `docs/user/install.md is missing flake.nix override option \`${param}\``,
+    );
+  }
+
+  for (const outputName of ["t3code-browser", "t3code-android", "t3code-full"]) {
+    NodeAssert.ok(
+      installDoc.includes(`\`${outputName}\``),
+      `docs/user/install.md is missing flake.nix package output \`${outputName}\``,
+    );
+  }
+
+  NodeAssert.ok(
+    !installDoc.includes("Actions → Release"),
+    "docs/user/install.md must reference Actions → Fork Release, not Actions → Release",
+  );
+  const forkGuide = read("docs/user/fork.md");
+  NodeAssert.ok(forkGuide.includes("T3CODE_AIX=0"), "docs/user/fork.md must document T3CODE_AIX=0");
+  NodeAssert.ok(
+    forkGuide.includes("t3 fork-eject"),
+    "docs/user/fork.md must document t3 fork-eject",
+  );
+});

@@ -26,7 +26,13 @@ jobs:
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
       - name: Check soft-fork invariants
-        run: node --test scripts/fork-invariants.test.mjs
+        run: node --test scripts/fork-invariants.test.mjs scripts/check-fork-docs.test.mjs
+
+      - name: Check fork docs sync
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+          node scripts/check-fork-docs.mjs "origin/${{ github.base_ref }}"
 
       - name: Setup Vite+ and dependencies
         uses: ./.github/actions/setup-ci-deps

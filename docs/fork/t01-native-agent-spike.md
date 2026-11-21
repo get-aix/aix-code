@@ -1,5 +1,11 @@
 # T01: Native agent compatibility spike
 
+> [!NOTE]
+> **Historical spike record.** This document records the initial compatibility probe from before aix
+> routing was implemented in the fork. For how aix model routing works today, see
+> [aix profiles](../user/aix-profiles.md#which-agent-runs-a-model) and
+> `apps/server/src/aix/ModelRouting.ts`.
+
 **Result: exact native routes have live evidence; no aix routing is enabled in T3.** One minimal
 Codex turn for `gpt-6.1-sol` through a configured Responses gateway passed, and one Claude Code
 turn for `claude-opus-5-5` through direct Anthropic Messages passed. Two OpenCode runs are limited

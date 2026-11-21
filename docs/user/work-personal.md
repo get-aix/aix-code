@@ -1,13 +1,15 @@
 # Personal and Work
 
-Every project in this fork is either **Personal** or **Work**. The switch at the top of the sidebar
-picks which one you see, and the rest of the app follows it:
+Every project in this fork belongs to either **Personal** or **Work**. The switch at the top of the
+sidebar chooses which workspace you're looking at, and the rest of the app follows along:
 
-- **Personal** shows your own projects and your own subscriptions, such as your Claude or ChatGPT
-  sign-in.
-- **Work** shows work projects and the [aix profiles](./aix-profiles.md) for your company's gateway.
+- **Personal** shows your personal projects and your own subscriptions (such as your Claude or
+  ChatGPT sign-in).
+- **Work** shows work projects, your company's [aix profiles](./aix-profiles.md), Work keys, and
+  gateway budgets.
 
-Work stays on the gateway, and your personal projects stay on your own subscriptions.
+Work stays on your team's gateway, and personal side projects stay on your own subscriptions—no more
+accidentally burning work budget on a hobby repo or sending company code to a personal account.
 
 <p align="center">
   <img src="../../.github/readme/fork/personal-sidebar.png" width="100%" alt="The sidebar in the Personal scope showing the garden-blog project and its thread">
@@ -15,110 +17,108 @@ Work stays on the gateway, and your personal projects stay on your own subscript
 
 ## Switch scopes
 
-Use the **Personal / Work** switch at the top of the sidebar. The sidebar, search, and project
-choices update right away. Running turns keep running.
+Click the **Personal / Work** switch at the top of the sidebar to flip between scopes immediately.
+Your sidebar, search results, and project pickers update right away while running turns keep going.
 
-The command palette (`Ctrl+K` / `⌘K`) has the same switch: **Show Work projects** or **Show
-Personal projects**.
+You can also switch from the command palette (`Ctrl+K` / `⌘K`) with **Show Work projects** or
+**Show Personal projects**.
 
 <p align="center">
   <img src="../../.github/readme/fork/palette-show-work.png" width="600" alt="The command palette with the Show Work projects command">
 </p>
 
-Each client remembers its own choice. Your desktop app can show Work while your phone shows
-Personal.
+Each client remembers its own active scope—your desktop app can stay on **Work** while your phone
+shows **Personal**.
 
 ## Move a project
 
-Projects without a scope are Personal, including every project from before you installed the fork.
-To move one, use any of these:
+Existing projects without a scope default to **Personal**, including projects from before you
+installed the fork. To move a project between scopes, use any of these:
 
-- **Sidebar:** right-click the project, then choose **Move to Work** or **Move to Personal**.
-- **Command palette:** run **Move project to Work** or **Move project to Personal**. The command
-  names the project it moves.
-- **Project settings:** under **Project scope**, press **Move to Work** or **Move to Personal**.
-- **Android app:** open the project in Settings, then press **Move to Work** or **Move to
-  Personal**.
+- **Sidebar:** right-click the project and choose **Move to Work** or **Move to Personal**.
+- **Command palette:** run **Move project to Work** or **Move project to Personal**.
+- **Project settings:** under **Project scope**, click **Move to Work** or **Move to Personal**.
+- **Android app:** open the project in Settings and tap **Move to Work** or **Move to Personal**.
 
 <p align="center">
-  <img src="../../.github/readme/fork/palette-move.png" width="600" alt="The command palette with the Move project to Work command for the current project">
+  <img src="../../.github/readme/fork/palette-move.png" width="600" alt="The command palette with the Move project to Work command">
 </p>
 
-The project and its threads move together. A toast confirms the move, with **Undo** to move it back
-and a button to show the other scope.
+The project and all of its threads move together. A toast confirms the move with an **Undo** button
+and a quick shortcut to switch into the other scope.
 
 <p align="center">
-  <img src="../../.github/readme/fork/project-scope.png" width="100%" alt="Project settings with the Project scope row, and a Moved to Work toast offering Undo and Show Work">
+  <img src="../../.github/readme/fork/project-scope.png" width="100%" alt="Project settings showing Project scope and Work key for a Work project">
 </p>
 
-New projects take the scope you're looking at. Add a project while viewing Work, and it's a Work
-project.
+New projects automatically inherit whichever scope you're currently viewing.
 
-## The model picker follows the scope
+## The model picker follows your scope
 
-In a Work project, the model picker opens on Work and lists your aix profiles. In a Personal
-project, it opens on Personal and lists your own providers.
+Open the model picker in a Work project and it opens on **Work** with your aix profiles. Open it in
+a Personal project and it opens on **Personal** with your own providers.
 
 <p align="center">
-  <img src="../../.github/readme/fork/personal-picker.png" width="100%" alt="A new thread in the Personal garden-blog project, with the model picker showing the Personal providers">
+  <img src="../../.github/readme/fork/personal-picker.png" width="100%" alt="A thread in the Personal garden-blog project with the model picker showing Personal providers">
 </p>
 
-The picker has its own Personal/Work toggle. Use it to pick a model from the other scope for one
-thread, for example to try a personal model on a work project. If a thread already uses a model
-from the other scope, the picker keeps showing it until you pick another model.
+The picker also includes its own **Personal / Work** toggle so you can intentionally pick a model
+from the other scope for a specific thread. If a thread is already using a model from the other
+scope, the picker stays on that model until you change it.
 
-**Settings → Providers** has the same toggle, plus a **Work profile** menu to choose which aix
-profile's providers you see.
+**Settings → Providers** uses the same scope toggle, plus a **Work profile** selector to inspect
+each aix profile's providers. The [Usage page](./aix-budgets.md) splits Work and Personal spend the
+same way.
 
-The [Usage page](./aix-budgets.md) counts Work projects' usage under Work, and personal usage under
-Personal.
+## Work keys and approvals
 
-## Keys and approvals
+Each Work project can have a **Work key**—the default [aix profile](./aix-profiles.md) that its
+threads and agents are allowed to use without asking. Configure it under **Project settings → Work
+key**.
 
-A Work project has a **Work key**, the [aix profile](./aix-profiles.md) its agents use by default.
-Set it in **Project settings → Work key**.
+Agents and threads can still use other keys or personal providers when you explicitly allow it:
 
-Agents can use other keys too, but only when you allow it:
-
-- **Sending on another key.** If you send a message with a model from a different key, T3 Code asks
-  first. Confirm to send, and that key joins the thread. Cancel keeps your message as it is.
-- **An agent asking for a key.** When an agent wants to run work on another key, you decide on its
-  card. **Deny** refuses it. **Allow this task** covers that one run. **Allow for this thread** covers
-  the thread from then on, and you can revoke it from the card.
-- **Allowing keys up front.** For an unattended run, approve keys before it starts. Open the model
-  picker in the thread, where the keys the thread's agents may use are listed. Use **Allow another
-  key…** to add one, and **Remove** to take it back.
-
-The key list appears once a thread has sent its first message. Before that, a key is allowed when you
-send with it and confirm.
+- **Sending on another key:** if you send a message using a model outside the project's Work key,
+  T3 Code asks you to confirm first. Confirming sends the message and adds that key to the thread's
+  allowed keys; cancelling leaves your draft untouched.
+- **An agent requesting another key:** when an agent or subagent asks to run work on a different
+  key, T3 Code pauses and shows a decision card in the thread:
+  - **Deny** refuses the request.
+  - **Allow this task** grants a single-use approval for that one delegated run.
+  - **Allow for this thread** allows that key for the rest of the thread (you can revoke it right
+    from the card at any time).
+- **Pre-approving keys on drafts and threads:** for unattended or multi-model runs, you can grant
+  extra keys up front—even before sending your first message. Open the model picker to see **Agents
+  in this thread may use**, click **Allow another key…** to add one, or **Remove** to revoke it.
 
 ## What the scope filters
 
-The scope filters:
+The active scope filters:
 
 - Projects and threads in the sidebar
 - Thread and project search
-- Project choices, such as the project chooser for a new thread
+- Project choosers (such as picking a project for a new thread)
 - The model picker's starting scope
-- Settings → Providers and the Usage page
+- **Settings → Providers** and the **Usage** page
 
-It doesn't filter:
+It does **not** filter:
 
-- Running turns and queued work, which keep running in either scope
+- Running turns and queued work, which continue in the background
 - Notifications
-- Shared preferences such as the theme and keyboard shortcuts
+- Shared preferences like theme and keyboard shortcuts
 
 ## Scopes aren't access control
 
-A scope is a label on the project, stored on its server. Anyone who can connect to that server can
-see and use both scopes. It doesn't keep data apart.
+A scope is an organizational label stored on the server—anyone who can connect to that server can
+switch between Personal and Work. It keeps your daily workflow tidy, not your data cryptographically
+isolated.
 
-For real separation, run two T3 servers with their own data directories, each with its own
-`T3CODE_HOME`. The [Nix install guide](./install.md#t3-code-fork-nix) shows one way. One client can
-connect to both.
+If you need hard separation, run two T3 servers with separate `T3CODE_HOME` directories (the
+[Nix install guide](./install.md#t3-code-fork-nix) shows how). One T3 client can connect to both
+servers at once.
 
 ## Clients
 
-The switch works on web, desktop, and the fork's [Android app](./fork.md#the-android-app). The
-official iOS and Android apps, and clients older than the fork, show all projects together and
-can't move them. Moving a project also needs a fork server and permission to change its projects.
+The Personal/Work switch, Work keys, and lane approvals work on web, desktop, and the fork's
+[Android app](./fork.md#the-android-app). Official upstream iOS and Android apps still connect to a
+fork server and can run aix providers, but they show all projects together without the scope switch.
