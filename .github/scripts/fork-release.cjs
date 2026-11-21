@@ -594,7 +594,7 @@ function validateForkBuildOnlyRun({ run, jobs, artifacts, expectedRunId, version
     runId < 1 ||
     !run ||
     run.id !== runId ||
-    run.path !== ".github/workflows/release.yml" ||
+    run.path !== ".github/workflows/fork-release.yml" ||
     run.event !== "workflow_dispatch" ||
     run.status !== "completed" ||
     run.conclusion !== "success" ||

@@ -1,0 +1,203 @@
+name: Fork CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - automation/upstream-stable-*
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fork-ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  fork_quality:
+    name: Fork Quality
+    if: github.repository == 'get-aix/t3code'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Setup Vite+ and dependencies
+        uses: ./.github/actions/setup-ci-deps
+
+      - name: Format
+        run: vp fmt --check
+
+      - name: Lint
+        run: vp lint --report-unused-disable-directives
+
+      - name: Check i18n catalogs
+        run: vp run i18n:check
+
+      - name: Check unused code
+        run: vp run knip:check
+
+      - name: Typecheck shared packages and web
+        run: vp run --filter @t3tools/contracts --filter @t3tools/shared --filter @t3tools/client-runtime --filter @t3tools/web typecheck
+
+      - name: Test shared packages
+        run: vp run --parallel --filter @t3tools/shared --filter @t3tools/client-runtime test
+
+  fork_server:
+    name: Fork Server
+    if: github.repository == 'get-aix/t3code'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup Vite+ and dependencies
+        uses: ./.github/actions/setup-ci-deps
+        with:
+          install-args: --filter=t3... --filter=@t3tools/scripts...
+
+      - name: Typecheck server
+        run: vp run --filter t3 typecheck
+
+      - name: Install Chromium for server tests
+        run: node apps/server/node_modules/playwright-core/cli.js install --with-deps --only-shell chromium
+
+      - name: Test server
+        run: vp run --filter t3 test
+
+      - name: Test contracts
+        run: vp run --filter @t3tools/contracts test
+
+  fork_web:
+    name: Fork Web Shard ${{ matrix.shard }}
+    if: github.repository == 'get-aix/t3code'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup Vite+ and dependencies
+        uses: ./.github/actions/setup-ci-deps
+        with:
+          install-args: --filter=@t3tools/web...
+
+      - name: Build web
+        run: vp run --filter @t3tools/web build
+
+      - name: Install Chromium for web tests
+        run: node apps/web/node_modules/playwright/cli.js install --with-deps --only-shell chromium
+
+      - name: Test web
+        env:
+          DEBUG: pw:browser
+        run: |
+          memory_events=/sys/fs/cgroup/memory.events
+          memory_peak=/sys/fs/cgroup/memory.peak
+          if [ -r "$memory_events" ]; then
+            echo "::group::Runner cgroup memory before web tests"
+            echo "memory.events"
+            cat "$memory_events" 2>/dev/null || echo "memory.events unavailable"
+            if [ -r "$memory_peak" ]; then
+              echo "memory.peak bytes"
+              cat "$memory_peak" 2>/dev/null || echo "memory.peak unavailable"
+            fi
+            echo "::endgroup::"
+          else
+            echo "Runner cgroup memory counters unavailable"
+          fi
+
+          set +e
+          vp run --filter @t3tools/web test --shard ${{ matrix.shard }}/${{ strategy.job-total }}
+          test_status=$?
+          set -e
+
+          if [ -r "$memory_events" ]; then
+            echo "::group::Runner cgroup memory after web tests"
+            echo "memory.events"
+            cat "$memory_events" 2>/dev/null || echo "memory.events unavailable"
+            if [ -r "$memory_peak" ]; then
+              echo "memory.peak bytes"
+              cat "$memory_peak" 2>/dev/null || echo "memory.peak unavailable"
+            fi
+            echo "::endgroup::"
+          fi
+
+          exit "$test_status"
+
+  fork_web_aggregate:
+    name: Fork Web
+    needs: fork_web
+    if: always() && github.repository == 'get-aix/t3code'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require web shards to pass
+        env:
+          SHARD_RESULT: ${{ needs.fork_web.result }}
+        run: |
+          if [[ "$SHARD_RESULT" != "success" ]]; then
+            echo "Fork Web shards completed with result: $SHARD_RESULT"
+            exit 1
+          fi
+
+  fork_desktop:
+    name: Fork Desktop Build
+    if: github.repository == 'get-aix/t3code'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup Vite+ and dependencies
+        uses: ./.github/actions/setup-ci-deps
+        with:
+          install-args: --filter=@t3tools/desktop... --filter=t3... --filter=@t3tools/web... --filter=@t3tools/scripts...
+
+      - name: Install desktop build libraries
+        run: sudo apt-get update && sudo apt-get install -y libsecret-1-dev pkg-config xvfb
+
+      - name: Ensure Electron is installed
+        run: vp run --filter @t3tools/desktop ensure:electron
+
+      - name: Build desktop pipeline
+        run: vp run build:desktop
+
+      - name: Verify preload bundle
+        run: node apps/desktop/scripts/verify-preload-bundle.mjs
+
+  fork_mobile:
+    name: Fork Mobile Type and Unit
+    if: github.repository == 'get-aix/t3code'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup Vite+ and dependencies
+        uses: ./.github/actions/setup-ci-deps
+        with:
+          install-args: --filter=@t3tools/mobile...
+
+      - name: Typecheck mobile
+        run: vp run --filter @t3tools/mobile typecheck
+
+      - name: Test mobile unit and React projects
+        run: vp run --filter @t3tools/mobile test

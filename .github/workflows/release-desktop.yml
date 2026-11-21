@@ -35,11 +35,6 @@ on:
         required: false
       AZURE_TRUSTED_SIGNING_PUBLISHER_NAME:
         required: false
-      # Fork macOS builds: base64 PKCS#12 of the fork's self-signed code-signing certificate.
-      MACOS_SELF_SIGNED_CERTIFICATE:
-        required: false
-      MACOS_SELF_SIGNED_CERTIFICATE_PASSWORD:
-        required: false
     inputs:
       label:
         required: true
@@ -70,7 +65,7 @@ on:
         default: false
         type: boolean
       # Whether the job opens the packaged app against a seeded database and
-      # opens a thread before uploading it. Linux AppImage or macOS DMG/zip.
+      # opens a thread before uploading it. Linux AppImage or macOS DMG.
       launch_check:
         required: false
         default: false
@@ -109,19 +104,6 @@ on:
         required: false
         default: true
         type: boolean
-      # Fork builds are allowed only through the release workflow's verified
-      # build-only path; upstream release callers keep their existing guard.
-      fork_build_only:
-        required: false
-        default: false
-        type: boolean
-      # Whether the job builds only the CLI archive (skipping desktop packaging,
-      # desktop dependencies, and desktop artifact uploads). Used by fork
-      # releases to build the Linux x64 WSL runtime needed by Windows x64.
-      cli_archive_only:
-        required: false
-        default: false
-        type: boolean
       clerk_publishable_key:
         required: true
         type: string
@@ -147,15 +129,11 @@ permissions:
 
 jobs:
   build:
-    if: >-
-      github.repository == 'pingdotgg/t3code' ||
-      (github.repository == 'get-aix/t3code' && inputs.fork_build_only)
     name: Build ${{ inputs.label }}
     runs-on: ${{ inputs.runner }}
     # Windows waits for the Linux CLI archive inside its own budget (see
     # "Wait for Linux CLI archive"), so it gets that wait on top of the usual 30.
-    # Fork macOS builds run on the free 3-core runner.
-    timeout-minutes: ${{ (inputs.platform == 'win' || (inputs.fork_build_only && inputs.platform == 'mac')) && 70 || 30 }}
+    timeout-minutes: ${{ inputs.platform == 'win' && 70 || 30 }}
     env:
       T3CODE_CLERK_PUBLISHABLE_KEY: ${{ inputs.clerk_publishable_key }}
       T3CODE_CLERK_JWT_TEMPLATE: ${{ inputs.clerk_jwt_template }}
@@ -168,13 +146,6 @@ jobs:
         shell: bash
         run: |
           echo "::error::untrusted_bundle cannot be combined with launch_check or cli_archive, which run the bundle."
-          exit 1
-
-      - name: Reject invalid cli_archive_only options
-        if: inputs.cli_archive_only && (!inputs.cli_archive || inputs.launch_check || inputs.verify_runner != '')
-        shell: bash
-        run: |
-          echo "::error::cli_archive_only requires cli_archive and cannot be combined with launch_check or verify_runner."
           exit 1
 
       # This repository is public, so Git needs no credentials. checkout's
@@ -208,7 +179,7 @@ jobs:
       - name: Setup dependencies
         uses: ./.github/actions/setup-ci-deps
         with:
-          install-args: ${{ inputs.cli_archive_only && '--filter=t3... --filter=@t3tools/scripts...' || '--filter=@t3tools/desktop... --filter=t3... --filter=@t3tools/scripts...' }}
+          install-args: --filter=@t3tools/desktop... --filter=t3... --filter=@t3tools/scripts...
           save-pnpm-store: ${{ inputs.save_pnpm_store }}
         env:
           pnpm_config_cache_dir: ${{ runner.temp }}/pnpm-metadata
@@ -241,10 +212,10 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: native/resource-monitor/target/${{ inputs.rust_target }}/release/t3-resource-monitor${{ inputs.platform == 'win' && '.exe' || '' }}
-          key: resource-monitor-${{ inputs.rust_target }}-${{ inputs.platform == 'win' && startsWith(inputs.runner, 'windows-') && 'native-' || '' }}${{ hashFiles('native/resource-monitor/Cargo.lock', 'native/resource-monitor/Cargo.toml', 'native/resource-monitor/src/**') }}
+          key: resource-monitor-${{ inputs.rust_target }}-${{ hashFiles('native/resource-monitor/Cargo.lock', 'native/resource-monitor/Cargo.toml', 'native/resource-monitor/src/**') }}
 
       - name: Cache Linux capture helpers
-        if: inputs.platform == 'linux' && !inputs.cli_archive_only
+        if: inputs.platform == 'linux'
         id: capture_helper_cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -258,7 +229,7 @@ jobs:
       # checks an archive found here against the SHA-256 pinned in those toolset
       # files and downloads again on a mismatch, so only raw archives are cached.
       - name: Cache Linux packaging tool archives
-        if: inputs.platform == 'linux' && !inputs.cli_archive_only
+        if: inputs.platform == 'linux'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
@@ -276,7 +247,7 @@ jobs:
           fi
 
       - name: Setup Rust
-        if: steps.resource_monitor_cache.outputs.cache-hit != 'true' || (inputs.platform == 'linux' && !inputs.cli_archive_only && steps.capture_helper_cache.outputs.cache-hit != 'true')
+        if: steps.resource_monitor_cache.outputs.cache-hit != 'true' || (inputs.platform == 'linux' && steps.capture_helper_cache.outputs.cache-hit != 'true')
         uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: stable
@@ -311,7 +282,7 @@ jobs:
           path: apps
 
       - name: Install cargo-xwin
-        if: inputs.platform == 'win' && !startsWith(inputs.runner, 'windows-') && steps.resource_monitor_cache.outputs.cache-hit != 'true'
+        if: inputs.platform == 'win' && steps.resource_monitor_cache.outputs.cache-hit != 'true'
         uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
         with:
           tool: cargo-xwin@0.23.1
@@ -321,12 +292,12 @@ jobs:
       - name: Build resource monitor
         if: steps.resource_monitor_cache.outputs.cache-hit != 'true'
         shell: bash
-        run: cargo ${{ inputs.platform == 'win' && !startsWith(inputs.runner, 'windows-') && 'xwin build' || 'build' }} --locked --release --manifest-path native/resource-monitor/Cargo.toml --target "${{ inputs.rust_target }}"
+        run: cargo ${{ inputs.platform == 'win' && 'xwin build' || 'build' }} --locked --release --manifest-path native/resource-monitor/Cargo.toml --target "${{ inputs.rust_target }}"
 
       # Off Windows, scripts/lib/windows-jsign.ts signs through jsign instead of
       # the TrustedSigning PowerShell module.
       - name: Install jsign
-        if: inputs.platform == 'win' && !startsWith(inputs.runner, 'windows-')
+        if: inputs.platform == 'win'
         shell: bash
         run: |
           set -euo pipefail
@@ -529,10 +500,9 @@ jobs:
           if-no-files-found: error
           # The archive is already gzip or zip; deflating it again saves under 2%.
           compression-level: 0
-          overwrite: true
 
       - name: Install Linux desktop build libraries
-        if: inputs.platform == 'linux' && !inputs.cli_archive_only
+        if: inputs.platform == 'linux'
         shell: bash
         run: |
           sudo apt-get update
@@ -547,8 +517,12 @@ jobs:
               convert -version
           fi
 
-      # The WSL backend embeds the same-arch Linux CLI archive. Windows jobs
-      # start alongside Linux and wait here after setup so the two overlap.
+      # The WSL backend runs the Linux CLI archive inside the distro, so the
+      # Windows desktop embeds the same-arch archive the release attaches.
+      # This job starts alongside that Linux job instead of after it, and the
+      # Linux job uploads the archive partway through, so the wait is placed
+      # after all other setup. It stops early if the Linux job ended without
+      # uploading the archive.
       - name: Wait for Linux CLI archive
         if: inputs.platform == 'win'
         shell: pwsh
@@ -604,45 +578,7 @@ jobs:
           name: cli-linux-${{ inputs.arch }}
           path: wsl-runtime
 
-      # Squirrel.Mac installs an update only when it satisfies the running app's
-      # designated requirement, which is pinned to this certificate. Losing or
-      # replacing it ends in-app updates for every installed fork Mac app.
-      - name: Install the fork's self-signed macOS certificate
-        if: github.repository == 'get-aix/t3code' && inputs.fork_build_only && inputs.platform == 'mac'
-        shell: bash
-        env:
-          CERTIFICATE: ${{ secrets.MACOS_SELF_SIGNED_CERTIFICATE }}
-          CERTIFICATE_PASSWORD: ${{ secrets.MACOS_SELF_SIGNED_CERTIFICATE_PASSWORD }}
-        run: |
-          set -euo pipefail
-          if [[ -z "$CERTIFICATE" || -z "$CERTIFICATE_PASSWORD" ]]; then
-            echo "::error::MACOS_SELF_SIGNED_CERTIFICATE and MACOS_SELF_SIGNED_CERTIFICATE_PASSWORD are required for fork macOS builds."
-            exit 1
-          fi
-          keychain="$RUNNER_TEMP/t3-fork-signing.keychain-db"
-          keychain_password="$(uuidgen)"
-          p12="$RUNNER_TEMP/t3-fork-signing.p12"
-          cert="$RUNNER_TEMP/t3-fork-signing.cer"
-          trap 'rm -f "$p12" "$cert"' EXIT
-          printf '%s' "$CERTIFICATE" | base64 -D > "$p12"
-          security create-keychain -p "$keychain_password" "$keychain"
-          security set-keychain-settings -lut 21600 "$keychain"
-          security unlock-keychain -p "$keychain_password" "$keychain"
-          security import "$p12" -k "$keychain" -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple: -s -k "$keychain_password" "$keychain" >/dev/null
-          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
-          # find-identity -v lists only trusted identities, and electron-builder looks there.
-          security find-certificate -c "T3 Code Fork" -p "$keychain" > "$cert"
-          sudo security add-trusted-cert -d -r trustRoot -p codeSign -k /Library/Keychains/System.keychain "$cert"
-          if ! security find-identity -v -p codesigning "$keychain" | grep -q '"T3 Code Fork"'; then
-            security find-identity -p codesigning "$keychain" >&2
-            echo "::error::The self-signed certificate is not a valid codesigning identity."
-            exit 1
-          fi
-          echo "T3CODE_DESKTOP_MAC_SELF_SIGNED_IDENTITY=T3 Code Fork" >> "$GITHUB_ENV"
-
       - name: Build desktop artifact
-        if: ${{ !inputs.cli_archive_only }}
         shell: bash
         env:
           # pnpm only goes to the registry for packages or versions the cache lacks.
@@ -652,8 +588,6 @@ jobs:
           T3CODE_DESKTOP_REUSE_RESOURCE_MONITOR: true
           T3CODE_DESKTOP_REUSE_LINUX_CAPTURE_HELPERS: ${{ steps.capture_helper_cache.outputs.cache-hit == 'true' }}
           T3CODE_DESKTOP_UNTRUSTED_BUNDLE: ${{ inputs.untrusted_bundle }}
-          # The cache adds files beyond the Windows payload limit; upstream's cross-build has none.
-          T3CODE_DESKTOP_SKIP_SERVER_COMPILE_CACHE: ${{ github.repository == 'get-aix/t3code' && inputs.fork_build_only && inputs.platform == 'win' && startsWith(inputs.runner, 'windows-') }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
@@ -679,9 +613,6 @@ jobs:
             --verbose
           )
           if [[ -n "${{ inputs.verify_runner }}" ]]; then
-            args+=(--keep-stage)
-          fi
-          if [[ "${{ inputs.platform == 'win' && startsWith(inputs.runner, 'windows-') }}" == "true" ]]; then
             args+=(--keep-stage)
           fi
 
@@ -739,60 +670,6 @@ jobs:
 
           vp run dist:desktop:artifact "${args[@]}"
 
-      - name: Verify the fork macOS app signature
-        if: github.repository == 'get-aix/t3code' && inputs.fork_build_only && inputs.platform == 'mac'
-        shell: bash
-        run: |
-          set -euo pipefail
-          unpacked="$(mktemp -d "$RUNNER_TEMP/t3-mac-signature.XXXXXX")"
-          ditto -x -k "$(ls release/*.zip)" "$unpacked"
-          app="$(ls -d "$unpacked"/*.app)"
-          codesign --verify --deep --strict "$app"
-          codesign -dvv "$app" 2>&1 | grep -qx 'Authority=T3 Code Fork' || {
-            codesign -dvv "$app" >&2
-            echo "::error::The app is not signed with the fork certificate."
-            exit 1
-          }
-
-      - name: List the native Windows payload after a failed build
-        if: failure() && github.repository == 'get-aix/t3code' && inputs.fork_build_only && inputs.platform == 'win' && startsWith(inputs.runner, 'windows-')
-        shell: bash
-        run: |
-          temp_dir="$(cygpath -u "$(node -p 'require("node:os").tmpdir()')")"
-          for unpacked in "$temp_dir"/t3code-desktop-win-stage-*/app/dist/win-unpacked; do
-            [[ -d "$unpacked" ]] || continue
-            (cd "$unpacked" && find . -type f | sort)
-          done
-
-      - name: Verify packaged Windows natives on Windows
-        if: github.repository == 'get-aix/t3code' && inputs.fork_build_only && inputs.platform == 'win' && startsWith(inputs.runner, 'windows-')
-        shell: bash
-        run: |
-          set -euo pipefail
-          temp_dir="$(cygpath -u "$(node -p 'require("node:os").tmpdir()')")"
-          stage_root=""
-          for candidate in "$temp_dir"/t3code-desktop-win-stage-*; do
-            [[ -d "$candidate/app/dist/win-unpacked" ]] || continue
-            if [[ -n "$stage_root" ]]; then
-              echo "::error::Found more than one staged Windows app; refusing ambiguous cleanup."
-              exit 1
-            fi
-            stage_root="$candidate"
-          done
-          if [[ -z "$stage_root" ]]; then
-            echo "::error::The native Windows build did not preserve its unpacked app for verification."
-            exit 1
-          fi
-          unpacked="$stage_root/app/dist/win-unpacked"
-          case "$stage_root" in
-            "$temp_dir"/t3code-desktop-win-stage-*) ;;
-            *) echo "::error::Refusing to clean an unknown desktop stage path."; exit 1 ;;
-          esac
-          trap 'rm -rf -- "$stage_root"' EXIT
-          node scripts/verify-windows-desktop-artifact.ts \
-            --app-dir "$unpacked" --arch "${{ inputs.arch }}" \
-            --build-version "${{ inputs.version }}" --verbose
-
       # The CLI was submitted without waiting so Apple reviews it while the
       # desktop builds. Notarization does not change the archive bytes, but
       # nothing uploads them, so nothing publishes them, until Apple accepts.
@@ -825,7 +702,6 @@ jobs:
           if-no-files-found: error
           # The archive is already gzip or zip; deflating it again saves under 2%.
           compression-level: 0
-          overwrite: true
 
       # Warm installs only touch the store index, so new content means a fetch.
       - name: Check staged install cache for new content
@@ -846,7 +722,7 @@ jobs:
 
       # A build can package fine and still not open (a missing module in the
       # backend or the bundle). This launches the app from the shipped
-      # AppImage, DMG, or macOS zip.
+      # AppImage or DMG.
       - name: Launch check
         if: inputs.launch_check
         shell: bash
@@ -854,19 +730,10 @@ jobs:
           set -euo pipefail
           check=(node scripts/smoke-desktop-app.ts --artifacts-dir "$RUNNER_TEMP/desktop-launch-check")
           if [[ "${{ inputs.platform }}" == "mac" ]]; then
-            if [[ "${{ inputs.target }}" == "zip" ]]; then
-              unpacked="$RUNNER_TEMP/desktop-launch-zip"
-              rm -rf "$unpacked"
-              mkdir -p "$unpacked"
-              trap 'rm -rf "$unpacked"' EXIT
-              ditto -x -k "$(ls "$GITHUB_WORKSPACE"/release/*.zip)" "$unpacked"
-              app=$(ls -d "$unpacked"/*.app)
-            else
-              mount="$RUNNER_TEMP/desktop-launch-dmg"
-              hdiutil attach -nobrowse -readonly -mountpoint "$mount" "$(ls "$GITHUB_WORKSPACE"/release/*.dmg)"
-              trap 'hdiutil detach "$mount" -force >/dev/null || true' EXIT
-              app=$(ls -d "$mount"/*.app)
-            fi
+            mount="$RUNNER_TEMP/desktop-launch-dmg"
+            hdiutil attach -nobrowse -readonly -mountpoint "$mount" "$(ls "$GITHUB_WORKSPACE"/release/*.dmg)"
+            trap 'hdiutil detach "$mount" -force >/dev/null || true' EXIT
+            app=$(ls -d "$mount"/*.app)
             executable=$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$app/Contents/Info.plist")
             "${check[@]}" --executable "$app/Contents/MacOS/$executable"
           else
@@ -884,7 +751,6 @@ jobs:
           name: desktop-launch-check-${{ inputs.platform }}-${{ inputs.arch }}
           path: ${{ runner.temp }}/desktop-launch-check
           if-no-files-found: ignore
-          overwrite: true
 
       # The verify job runs what this host could not: the packaged natives and
       # the CLI. Its scripts are bundled so that job needs no install.
@@ -915,10 +781,8 @@ jobs:
           if-no-files-found: error
           retention-days: 1
           compression-level: 1
-          overwrite: true
 
       - name: Collect release assets
-        if: ${{ !inputs.cli_archive_only }}
         shell: bash
         run: |
           set -euo pipefail
@@ -957,66 +821,13 @@ jobs:
           # the release job merges them back into one manifest per channel.
           # builder-debug.yml is electron-builder's config dump, not a feed.
           if [[ "${{ inputs.platform }}" == "win" ]]; then
-            shopt -s nullglob
             for manifest in release-publish/*.yml; do
               [[ "$manifest" == */builder-debug.yml ]] && continue
               mv "$manifest" "${manifest%.yml}-win-${{ inputs.arch }}.yml"
             done
           fi
 
-      - name: Inspect Windows installer signature
-        id: windows_signature
-        if: github.repository == 'get-aix/t3code' && inputs.fork_build_only && inputs.platform == 'win' && startsWith(inputs.runner, 'windows-')
-        shell: pwsh
-        run: |
-          $installers = @(Get-ChildItem -Path release-publish -Filter *.exe -File)
-          if ($installers.Count -ne 1) {
-            throw "Expected one Windows installer, found $($installers.Count)."
-          }
-          $signature = Get-AuthenticodeSignature -FilePath $installers[0].FullName
-          if ($signature.Status -eq 'Valid') {
-            $mode = 'signed'
-          } elseif ($signature.Status -eq 'NotSigned') {
-            $mode = 'unsigned'
-          } else {
-            throw "Windows installer signature status is $($signature.Status)."
-          }
-          "mode=$mode" >> $env:GITHUB_OUTPUT
-
-      - name: Add Windows installer checksum and metadata
-        if: github.repository == 'get-aix/t3code' && inputs.fork_build_only && inputs.platform == 'win' && startsWith(inputs.runner, 'windows-')
-        shell: bash
-        env:
-          WINDOWS_SIGNING: ${{ steps.windows_signature.outputs.mode }}
-          SOURCE_SHA: ${{ inputs.ref }}
-          VERSION: ${{ inputs.version }}
-        run: |
-          set -euo pipefail
-          installers=(release-publish/*.exe)
-          if [[ ${#installers[@]} -ne 1 ]]; then
-            echo "Expected one Windows installer, found ${#installers[@]}." >&2
-            exit 1
-          fi
-          installer="${installers[0]}"
-          installer_name="$(basename "$installer")"
-          (cd release-publish && sha256sum "$installer_name" > "$installer_name.sha256")
-          WINDOWS_INSTALLER="$(basename "$installer")" node - <<'NODE'
-          const fs = require("node:fs");
-          const metadata = {
-            application: "T3 Code",
-            version: process.env.VERSION,
-            platform: "windows",
-            architecture: "x64",
-            gitSha: process.env.SOURCE_SHA,
-            installer: process.env.WINDOWS_INSTALLER,
-            windowsSigning: process.env.WINDOWS_SIGNING,
-            sha256: fs.readFileSync(`release-publish/${process.env.WINDOWS_INSTALLER}.sha256`, "utf8").split(" ")[0],
-          };
-          fs.writeFileSync("release-publish/windows-metadata.json", `${JSON.stringify(metadata, null, 2)}\n`);
-          NODE
-
       - name: Collect resource monitor
-        if: ${{ !inputs.cli_archive_only }}
         shell: bash
         run: |
           set -euo pipefail
@@ -1030,7 +841,6 @@ jobs:
           cp "$source_path" "$target_dir/$binary_name"
 
       - name: Upload build artifacts
-        if: ${{ !inputs.cli_archive_only }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: desktop-${{ inputs.platform }}-${{ inputs.arch }}
@@ -1038,21 +848,18 @@ jobs:
           if-no-files-found: error
           # Installers, zips and blockmaps are already compressed; deflating them again saves under 0.3%.
           compression-level: 0
-          overwrite: true
 
       - name: Upload resource monitor
-        if: ${{ !inputs.cli_archive_only }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: resource-monitor-${{ inputs.resource_key }}
           path: resource-monitor-publish/${{ inputs.resource_key }}/*
           if-no-files-found: error
-          overwrite: true
 
   verify:
     name: Verify
     needs: [build]
-    if: ${{ github.repository == 'pingdotgg/t3code' && (inputs.verify_runner != '') }}
+    if: inputs.verify_runner != ''
     runs-on: ${{ inputs.verify_runner }}
     timeout-minutes: 15
     steps:

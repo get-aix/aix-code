@@ -6,6 +6,8 @@ on:
       - .github/workflows/upstream-stable-sync.yml
       - scripts/upstream-stable-sync.mjs
       - scripts/upstream-stable-sync.test.mjs
+      - scripts/update-flake-pnpm-hash.mjs
+      - scripts/update-flake-pnpm-hash.test.mjs
       - scripts/update-release-package-versions.ts
       - scripts/lib/tagged-source-version.ts
       - .github/scripts/fork-ci-checks.cjs
@@ -16,12 +18,14 @@ on:
       - .github/workflows/upstream-stable-sync.yml
       - scripts/upstream-stable-sync.mjs
       - scripts/upstream-stable-sync.test.mjs
+      - scripts/update-flake-pnpm-hash.mjs
+      - scripts/update-flake-pnpm-hash.test.mjs
       - scripts/update-release-package-versions.ts
       - scripts/lib/tagged-source-version.ts
       - .github/scripts/fork-ci-checks.cjs
       - .github/scripts/fork-ci-checks.test.cjs
   workflow_run:
-    workflows: [CI]
+    workflows: [Fork CI]
     types: [completed]
     branches:
       - automation/upstream-stable-*
@@ -88,13 +92,13 @@ jobs:
         run: vp install --filter=@t3tools/scripts... --frozen-lockfile
 
       - name: Test stable sync and exact fork CI checks
-        run: node --test scripts/upstream-stable-sync.test.mjs .github/scripts/fork-ci-checks.test.cjs .github/scripts/fork-release.test.cjs
+        run: node --test scripts/upstream-stable-sync.test.mjs scripts/update-flake-pnpm-hash.test.mjs .github/scripts/fork-ci-checks.test.cjs .github/scripts/fork-release.test.cjs
 
   sync:
     if: ${{ github.repository == 'get-aix/t3code' && github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
     needs: test
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     permissions:
       actions: read
       contents: read
@@ -171,6 +175,12 @@ jobs:
       - name: Install release package updater dependencies
         if: steps.inspect.outputs.requires_write == 'true'
         run: vp install --filter=@t3tools/scripts... --frozen-lockfile
+
+      - name: Install Nix for flake pnpmDeps hash updates
+        if: steps.inspect.outputs.requires_write == 'true'
+        uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31
+        with:
+          github_access_token: ${{ github.token }}
 
       - name: Push the update branch and open its pull request
         if: steps.inspect.outputs.requires_write == 'true'

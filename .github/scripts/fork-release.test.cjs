@@ -377,7 +377,7 @@ test("publication accepts only a successful matching build-only run and artifact
   const artifactName = `t3-code-installers-0.1.9-${sha.slice(0, 12)}`;
   const run = {
     id: 12345,
-    path: ".github/workflows/release.yml",
+    path: ".github/workflows/fork-release.yml",
     event: "workflow_dispatch",
     status: "completed",
     conclusion: "success",
@@ -571,7 +571,7 @@ test("an existing release is idempotent only with its exact source and complete 
       }),
     /complete fork source and asset identity/,
   );
-  assert.equal(REQUIRED_FORK_CHECKS.length, 4);
+  assert.equal(REQUIRED_FORK_CHECKS.length, 5);
 });
 
 test("existing release assets must have matching source metadata and file checksums", async () => {
@@ -1131,4 +1131,18 @@ test("oversized fork commit lists keep the newest commits and link to the full c
     notes,
     /https:\/\/github\.com\/get-aix\/t3code\/compare\/v0\.1\.11\.\.\.v0\.1\.12-aix\.1/,
   );
+});
+
+test("fork release jobs call only the fork-owned desktop workflow", () => {
+  const release = fs.readFileSync(path.join(__dirname, "../workflows/fork-release.yml"), "utf8");
+  const desktop = fs.readFileSync(
+    path.join(__dirname, "../workflows/fork-release-desktop.yml"),
+    "utf8",
+  );
+  assert.match(release, /^name: Fork Release$/m);
+  assert.ok(release.includes("Fork build-only stable"));
+  assert.ok(release.includes("Fork publish stable"));
+  assert.match(desktop, /^name: Fork Release Desktop$/m);
+  assert.ok(release.includes("uses: ./.github/workflows/fork-release-desktop.yml"));
+  assert.ok(!release.includes("uses: ./.github/workflows/release-desktop.yml"));
 });

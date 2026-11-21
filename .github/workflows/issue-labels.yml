@@ -14,7 +14,6 @@ permissions:
 
 jobs:
   sync:
-    if: github.repository == 'pingdotgg/t3code'
     name: Sync issue labels
     runs-on: ubuntu-24.04
     steps:

@@ -1,6 +1,7 @@
 const FORK_REPOSITORY = "get-aix/t3code";
 
 const REQUIRED_FORK_CHECKS = Object.freeze([
+  "Fork Quality",
   "Fork Server",
   "Fork Web",
   "Fork Desktop Build",
@@ -42,7 +43,7 @@ function validateForkCiCompletion({
   if (
     !run ||
     run.id !== runId ||
-    run.path !== ".github/workflows/ci.yml" ||
+    run.path !== ".github/workflows/fork-ci.yml" ||
     run.event !== "push" ||
     run.status !== "completed" ||
     run.conclusion !== "success" ||
@@ -65,7 +66,7 @@ function validateForkCiCompletion({
 function validateForkCiRun({ run, jobs, expectedBranch, expectedSha }) {
   if (
     !run ||
-    run.path !== ".github/workflows/ci.yml" ||
+    run.path !== ".github/workflows/fork-ci.yml" ||
     run.event !== "push" ||
     run.status !== "completed"
   ) {

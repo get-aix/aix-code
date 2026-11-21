@@ -206,7 +206,7 @@ export function validateForkMergeProtection({ protection, repository, rulesets =
   const missing = REQUIRED_FORK_CHECKS.filter((name) => contexts.get(name) !== 15368);
   if (missing.length > 0) {
     throw new Error(
-      "Main must require these four checks from the GitHub Actions app (15368): " +
+      "Main must require these five checks from the GitHub Actions app (15368): " +
         missing.join(", ") +
         ".",
     );
@@ -361,7 +361,6 @@ export function validateSyncBranch({
     throw new Error(`Existing update branch ${branch} has an unexpected upstream marker.`);
   }
 
-  const branchParents = runGit(["show", "-s", "--format=%P", branchCommit]).split(" ");
   const branchChanges = (commit) =>
     runGit(["diff", "--name-only", `${commit}^`, commit])
       .split("\n")
@@ -373,12 +372,18 @@ export function validateSyncBranch({
       (parents.length === 1 && branchChanges(commit).includes(MARKER_PATH))
     );
   };
+  const topParents = runGit(["show", "-s", "--format=%P", branchCommit]).split(" ");
+  const topChanges = topParents.length === 1 ? branchChanges(branchCommit) : [];
+  const hasFlakeHashCommit =
+    topParents.length === 1 && topChanges.length === 1 && topChanges[0] === "flake.nix";
+  const versionOrSyncCommit = hasFlakeHashCommit ? topParents[0] : branchCommit;
+  const branchParents = runGit(["show", "-s", "--format=%P", versionOrSyncCommit]).split(" ");
   const hasVersionCommit =
     branchParents.length === 1 &&
-    branchChanges(branchCommit).length > 0 &&
-    !branchChanges(branchCommit).includes(MARKER_PATH) &&
+    branchChanges(versionOrSyncCommit).length > 0 &&
+    !branchChanges(versionOrSyncCommit).includes(MARKER_PATH) &&
     parentIsSyncCommit(branchParents[0]);
-  const syncCommit = hasVersionCommit ? branchParents[0] : branchCommit;
+  const syncCommit = hasVersionCommit ? branchParents[0] : versionOrSyncCommit;
   const syncParents = runGit(["show", "-s", "--format=%P", syncCommit]).split(" ");
   const mergesStableTag = syncParents.length === 2 && syncParents[1] === targetCommit;
   const recordsTagAlreadyInMain =
@@ -420,7 +425,7 @@ export function validateSyncBranch({
   const expectedVersionChanges = [];
   for (const file of releasePackageFiles) {
     const previous = JSON.parse(runGit(["show", `${syncCommit}:${file}`]));
-    const current = JSON.parse(runGit(["show", `${branchCommit}:${file}`]));
+    const current = JSON.parse(runGit(["show", `${versionOrSyncCommit}:${file}`]));
     if (current.version !== version) {
       throw new Error(
         `Existing update branch ${branch} has a release manifest with the wrong version.`,
@@ -437,7 +442,7 @@ export function validateSyncBranch({
       );
     }
   }
-  const actualVersionChanges = hasVersionCommit ? branchChanges(branchCommit) : [];
+  const actualVersionChanges = hasVersionCommit ? branchChanges(versionOrSyncCommit) : [];
   if (
     JSON.stringify(actualVersionChanges.toSorted()) !==
     JSON.stringify(expectedVersionChanges.toSorted())
@@ -445,6 +450,29 @@ export function validateSyncBranch({
     throw new Error(
       `Existing update branch ${branch} contains unexpected commits or release manifest changes.`,
     );
+  }
+  if (hasFlakeHashCommit) {
+    const lockfileChanged =
+      runGit(["diff", "--name-only", baseCommit, syncCommit, "--", "pnpm-lock.yaml"]).trim()
+        .length > 0;
+    if (!lockfileChanged) {
+      throw new Error(
+        `Existing update branch ${branch} updates flake.nix even though pnpm-lock.yaml did not change.`,
+      );
+    }
+    const previousFlake = runGit(["show", `${versionOrSyncCommit}:flake.nix`]);
+    const currentFlake = runGit(["show", `${branchCommit}:flake.nix`]);
+    const hashPattern = /(\bhash\s*=\s*")sha256-[A-Za-z0-9+/]{43}=("\s*;)/g;
+    const currentMatches = [...currentFlake.matchAll(hashPattern)];
+    if (
+      currentMatches.length !== 1 ||
+      previousFlake.replace(hashPattern, "$1<HASH>$2") !==
+        currentFlake.replace(hashPattern, "$1<HASH>$2")
+    ) {
+      throw new Error(
+        `Existing update branch ${branch} contains unexpected flake.nix changes outside pnpmDeps.hash.`,
+      );
+    }
   }
 }
 
@@ -547,7 +575,7 @@ function getForkCiRuns(branch, sha) {
           "--repo",
           FORK_REPOSITORY,
           "--workflow",
-          "ci.yml",
+          "fork-ci.yml",
           "--branch",
           branch,
           "--event",
@@ -910,7 +938,7 @@ export function queueForkRelease({
           "--repo",
           FORK_REPOSITORY,
           "--workflow",
-          "release.yml",
+          "fork-release.yml",
           "--branch",
           "main",
           "--event",
@@ -938,7 +966,7 @@ export function queueForkRelease({
         "api",
         "--method",
         "POST",
-        `repos/${FORK_REPOSITORY}/actions/workflows/release.yml/dispatches`,
+        `repos/${FORK_REPOSITORY}/actions/workflows/fork-release.yml/dispatches`,
         "-f",
         "ref=main",
         "-f",
@@ -1129,7 +1157,7 @@ async function mergeSyncPullRequestFromCi() {
     throw new Error("The sync pull request is not in a verified merged state.");
   }
 
-  const message = `Merged upstream stable ${release.tag_name} after all four checks succeeded on exact PR head ${branchCommit}. Release dispatch waits for all four checks on the resulting integration commit on main.`;
+  const message = `Merged upstream stable ${release.tag_name} after all five checks succeeded on exact PR head ${branchCommit}. Release dispatch waits for all five checks on the resulting integration commit on main.`;
   console.log(message);
   await writeStepSummary(message);
 }
@@ -1198,8 +1226,8 @@ async function queueReleaseFromMainCi() {
     runCommand: runWithSyncApp,
   });
   const message = dispatched
-    ? `All four Fork CI jobs succeeded on integration commit ${sourceSha}; queued stable ${releaseSource.upstreamTag} with upstream base ${releaseSource.upstreamBase}.`
-    : `All four Fork CI jobs succeeded on integration commit ${sourceSha}; the matching stable ${releaseSource.upstreamTag} release is already queued or published.`;
+    ? `All five Fork CI checks succeeded on integration commit ${sourceSha}; queued stable ${releaseSource.upstreamTag} with upstream base ${releaseSource.upstreamBase}.`
+    : `All five Fork CI checks succeeded on integration commit ${sourceSha}; the matching stable ${releaseSource.upstreamTag} release is already queued or published.`;
   console.log(message);
   await writeStepSummary(message);
 }
@@ -1455,6 +1483,25 @@ async function main() {
     }
   }
 
+  if (!dryRun && !existingBranchCommit) {
+    const flakeHashUpdater = NodeURL.fileURLToPath(
+      new URL("./update-flake-pnpm-hash.mjs", import.meta.url),
+    );
+    if (
+      git(["diff", "--quiet", mainRef, "--", "pnpm-lock.yaml"], { allowFailure: true }) ===
+      undefined
+    ) {
+      run(process.execPath, [flakeHashUpdater, "--root", process.cwd()]);
+      git(["add", "--", "flake.nix"]);
+      if (
+        git(["diff", "--cached", "--quiet", "--", "flake.nix"], { allowFailure: true }) ===
+        undefined
+      ) {
+        git(["commit", "--no-verify", "-m", "chore: update Nix pnpm dependency hash"]);
+      }
+    }
+  }
+
   const commits = git(["log", "--format=%s (%h)", `${baseCommit}..${targetCommit}`])
     .split("\n")
     .filter(Boolean);
@@ -1470,14 +1517,14 @@ async function main() {
   const body = [
     `This pull request synchronizes upstream stable release **${targetTag}** (${targetCommit}).`,
     "",
-    "The update branch is based on fork `main` and uses only this upstream stable tag; it never merges upstream `main`. If the tag commit is not already in fork `main`, the branch merges that tag while preserving fork commits. If the tag is already present, the branch records only the stable marker. The branch is pushed first so eligible push checks run on its exact head SHA. Automatic merge requires all four fork checks and strict protected-main rules; it never uses an administrator bypass.",
+    "The update branch is based on fork `main` and uses only this upstream stable tag; it never merges upstream `main`. If the tag commit is not already in fork `main`, the branch merges that tag while preserving fork commits. If the tag is already present, the branch records only the stable marker. The branch is pushed first so eligible push checks run on its exact head SHA. Automatic merge requires all five fork checks and strict protected-main rules; it never uses an administrator bypass.",
     "",
     ...(skippedTagSummary ? [skippedTagSummary, ""] : []),
     "### Upstream change summary",
     changeSummary,
     "",
     "### Verification",
-    "- The GitHub App token pushes the branch and opens this PR so CI runs on its exact head without workflow approval. Merge automation waits for all four checks to succeed on that exact SHA.",
+    "- The GitHub App token pushes the branch and opens this PR so CI runs on its exact head without workflow approval. Merge automation waits for all five checks to succeed on that exact SHA.",
   ].join("\n");
   if (dryRun) {
     const summary = `## Upstream stable sync: ${targetTag}\n\n${skippedTagSummary ? `${skippedTagSummary}\n\n` : ""}${changeSummary}\n\nDry run only; no branch was pushed and no pull request was created.`;
@@ -1489,7 +1536,7 @@ async function main() {
   await NodeFSP.writeFile(bodyPath, `${body}\n`);
   if (!existingBranchCommit) git(["push", "origin", `HEAD:refs/heads/${branch}`]);
   const pullRequestUrl = createSyncPullRequest(branch, targetTag, bodyPath);
-  const summary = `## Upstream stable sync: ${targetTag}\n\n${skippedTagSummary ? `${skippedTagSummary}\n\n` : ""}${changeSummary}\n\nCreated the sync pull request: ${pullRequestUrl}\n\nFork CI was triggered by the push of ${branch}. The CI completion workflow verifies all four checks against the exact head before protected merging.`;
+  const summary = `## Upstream stable sync: ${targetTag}\n\n${skippedTagSummary ? `${skippedTagSummary}\n\n` : ""}${changeSummary}\n\nCreated the sync pull request: ${pullRequestUrl}\n\nFork CI was triggered by the push of ${branch}. The CI completion workflow verifies all five checks against the exact head before protected merging.`;
   console.log(summary);
   await writeStepSummary(summary);
 }

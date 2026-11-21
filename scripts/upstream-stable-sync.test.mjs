@@ -251,7 +251,7 @@ if (args[0] === "api" && args.some((arg) => arg.includes("/releases?"))) {
 } else if (args[0] === "run" && args[1] === "list") {
   const branch = args[args.indexOf("--branch") + 1];
   const workflow = args[args.indexOf("--workflow") + 1];
-  if (workflow === "ci.yml") {
+  if (workflow === "fork-ci.yml") {
     output((state.ciRuns ?? []).filter((run) => run.headBranch === branch));
   } else {
     output(state.runs.filter((run) => run.branch === branch && run.event === "workflow_dispatch"));
@@ -283,6 +283,7 @@ if (args[0] === "api" && args.some((arg) => arg.includes("/releases?"))) {
         required_status_checks: {
           strict: true,
           checks: [
+            { context: "Fork Quality", app_id: 15368 },
             { context: "Fork Server", app_id: 15368 },
             { context: "Fork Web", app_id: 15368 },
             { context: "Fork Desktop Build", app_id: 15368 },
@@ -370,7 +371,7 @@ async function prepareSuccessfulCiEvent(fixture) {
   ];
   state.workflowRun = {
     id: runId,
-    path: ".github/workflows/ci.yml",
+    path: ".github/workflows/fork-ci.yml",
     event: "push",
     status: "completed",
     conclusion: "success",
@@ -581,6 +582,7 @@ NodeTest.test("automatic merge requires strict fork checks while exempting admin
     required_status_checks: {
       strict: true,
       checks: [
+        { context: "Fork Quality", app_id: 15368 },
         { context: "Fork Server", app_id: 15368 },
         { context: "Fork Web", app_id: 15368 },
         { context: "Fork Desktop Build", app_id: 15368 },
@@ -1329,7 +1331,7 @@ NodeTest.test(
       NodeAssert.equal(result.status, 0, result.output);
       NodeAssert.match(
         result.output,
-        /Release dispatch waits for all four checks on the resulting integration commit/,
+        /Release dispatch waits for all five checks on the resulting integration commit/,
       );
       const state = await fixture.readState();
       NodeAssert.equal(state.mergeCalls, 1);
@@ -1386,7 +1388,7 @@ NodeTest.test(
       const mainCiRunId = 79002;
       const completedMainRun = {
         id: mainCiRunId,
-        path: ".github/workflows/ci.yml",
+        path: ".github/workflows/fork-ci.yml",
         event: "push",
         status: "completed",
         conclusion: "success",
@@ -1422,7 +1424,7 @@ NodeTest.test(
       NodeAssert.equal(releaseQueue.status, 0, releaseQueue.output);
       NodeAssert.match(
         releaseQueue.output,
-        /All four Fork CI jobs succeeded on integration commit/,
+        /All five Fork CI checks succeeded on integration commit/,
       );
       const finalState = await fixture.readState();
       NodeAssert.equal(finalState.syncAppWrites, 2);
@@ -1510,7 +1512,7 @@ NodeTest.test("merge handler refuses a skipped required check", async () => {
   try {
     const event = await prepareSuccessfulCiEvent(fixture);
     const state = await fixture.readState();
-    state.workflowJobs[0].conclusion = "skipped";
+    state.workflowJobs.find((job) => job.name === "Fork Server").conclusion = "skipped";
     await fixture.writeState(state);
 
     const result = fixture.runSync({ env: event.env });
@@ -1592,7 +1594,7 @@ NodeTest.test("stops on unexpected changes in an existing update branch", async 
 
 NodeTest.test("fork CI explicitly runs contracts tests in addition to server tests", async () => {
   const workflow = await NodeFSP.readFile(
-    new URL("../.github/workflows/ci.yml", import.meta.url),
+    new URL("../.github/workflows/fork-ci.yml", import.meta.url),
     "utf8",
   );
   const forkServer = workflow.split("\n  fork_server:")[1]?.split("\n  fork_web:")[0] ?? "";
@@ -1696,3 +1698,127 @@ NodeTest.test("a non-conflicting stable merge retains fork files", async () => {
     await NodeFSP.rm(repository, { recursive: true, force: true });
   }
 });
+
+NodeTest.test("sync completion listens only to the distinct Fork CI workflow", async () => {
+  const workflow = await NodeFSP.readFile(
+    new URL("../.github/workflows/upstream-stable-sync.yml", import.meta.url),
+    "utf8",
+  );
+  NodeAssert.match(workflow, /workflows: \[Fork CI\]/);
+  NodeAssert.match(workflow, /scripts\/update-flake-pnpm-hash\.test\.mjs/);
+  NodeAssert.match(workflow, /cachix\/install-nix-action@/);
+});
+
+NodeTest.test(
+  "validateSyncBranch accepts a flake.nix hash commit only when pnpm-lock.yaml changed and only pnpmDeps.hash differs",
+  async () => {
+    const repository = await NodeFSP.mkdtemp(NodePath.join(NodeOS.tmpdir(), "t17-flake-sync-"));
+    const runGit = (args) =>
+      NodeChildProcess.execFileSync("git", args, {
+        cwd: repository,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+      }).trim();
+
+    try {
+      runGit(["init", "--initial-branch=main"]);
+      runGit(["config", "user.name", "T17 fixture"]);
+      runGit(["config", "user.email", "t17-fixture@example.invalid"]);
+      runGit(["config", "commit.gpgsign", "false"]);
+      runGit(["config", "tag.gpgSign", "false"]);
+
+      const { releasePackageFiles } = await import("./lib/tagged-source-version.ts");
+      const writeReleaseFiles = async (version) => {
+        for (const file of releasePackageFiles) {
+          await NodeFSP.mkdir(NodePath.dirname(NodePath.join(repository, file)), {
+            recursive: true,
+          });
+          await NodeFSP.writeFile(
+            NodePath.join(repository, file),
+            `${JSON.stringify({ name: file, version }, null, 2)}\n`,
+          );
+        }
+      };
+
+      const oldHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+      const newHash = "sha256-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=";
+      const flakeFor = (hash, extra = "") =>
+        `{\n  pnpmDeps = {\n    hash = "${hash}";\n  };\n${extra}}\n`;
+
+      await writeReleaseFiles("0.1.10");
+      await NodeFSP.writeFile(NodePath.join(repository, "pnpm-lock.yaml"), "lockfileVersion: 9\n");
+      await NodeFSP.writeFile(NodePath.join(repository, "flake.nix"), flakeFor(oldHash));
+      runGit(["add", "."]);
+      runGit(["commit", "-m", "base"]);
+
+      runGit(["switch", "-c", "upstream"]);
+      await NodeFSP.writeFile(
+        NodePath.join(repository, "pnpm-lock.yaml"),
+        "lockfileVersion: 9\n# updated\n",
+      );
+      runGit(["add", "pnpm-lock.yaml"]);
+      runGit(["commit", "-m", "upstream lockfile update"]);
+      runGit(["tag", "v0.1.11"]);
+      const targetCommit = runGit(["rev-parse", "refs/tags/v0.1.11"]);
+
+      runGit(["switch", "main"]);
+      const mainCommit = runGit(["rev-parse", "refs/heads/main"]);
+      const branch = "automation/upstream-stable-v0.1.11";
+      runGit(["switch", "-c", branch]);
+      runGit(["merge", "--no-ff", "--no-commit", "refs/tags/v0.1.11"]);
+      await NodeFSP.mkdir(NodePath.join(repository, ".github"), { recursive: true });
+      await NodeFSP.writeFile(
+        NodePath.join(repository, ".github/upstream-stable.json"),
+        `${JSON.stringify({ tag: "v0.1.11", commit: targetCommit }, null, 2)}\n`,
+      );
+      runGit(["add", ".github/upstream-stable.json"]);
+      runGit(["commit", "-m", "chore: sync upstream stable v0.1.11"]);
+
+      await writeReleaseFiles("0.1.11");
+      runGit(["add", ...releasePackageFiles]);
+      runGit(["commit", "-m", "chore: set release package versions to 0.1.11"]);
+
+      await NodeFSP.writeFile(NodePath.join(repository, "flake.nix"), flakeFor(newHash));
+      runGit(["add", "flake.nix"]);
+      runGit(["commit", "-m", "chore: update Nix pnpm dependency hash"]);
+      const validHead = runGit(["rev-parse", "HEAD"]);
+
+      NodeAssert.doesNotThrow(() =>
+        validateSyncBranch({
+          branch,
+          branchCommit: validHead,
+          mainRef: "refs/heads/main",
+          targetTag: "v0.1.11",
+          targetCommit,
+          expectedMainParent: mainCommit,
+          cwd: repository,
+        }),
+      );
+
+      // Editing anything in flake.nix outside pnpmDeps.hash must fail validation.
+      await NodeFSP.writeFile(
+        NodePath.join(repository, "flake.nix"),
+        flakeFor(newHash, "  extra = 1;\n"),
+      );
+      runGit(["add", "flake.nix"]);
+      runGit(["commit", "--amend", "-m", "chore: update Nix pnpm dependency hash"]);
+      const badFlakeHead = runGit(["rev-parse", "HEAD"]);
+
+      NodeAssert.throws(
+        () =>
+          validateSyncBranch({
+            branch,
+            branchCommit: badFlakeHead,
+            mainRef: "refs/heads/main",
+            targetTag: "v0.1.11",
+            targetCommit,
+            expectedMainParent: mainCommit,
+            cwd: repository,
+          }),
+        /unexpected flake\.nix changes/,
+      );
+    } finally {
+      await NodeFSP.rm(repository, { recursive: true, force: true });
+    }
+  },
+);

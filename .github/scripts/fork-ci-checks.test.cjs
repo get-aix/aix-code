@@ -1,5 +1,6 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
+const fs = require("node:fs");
 const {
   REQUIRED_FORK_CHECKS,
   selectLatestForkCiRun,
@@ -12,7 +13,7 @@ const expectedBranch = "automation/upstream-stable-v1.2.3-aaaaaaaa";
 const workflowRun = {
   id: 123,
   run_attempt: 2,
-  path: ".github/workflows/ci.yml",
+  path: ".github/workflows/fork-ci.yml",
   event: "push",
   status: "completed",
   conclusion: "success",
@@ -133,4 +134,23 @@ test("rejects skipped, missing, duplicate, wrong-source, or other-head fork chec
       }),
     /does not match the current sync branch head/,
   );
+});
+
+test("Fork CI has a distinct workflow identity and runs all required quality gates", () => {
+  const path = require("node:path");
+  const workflow = fs.readFileSync(path.join(__dirname, "..", "workflows", "fork-ci.yml"), "utf8");
+  assert.match(workflow, /^name: Fork CI$/m);
+  for (const check of REQUIRED_FORK_CHECKS) {
+    assert.ok(workflow.includes(`name: ${check}`), `missing job ${check}`);
+  }
+  for (const command of [
+    "vp fmt --check",
+    "vp lint --report-unused-disable-directives",
+    "vp run i18n:check",
+    "vp run knip:check",
+    "--filter @t3tools/contracts --filter @t3tools/shared --filter @t3tools/client-runtime --filter @t3tools/web typecheck",
+    "--parallel --filter @t3tools/shared --filter @t3tools/client-runtime test",
+  ]) {
+    assert.ok(workflow.includes(command), `missing Fork Quality command: ${command}`);
+  }
 });
