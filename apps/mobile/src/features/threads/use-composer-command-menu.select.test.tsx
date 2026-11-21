@@ -1,4 +1,4 @@
-import { act } from "react";
+import { act, useLayoutEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, it, vi } from "vite-plus/test";
 
@@ -34,9 +34,9 @@ it("/model clears only its trigger and opens the model picker", async () => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   const onChangeDraftMessage = vi.fn();
   const onOpenModelPicker = vi.fn();
-  let menu: ReturnType<typeof useComposerCommandMenu> | undefined;
+  const probe: { menu?: ReturnType<typeof useComposerCommandMenu> } = {};
   function Probe() {
-    menu = useComposerCommandMenu({
+    const menu = useComposerCommandMenu({
       draftMessage: "fix this /mod",
       ownerKey: "draft",
       environmentId: null,
@@ -47,14 +47,17 @@ it("/model clears only its trigger and opens the model picker", async () => {
       onChangeDraftMessage,
       onOpenModelPicker,
     });
+    useLayoutEffect(() => {
+      probe.menu = menu;
+    });
     return null;
   }
 
   const root = createRoot(document.createElement("div"));
   await act(async () => root.render(<Probe />));
-  const model = menu?.items.find((item) => item.id === "cmd:model");
+  const model = probe.menu?.items.find((item) => item.id === "cmd:model");
   if (!model) throw new Error("Expected /model in the slash menu");
-  await act(async () => menu?.onSelect(model));
+  await act(async () => probe.menu?.onSelect(model));
 
   expect(onOpenModelPicker).toHaveBeenCalledOnce();
   expect(onChangeDraftMessage).toHaveBeenCalledWith("fix this ");

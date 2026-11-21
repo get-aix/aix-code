@@ -5,6 +5,7 @@ import {
   paceRemainingPercent,
 } from "@t3tools/shared/usageLimits";
 import { formatUsd } from "@t3tools/shared/usageFormat";
+import { T, useGT, useMessages } from "gt-react";
 import { cn } from "~/lib/utils";
 
 const chartColors = ["#7c8cf8", "#4fb7a5", "#ecad58", "#cb79b3"];
@@ -16,9 +17,12 @@ export function UsageLimitsWork({
   presentations: LimitPresentations;
   now: number;
 }) {
+  const gt = useGT();
+  const m = useMessages();
   const usage = groupWorkUsage(
     collectLimitAccounts(presentations, { includeUnsupportedAix: true }),
     now,
+    m,
   );
   const rows = usage.groups.flatMap((group) => group.rows);
   const reset = rows
@@ -28,7 +32,7 @@ export function UsageLimitsWork({
     return (
       <div className="flex flex-col gap-4">
         <p className="text-sm text-muted-foreground">
-          No Work profile limits are available for the selected environments.
+          <T>No Work profile limits are available for the selected environments.</T>
         </p>
       </div>
     );
@@ -43,7 +47,7 @@ export function UsageLimitsWork({
       <section className="flex flex-col gap-2 rounded-xl border bg-card p-4">
         <p className="text-xs text-muted-foreground">
           {month}
-          {resets ? ` · resets ${resets}` : ""}
+          {resets ? ` · ${gt("resets {date}", { date: resets })}` : ""}
         </p>
         <p className="text-3xl font-semibold text-foreground tabular-nums">
           {formatUsd(usage.spent)}{" "}
@@ -53,7 +57,7 @@ export function UsageLimitsWork({
           <>
             <div
               className="flex h-2 overflow-hidden rounded-full bg-muted"
-              aria-label="Usage by group"
+              aria-label={gt("Usage by group")}
             >
               {usage.groups.map((group, index) => (
                 <span
@@ -119,6 +123,7 @@ export function UsageLimitsWork({
 }
 
 function KeyRow({ row, now, divider }: { row: WorkUsageRow; now: number; divider: boolean }) {
+  const gt = useGT();
   const window = row.window;
   const tick = window ? paceRemainingPercent(window, now) : null;
   const tone =
@@ -127,8 +132,12 @@ function KeyRow({ row, now, divider }: { row: WorkUsageRow; now: number; divider
     <div className={cn("grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 py-2", divider && "border-t")}>
       <span className="flex min-w-0 items-center gap-2 text-sm font-medium text-foreground">
         <span className="truncate">{row.label}</span>
-        {row.status === "nearLimit" ? <StatusChip tone="destructive">Near limit</StatusChip> : null}
-        {row.status === "overPace" ? <StatusChip tone="warning">Over pace</StatusChip> : null}
+        {row.status === "nearLimit" ? (
+          <StatusChip tone="destructive">{gt("Near limit")}</StatusChip>
+        ) : null}
+        {row.status === "overPace" ? (
+          <StatusChip tone="warning">{gt("Over pace")}</StatusChip>
+        ) : null}
       </span>
       {window?.amounts ? (
         <span className="text-sm tabular-nums">

@@ -440,11 +440,16 @@ function ProjectOverviewContent(props: {
         {canMoveProjectScope ? (
           <SettingsActionRow
             icon="arrow.left.arrow.right"
-            label={isWork ? "Move to Personal" : "Move to Work"}
+            label={isWork ? gt("Move to Personal") : gt("Move to Work")}
             description={
               offline
-                ? "Connect every machine with this project to change its scope."
-                : `In ${isWork ? "Work" : "Personal"}. Moves every checkout of this project between Personal and Work.`
+                ? gt("Connect every machine with this project to change its scope.")
+                : gt(
+                    "In {scope}. Moves every checkout of this project between Personal and Work.",
+                    {
+                      scope: isWork ? gt("Work") : gt("Personal"),
+                    },
+                  )
             }
             disabled={isOrganizing || offline}
             loading={isOrganizing}
@@ -454,13 +459,15 @@ function ProjectOverviewContent(props: {
       </SettingsSection>
 
       {canPickWorkKey ? (
-        <SettingsSection title="Work key">
+        <SettingsSection title={gt("Work key")}>
           {[...workKeys].map(([profile, label], index) => (
             <SettingsChoiceRow
               key={profile}
               label={label}
               description={
-                offline ? "Connect every machine with this project to change its key." : undefined
+                offline
+                  ? gt("Connect every machine with this project to change its key.")
+                  : undefined
               }
               selected={representative.homeAixProfile === profile}
               separated={index > 0}

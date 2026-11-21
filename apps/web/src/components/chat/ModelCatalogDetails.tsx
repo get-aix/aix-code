@@ -1,3 +1,4 @@
+import { useGT, useMessages } from "gt-react";
 import { CheckIcon, CopyIcon, InfoIcon } from "lucide-react";
 import { useState, type RefObject } from "react";
 import type { ServerProvider } from "@t3tools/contracts";
@@ -13,13 +14,15 @@ export function ModelCatalogDetails(props: {
   searchInputRef: RefObject<HTMLInputElement | null>;
   onEscape?: (() => void) | undefined;
 }) {
+  const gt = useGT();
+  const m = useMessages();
   const [copyFailed, setCopyFailed] = useState(false);
   const { copyToClipboard, isCopied: copied } = useCopyToClipboard({
     target: namedClipboardTarget("model ID"),
     onError: () => setCopyFailed(true),
     onCopy: () => setCopyFailed(false),
   });
-  const rows = catalogMetadataRows(props.metadata);
+  const rows = catalogMetadataRows(props.metadata, m);
 
   const copyModelId = async () => {
     copyToClipboard(props.modelId, undefined);
@@ -33,7 +36,7 @@ export function ModelCatalogDetails(props: {
           <Button
             size="icon-xs"
             variant="ghost-muted"
-            aria-label={`Model details for ${props.name}`}
+            aria-label={gt("Model details for {model}", { model: props.name })}
             onClick={(event) => event.stopPropagation()}
             onKeyDown={(event) => {
               if (event.key === "Escape") props.onEscape?.();
@@ -72,10 +75,10 @@ export function ModelCatalogDetails(props: {
               variant="ghost-muted"
               aria-label={
                 copyFailed
-                  ? "Could not copy model ID"
+                  ? gt("Could not copy model ID")
                   : copied
-                    ? "Model ID copied"
-                    : "Copy model ID"
+                    ? gt("Model ID copied")
+                    : gt("Copy model ID")
               }
               onClick={() => void copyModelId()}
             >
@@ -83,7 +86,7 @@ export function ModelCatalogDetails(props: {
             </Button>
           </div>
           <p className="sr-only" aria-live="polite">
-            {copyFailed ? "Could not copy model ID" : copied ? "Model ID copied" : ""}
+            {copyFailed ? gt("Could not copy model ID") : copied ? gt("Model ID copied") : ""}
           </p>
         </div>
       </PopoverPopup>

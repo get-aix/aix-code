@@ -11,7 +11,7 @@ import type {
   ServerProviderSlashCommand,
 } from "@t3tools/contracts";
 import type { ComposerTriggerKind } from "@t3tools/shared/composerTrigger";
-import { msg, useMessages } from "gt-react-native";
+import { msg, useGT, useMessages } from "gt-react-native";
 import { memo } from "react";
 import { Pressable, ScrollView, StyleSheet, View, type ViewStyle } from "react-native";
 
@@ -189,12 +189,13 @@ const CommandRow = memo(function CommandRow(props: {
   readonly isSlashSkill: boolean;
 }) {
   const iconName = itemIcon(props.item);
+  const gt = useGT();
 
   return (
     <Pressable
       accessibilityRole="button"
       {...(props.item.type === "model" && props.item.option.isFree
-        ? { accessibilityLabel: `${props.item.label}, free` }
+        ? { accessibilityLabel: gt("{label}, free", { label: props.item.label }) }
         : {})}
       onPress={props.onPress}
       className="flex-row items-center gap-2.5 border-border px-3.5 py-2.5 active:opacity-60"

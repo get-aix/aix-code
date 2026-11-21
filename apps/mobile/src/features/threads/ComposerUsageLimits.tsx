@@ -6,7 +6,7 @@ import type {
   UsageLimitsReport,
   UsageScope,
 } from "@t3tools/contracts";
-import { T, useGT } from "gt-react-native";
+import { T, useGT, Var } from "gt-react-native";
 import { Pressable, ScrollView, View } from "react-native";
 import { useState } from "react";
 import { formatUsd } from "@t3tools/shared/usageFormat";
@@ -45,8 +45,13 @@ export function ComposerUsageLimits({
   const gt = useGT();
   const now = Date.parse(report.createdAt);
   const work = composerWorkUsage(accounts, providerInstanceId);
-  const workGroupName = work?.name ?? "Work";
+  const workGroupName = work?.name ?? gt("Work");
   const workReset = work?.resetsAt;
+  const workResetDate = workReset
+    ? new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(
+        new Date(workReset),
+      )
+    : null;
   const close = (
     <Pressable
       accessibilityLabel={gt("Dismiss usage limits")}
@@ -68,8 +73,8 @@ export function ComposerUsageLimits({
               selected={scope}
               onSelect={setRequestedScope}
               options={[
-                { value: "personal", label: "Personal" },
-                { value: "work", label: "Work" },
+                { value: "personal", label: gt("Personal") },
+                { value: "work", label: gt("Work") },
               ]}
             />
           </View>
@@ -78,10 +83,12 @@ export function ComposerUsageLimits({
           <>
             <View className="flex-row items-center justify-between gap-3 px-4 pt-3">
               <Text numberOfLines={1} className="min-w-0 flex-1 text-xs text-foreground-muted">
-                {workGroupName} · Work
-                {workReset
-                  ? ` · resets ${new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(new Date(workReset))}`
-                  : ""}
+                {workResetDate === null
+                  ? gt("{workGroupName} · Work", { workGroupName })
+                  : gt("{workGroupName} · Work · resets {resetDate}", {
+                      workGroupName,
+                      resetDate: workResetDate,
+                    })}
               </Text>
               {close}
             </View>
@@ -187,7 +194,9 @@ function WorkUsageLimitsRows({
                 {reportAccountLabel(account)}
               </Text>
               {index === 0 && work.isThread ? (
-                <Text className="text-xs text-foreground-muted">· this thread</Text>
+                <Text className="text-xs text-foreground-muted">
+                  <T>· this thread</T>
+                </Text>
               ) : null}
             </View>
             {window?.amounts ? (
@@ -208,7 +217,11 @@ function WorkUsageLimitsRows({
       })}
       {projectAmounts ? (
         <View className="flex-row flex-wrap items-center justify-between gap-x-3 border-t border-border-subtle py-2">
-          <Text className="text-xs text-foreground-muted">{groupName} project total</Text>
+          <Text className="text-xs text-foreground-muted">
+            <T>
+              <Var>{groupName}</Var> project total
+            </T>
+          </Text>
           <Text className="text-sm tabular-nums text-foreground">
             {formatUsd(projectAmounts.spent)}
             <Text className="text-foreground-muted"> / {formatUsd(projectAmounts.total)}</Text>

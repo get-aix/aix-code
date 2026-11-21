@@ -952,7 +952,12 @@ export function useComposerSend(input: ComposerSendInput) {
       const profileLabels = aixProfileLabels(providerInstanceEntries);
       const names = lanesToConfirm.map((lane) => laneLabel(lane, profileLabels)).join(" and ");
       const confirmed = await readLocalApi()?.dialogs.confirm(
-        `Use ${names} in this thread?\nSending adds ${names} to this thread. Cancel keeps your message.`,
+        m(
+          msg(
+            "Use {lanes} in this thread?\nSending adds {lanes} to this thread. Cancel keeps your message.",
+            { lanes: names },
+          ),
+        ),
       );
       if (!confirmed) return;
     }

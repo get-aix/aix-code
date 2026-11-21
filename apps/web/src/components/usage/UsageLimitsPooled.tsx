@@ -723,7 +723,7 @@ function PoolSection({
 export function UsageLimitsPooled({
   presentations,
   now,
-  emptyMessage = "No provider on the selected environments reports subscription limits.",
+  emptyMessage,
   aixProfileLabels = new Map(),
 }: {
   readonly presentations: Parameters<typeof collectLimitAccounts>[0];
@@ -735,13 +735,15 @@ export function UsageLimitsPooled({
   const m = useMessages();
   const [segmentPopover] = useState(() => PopoverCreateHandle<SegmentPayload>());
   const segmentPopoverActions = useRef<PopoverPrimitive.Root.Actions | null>(null);
+  const emptyText =
+    emptyMessage ?? gt("No provider on the selected environments reports subscription limits.");
   const pools = collectLimitPools(collectLimitAccounts(presentations), now);
   const repeatedProfiles = profilesOnSeveralEnvironments(pools);
   const externalLinks = collectExternalUsageLinks(presentations, m);
   return (
     <div className="flex flex-col gap-8">
       {pools.length === 0 && externalLinks.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{emptyMessage}</p>
+        <p className="text-sm text-muted-foreground">{emptyText}</p>
       ) : null}
       <SegmentPopoverContext value={segmentPopover}>
         {pools.map((pool) => (

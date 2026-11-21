@@ -1,4 +1,5 @@
 import type { ModelLane, ProjectId } from "@t3tools/contracts";
+import { T, useGT, useMessages } from "gt-react";
 import {
   allowedLanesForProject,
   laneOfInstance,
@@ -25,6 +26,8 @@ export function ComposerLaneRows(props: {
   instanceEntries: ReadonlyArray<ProviderInstanceEntry>;
 }) {
   const projects = useProjects();
+  const gt = useGT();
+  const m = useMessages();
   const updateThreadMetadata = useOrchestrationCommand(threadEnvironment.updateMetadata);
   const setDraftThreadContext = useComposerDraftStore((store) => store.setDraftThreadContext);
   const { thread, draftId } = props;
@@ -63,12 +66,14 @@ export function ComposerLaneRows(props: {
   return (
     // contain:inline-size: long key names truncate instead of widening the picker.
     <div className="flex w-full flex-col items-start gap-1 border-b border-border/70 pb-2 text-xs text-muted-foreground [contain:inline-size]">
-      <span>Agents in this thread may use</span>
+      <span>
+        <T>Agents in this thread may use</T>
+      </span>
       {lanes.map((lane) => (
         <div key={lane} className="flex w-full items-center justify-between gap-2">
           <span className="truncate text-foreground">
-            {laneLabel(lane, profileLabels)}
-            {lane === home ? " · project key" : null}
+            {laneLabel(lane, profileLabels, m)}
+            {lane === home ? ` · ${gt("project key")}` : null}
           </span>
           {lane === home ? null : (
             <Button
@@ -76,7 +81,7 @@ export function ComposerLaneRows(props: {
               variant="ghost-muted"
               onClick={() => saveGrants(grants.filter((granted) => granted !== lane))}
             >
-              Remove
+              <T>Remove</T>
             </Button>
           )}
         </div>
@@ -84,12 +89,12 @@ export function ComposerLaneRows(props: {
       {others.length > 0 ? (
         <Menu>
           <MenuTrigger render={<Button size="xs" variant="ghost-muted" />}>
-            Allow another key…
+            <T>Allow another key…</T>
           </MenuTrigger>
           <MenuPopup side="top" align="start" {...composerFloatingLayerProps}>
             {others.map((lane) => (
               <MenuItem key={lane} onClick={() => saveGrants([...grants, lane])}>
-                {laneLabel(lane, profileLabels)}
+                {laneLabel(lane, profileLabels, m)}
               </MenuItem>
             ))}
           </MenuPopup>

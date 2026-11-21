@@ -370,7 +370,9 @@ export function CommandPalette(props: {
       actions.push({
         key: `show${destinationScope === "work" ? "Work" : "Personal"}Projects`,
         kind: "action",
-        title: `Show ${destinationScope === "work" ? "Work" : "Personal"} projects`,
+        title: gt("Show {scope} projects", {
+          scope: destinationScope === "work" ? gt("Work") : gt("Personal"),
+        }),
         searchTerms: ["show projects", "switch scope", destinationScope],
         run: () => setActiveScope(destinationScope),
       });

@@ -507,7 +507,7 @@ function SubagentTimelineLink(props: {
         </span>
         {props.crossingReason ? (
           <span className="block truncate text-2xs leading-relaxed text-muted-foreground">
-            Reason: {props.crossingReason}
+            {gt("Reason: {reason}", { reason: props.crossingReason })}
           </span>
         ) : null}
         <span

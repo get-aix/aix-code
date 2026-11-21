@@ -923,9 +923,11 @@ function ProjectsSection({
       </div>
       {canWrite && projectImport.canSetProjectScope ? (
         <div className="flex items-center justify-between gap-3 px-8">
-          <span className="text-xs text-muted-foreground">Project scope</span>
+          <span className="text-xs text-muted-foreground">
+            <T>Project scope</T>
+          </span>
           <ToggleGroup
-            aria-label="Project scope"
+            aria-label={gt("Project scope")}
             value={[projectImport.projectScope]}
             onValueChange={(next) => {
               const value = next[0];
@@ -934,8 +936,12 @@ function ProjectsSection({
               }
             }}
           >
-            <Toggle value="personal">Personal</Toggle>
-            <Toggle value="work">Work</Toggle>
+            <Toggle value="personal">
+              <T>Personal</T>
+            </Toggle>
+            <Toggle value="work">
+              <T>Work</T>
+            </Toggle>
           </ToggleGroup>
         </div>
       ) : null}

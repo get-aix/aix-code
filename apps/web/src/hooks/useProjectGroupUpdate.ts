@@ -152,7 +152,7 @@ export function useProjectPin() {
     if (!canMoveProjectGroupScope(group)) return;
     const sourceScope = group.scope ?? "personal";
     const destinationScope = sourceScope === "work" ? "personal" : "work";
-    const destinationLabel = destinationScope === "work" ? "Work" : "Personal";
+    const destinationLabel = destinationScope === "work" ? m(msg("Work")) : m(msg("Personal"));
     const result = await updateProjectGroup(
       group.memberProjects,
       { scope: destinationScope },
@@ -163,14 +163,14 @@ export function useProjectPin() {
     const toastId = toastManager.add(
       stackedThreadToast({
         type: "success",
-        title: `Moved to ${destinationLabel}`,
+        title: m(msg("Moved to {scope}", { scope: destinationLabel })),
         actionProps: {
-          children: `Show ${destinationLabel}`,
+          children: m(msg("Show {scope}", { scope: destinationLabel })),
           onClick: () => void setActiveEnvironmentScope(destinationScope),
         },
         data: {
           secondaryActionProps: {
-            children: "Undo",
+            children: m(msg("Undo")),
             onClick: () => {
               toastManager.close(toastId);
               void updateProjectGroup(

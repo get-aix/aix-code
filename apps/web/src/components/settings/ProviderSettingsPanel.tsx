@@ -1173,7 +1173,7 @@ export function EnvironmentProviderSettings({
             {settingsHierarchy.hasAixProfiles ? (
               <div className="flex min-w-0 flex-col gap-2 border-b border-border/50 p-2">
                 <ToggleGroup
-                  aria-label="Provider scope"
+                  aria-label={gt("Provider scope")}
                   variant="segmented"
                   value={[providerViewScope]}
                   onValueChange={(next) => {
@@ -1181,8 +1181,12 @@ export function EnvironmentProviderSettings({
                     if (scope === "personal" || scope === "work") setProviderViewScope(scope);
                   }}
                 >
-                  <Toggle value="personal">Personal</Toggle>
-                  <Toggle value="work">Work</Toggle>
+                  <Toggle value="personal">
+                    <T>Personal</T>
+                  </Toggle>
+                  <Toggle value="work">
+                    <T>Work</T>
+                  </Toggle>
                 </ToggleGroup>
                 {providerViewScope === "work" && settingsHierarchy.profiles.length > 0 ? (
                   <Select
@@ -1191,11 +1195,11 @@ export function EnvironmentProviderSettings({
                       if (value) setProviderProfileId(value);
                     }}
                   >
-                    <SelectTrigger size="sm" aria-label="Work profile">
+                    <SelectTrigger size="sm" aria-label={gt("Work profile")}>
                       <SelectValue>
                         {settingsHierarchy.profiles.find(
                           (profile) => profile.id === settingsHierarchy.profileId,
-                        )?.label ?? "Select profile"}
+                        )?.label ?? gt("Select profile")}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectPopup align="start" alignItemWithTrigger={false}>

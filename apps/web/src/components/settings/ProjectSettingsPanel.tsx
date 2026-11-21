@@ -673,8 +673,11 @@ function ProjectDetail({
           />
           {canMoveProjectScope ? (
             <SettingsRow
-              title="Project scope"
-              description={`In ${group.scope === "work" ? "Work" : "Personal"}. Controls whether this project appears in Personal or Work.`}
+              title={gt("Project scope")}
+              description={gt(
+                "In {scope}. Controls whether this project appears in Personal or Work.",
+                { scope: group.scope === "work" ? gt("Work") : gt("Personal") },
+              )}
               control={
                 <Button
                   size="sm"
@@ -682,15 +685,19 @@ function ProjectDetail({
                   disabled={isOrganizing}
                   onClick={() => void moveScope()}
                 >
-                  Move to {group.scope === "work" ? "Personal" : "Work"}
+                  {gt("Move to {scope}", {
+                    scope: group.scope === "work" ? gt("Personal") : gt("Work"),
+                  })}
                 </Button>
               }
             />
           ) : null}
           {group.scope === "work" && canOrganize ? (
             <SettingsRow
-              title="Work key"
-              description="The aix profile whose models this project's threads use by default."
+              title={gt("Work key")}
+              description={gt(
+                "The aix profile whose models this project's threads use by default.",
+              )}
               control={
                 <Select
                   value={group.homeAixProfile ?? ""}
@@ -702,17 +709,17 @@ function ProjectDetail({
                     )
                   }
                 >
-                  <SelectTrigger size="sm" aria-label="Work key">
+                  <SelectTrigger size="sm" aria-label={gt("Work key")}>
                     <SelectValue>
                       {workKeyProfiles.find((profile) => profile.id === group.homeAixProfile)
                         ?.label ??
                         group.homeAixProfile ??
-                        "None"}
+                        gt("None")}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectPopup align="end" alignItemWithTrigger={false}>
                     <SelectItem hideIndicator value="">
-                      None
+                      <T>None</T>
                     </SelectItem>
                     {workKeyProfiles.map((profile) => (
                       <SelectItem hideIndicator key={profile.id} value={profile.id}>

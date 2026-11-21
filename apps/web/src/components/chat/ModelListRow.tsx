@@ -94,12 +94,14 @@ export const ModelListRow = memo(function ModelListRow(props: {
               render={
                 <span className="text-xs font-medium text-success">
                   <span aria-hidden="true">$</span>
-                  <span className="sr-only">, free</span>
+                  <span className="sr-only">
+                    <T>, free</T>
+                  </span>
                 </span>
               }
             />
             <TooltipPopup side="top" align="center">
-              Free
+              <T>Free</T>
             </TooltipPopup>
           </Tooltip>
         ) : null}

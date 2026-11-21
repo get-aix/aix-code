@@ -700,7 +700,7 @@ function itemSummary(
     case "link_request":
       return resolve(msg("Link {target}", { target: linkRequestTargetName(item, resolve) }));
     case "lane_request":
-      return `Request ${item.lane} provider access`;
+      return resolve(msg("Request {lane} provider access", { lane: item.lane }));
     case "dynamic_tool": {
       const classified = classifyToolActivity({
         itemType: "dynamic_tool_call",

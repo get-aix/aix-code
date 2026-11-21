@@ -1224,7 +1224,6 @@
   "bb34eaf6ddc55a72": "Ce compte n’a pas de limites d’abonnement.",
   "42a2622893a6bced": "Impossible de lire les limites.",
   "4897e228d3185c96": "Aucune limite signalée.",
-  "e27d2cb964df5dd5": "{source} : aucun compte signalé.",
   "1b503134018285f4": "{days} j {hours} h",
   "164c674cf062933a": "{label} · {count} restants · expire dans {expires}",
   "9c82c39589c23938": "{label} · {count} restants",
@@ -1443,6 +1442,13 @@
   "218c111b4aa6e029": "Impossible de lire une image collée.",
   "ce88bed3d928cf6b": "Cette pièce jointe n’est plus disponible. Joignez à nouveau le fichier.",
   "232298a82d027b3d": "Détails",
+  "acbf0b4710755dc1": "Personnel",
+  "a18d69acdf6b047d": "Travail · {name}",
+  "f274ca0eb1463732": "Utiliser Personnel dans {projectTitle} ?",
+  "e5c55f64ff020cf9": "Utiliser la clé {keyName} dans {projectTitle} ?",
+  "d9fe7edae49a92d5": "{projectTitle} n'a pas encore de clé de travail. Ce fil utiliserait désormais {keyName}.",
+  "61bb5a4b7c668632": "{projectTitle} utilise {homeName}. Ce fil utiliserait désormais {keyName}.",
+  "9f3cf9ac4041f9aa": "Utiliser {keyName} dans ce fil",
   "35fcb6312e278185": "La politique de votre organisation n’autorise pas le fournisseur {label}.",
   "90548f7a4d620371": "La politique de {organization} n’autorise pas le fournisseur {label}.",
   "2c850e594aa60ad5": "Fournisseur non autorisé",
@@ -1472,6 +1478,7 @@
   "49a888ab323521ae": "Fil dupliqué",
   "5d865442753ef6c2": "Fil créé",
   "3604d2f52be9539e": "Associer {target}",
+  "8e0a33de1640c41f": "Demander l'accès au fournisseur {lane}",
   "646de37e0bec85f8": "Appel d’outil",
   "5469bba2f5569925": "Plan proposé",
   "c3a88348c14f8258": "Plan mis à jour",
@@ -2102,6 +2109,7 @@
   "9544305f2964486f": "Impossible d’afficher le diff",
   "a488d0f5de859d6b": "Essayez de recharger la vue du diff.",
   "0c72282254a37568": "Recharger le diff",
+  "48cbd77fffac4713": "Travail",
   "08b661a161d6a90e": "Fichier indisponible",
   "8984762fe890a1c9": "Ouverture dans la visionneuse de fichiers...",
   "6c3e294c1f7dbb84": "Chargement du fichier...",
@@ -2252,10 +2260,11 @@
   "bfbcb7fa64c13d58": "Ajoutez un environnement pour charger des projets et démarrer des sessions de code.",
   "81a3f8580a37f609": "Environnement indisponible",
   "b3ef0d49fe0d9702": "L’environnement enregistré est hors ligne. Vérifiez l’URL ou démarrez l’environnement, puis réessayez.",
+  "7403c723c0ec360d": "Aucun projet trouvé",
+  "ddd19b04779cf860": "{retryingLabels} n'a pas répondu et réessaie toujours. Ses projets et fils apparaîtront une fois connecté.",
   "a044effb791c0a10": "Chargement des fils",
   "f1a2d9a807e69569": "Connexion à l’environnement",
   "7832b2d3d77a4df6": "Chargement des projets et des fils depuis l’environnement enregistré.",
-  "7403c723c0ec360d": "Aucun projet trouvé",
   "7701d3f6354f710b": "L’environnement connecté n’a signalé aucun projet.",
   "25ff20870084dd65": "Créez une tâche pour démarrer un nouvel environnement de code dans l’un de vos projets connectés.",
   "07641d43f54a7238": "Afficher les fils de tous les environnements",
@@ -2454,6 +2463,7 @@
   "ca958433a5eefdb2": "Nouveau fil dans…",
   "b2de061402602d22": "Gérer les environnements",
   "09be015b51805a59": "Utilisation",
+  "3c858bc319e35205": "Afficher les projets {scope}",
   "e510d9a7b684fbfe": "Trier un ticket",
   "8e25bd5e884fefea": "Sur {environment}",
   "2688b982396717fc": "Sur cette machine",
@@ -2525,6 +2535,7 @@
   "9d656a9e7b4c146c": "Ouvrir un dossier ou cloner un dépôt",
   "d9551846fba98b8d": "Destination du clone",
   "c7a8a0c6f79e4577": "Cloner le projet",
+  "2064ade9d3ba772b": "Périmètre du projet",
   "7c36d9988b605593": "Donner à {app} l’accès à {owner}",
   "9b771434a1d169dd": "L’app n’y est pas installée, les requêtes GitHub pour {repository} utilisent donc votre propre connexion et sa limite de débit plus basse.",
   "1eeda2f41f6a2140": "Installer",
@@ -3405,6 +3416,12 @@
   "aead92b761823bb0": "Échec de la suppression de « {project} »",
   "d94a4382aaf01787": "{count, plural, one {{count} checkout} other {{count} checkouts}}",
   "097a50ffe86aecc6": "Enregistrer le nom du projet",
+  "c768c841a052924c": "Déplacer vers Personnel",
+  "0e96841e5685bd64": "Déplacer vers Travail",
+  "02a7800290dc16a7": "Connectez chaque machine à ce projet pour modifier son périmètre.",
+  "eac1c44b061ca4c2": "Dans {scope}. Déplace chaque copie de ce projet entre Personnel et Travail.",
+  "e9a78b0c3ced93c5": "Clé de travail",
+  "6466e5d76e3a7a51": "Connectez chaque machine à ce projet pour modifier sa clé.",
   "7679d49fbd511b31": "Organiser",
   "da558d4aa2205fb0": "Épingler",
   "fc5c319684c43a4b": "Connectez chaque machine qui a ce projet pour modifier ce paramètre.",
@@ -3425,6 +3442,8 @@
   "4614a422f1430cd7": "Nom",
   "89c5ab924f851b78": "Supprimer le checkout",
   "c165e95dd1b35bfd": "Cette session peut afficher les fournisseurs de {environment} mais pas modifier leurs paramètres.",
+  "d7937bd2001fce5e": "Profil de travail",
+  "45520a347d732098": "Sélectionner un profil",
   "d94f2f73976440c1": "Impossible de mettre à jour la connexion au fournisseur.",
   "2e5faa8c1b194a16": "Recherche des méthodes de connexion…",
   "300d4800cd6292f9": "Aucune connexion dans l’app proposée. Suivez la documentation du fournisseur pour terminer la configuration.",
@@ -3452,6 +3471,7 @@
   "acab38d4d065c020": "Affiche l’e-mail du compte",
   "16bc6f6dc21e6167": "Sélectionnez un environnement connecté.",
   "229961ee1c32a532": "Autorisations limitées",
+  "a7da92a86bbfb1ce": "Aucun fournisseur dans ce profil.",
   "7cc151a4ae532ee7": "Configurez un fournisseur avec connexion dans l’app dans les Paramètres web ou bureau.",
   "e91a8efa0de1b737": [
     "Saisissez le code ",
@@ -4030,13 +4050,25 @@
   "1c2f899f6eb7aa4b": "Aucun skill trouvé.",
   "25b22a00dae2d1ec": "Aucune commande correspondante.",
   "f8d88331e2a1ec4c": "Aucun résultat.",
+  "93c9cf1ff49a15d3": "{label}, gratuit",
   "f361df7c168544f1": "Ignorer l’erreur",
   "73af9dd121cb467b": "Ignorer l’avis de commentaires",
   "7c1fee250333bb01": "Copier l’ID",
   "2b7fd345e4f4fd6e": "Annuler la modification du message en file d’attente",
   "b2ec7dff2dde1179": "Modification d’un message en file d’attente",
   "faeebf9714efe741": "Masquer les limites d’utilisation",
+  "03db01060373e694": "{workGroupName} · Travail",
+  "c296084b22189c04": "{workGroupName} · Travail · réinitialisation {resetDate}",
   "3b83ac2c1d6ca9ae": "Limites d’utilisation",
+  "75215acf672c9334": "· ce fil",
+  "5b779ea046758266": [
+    {
+      "i": 1,
+      "k": "_gt_value_1",
+      "v": "v"
+    },
+    " total du projet"
+  ],
   "7212b0e2653b17f3": "Date et heure",
   "7982b3041b9ae1d0": "Durée",
   "e456a25c2ed6b9e2": "Minutes",
@@ -4071,6 +4103,29 @@
   "ce591b4de647ecda": "Ouvrir {title}",
   "4a9a6f6111329b54": "Recharger {title}",
   "12f0890f800baa7a": "Page indisponible",
+  "d54a6c973ed1560f": "Impossible de répondre à la demande.",
+  "6d12d51cbe8a951b": "Autoriser pour ce fil",
+  "d793c3eea491dc13": "Autoriser cette tâche",
+  "305b690eaac3748e": "Impossible de révoquer",
+  "2f16c330adb654e9": "Impossible de révoquer la lane.",
+  "e435a3e115eff471": [
+    "Utiliser ",
+    {
+      "i": 1,
+      "k": "_gt_value_1",
+      "v": "v"
+    },
+    " sur ",
+    {
+      "i": 2,
+      "k": "_gt_value_2",
+      "v": "v"
+    },
+    " ?"
+  ],
+  "7c5eb60743d53f71": "Refuser",
+  "a1187ab91ba4bc41": "Cette session ne peut pas répondre à cette demande.",
+  "224e9839195b63b2": "Révoquer",
   "9c5a2e144cefdf2f": "Lecture seule",
   "12d03e02951725b0": "Lire les projets et les fils. Ne peut rien démarrer, envoyer ni modifier.",
   "63fd02d55f0e4417": "Associer une machine à cet environnement",
@@ -4378,6 +4433,9 @@
   "548123cb74c4abcf": "Limites d’utilisation indisponibles",
   "b0eadfef07c14ecb": "Ce fournisseur ne signale pas de limites actuellement.",
   "da39f97188187260": "Ajout du texte collé",
+  "07008cf8449ab4ac": "Changer de modèle",
+  "32827696c1ff1a66": "Impossible d'utiliser la clé",
+  "815527f5e9b1b933": "Ce message n'a pas été envoyé.",
   "ec69e0a9202da9d3": "Le prochain envoi conserve les {tokens} tokens d’historique",
   "e5911cda35b05b57": "Le prochain envoi compacte d’abord {tokens} tokens d’historique",
   "ad83e67ab7244b26": "Compacte d’abord",
@@ -4585,8 +4643,10 @@
   "510cb7d39f654dfc": "Retirer des favoris : {provider}, {model}",
   "39b92bb3a992a452": "Ajouter aux favoris : {provider}, {model}",
   "cbc2606e931511dd": "{provider}, {count, plural, one {{count} modèle} other {{count} modèles}}",
+  "35e1c52bcd42fcea": "Impossible d'actualiser les catalogues aix",
   "15033b76c4b20e76": "Modèle indisponible",
   "ed063bb30064ac7e": "Configurez ce fournisseur sur le web ou le bureau, ou sélectionnez un autre modèle.",
+  "0d7c9ddd60661e30": "Actualiser le catalogue aix de {provider}",
   "440285ac659c7832": "Exécution",
   "a83559c38e1cd470": "Catalogue",
   "16839051320ad525": "Gérer les modèles masqués",
@@ -4599,6 +4659,7 @@
   "b589c01784b9a88c": "Trouver un modèle",
   "9b0277205d8a9b04": "Tous les fournisseurs",
   "4314e052a3524c51": "Favoris",
+  "683dc8c4b42d1a89": "Harness",
   "279ab25bdca98778": "Paramètres du fil",
   "0ef86daa831dde67": "Annuler les paramètres du fil",
   "cb27bc9ea63671c0": "Filtres de modèles",
@@ -4879,34 +4940,31 @@
   "b16fdf56b16d99c9": "Dans le rythme",
   "90f977e97ae8b6c6": "En dessous du rythme",
   "897aceb6c7196649": "Compte",
-  "811008ce95331531": "Segment {index}, {account}, {remaining} % restant",
-  "bfb2d0ef476d295b": "Segment {index}, {account}, {remaining} % restant, {timeLeft} % de la fenêtre restant",
+  "fe8a0b7a0c5d9c6f": "Budget",
+  "bcf1937839647e7b": "{spent} sur {total} dépensés",
+  "c72bc2247561be1d": "Segment {index}, {account}, {remaining} restants",
+  "ce9654d70fc03401": "Segment {index}, {account}, {remaining} restants, {timeLeft}% de la fenêtre restante",
   "e71c96e5114f7718": "Afficher les détails du compte",
-  "27cd137302298f71": "Segment {index}, {account}, {remaining} % restant, {resetsIn}, {credits, plural, one {{credits} crédit de réinitialisation en réserve} other {{credits} crédits de réinitialisation en réserve}}",
-  "288ade531cfcf90c": "Segment {index}, {account}, {remaining} % restant, {resetsIn}",
-  "f78edbddd70ee41d": "Segment {index}, {account}, {remaining} % restant, {credits, plural, one {{credits} crédit de réinitialisation en réserve} other {{credits} crédits de réinitialisation en réserve}}",
+  "932cb291ed3f7ade": "Segment {index}, {account}, {remaining} restants, {resetsIn}, {credits, plural, other {{credits} crédits de réinitialisation en réserve}}",
+  "66067ccc941f1599": "Segment {index}, {account}, {remaining} restants, {resetsIn}",
+  "d140651d728a84ac": "Segment {index}, {account}, {remaining} restants, {credits, plural, other {{credits} crédits de réinitialisation en réserve}}",
   "d2d071e45a2d6b89": "Sélectionnez un environnement pour voir les limites.",
-  "f411a8cef140a5ea": "Aucun fournisseur des environnements sélectionnés ne signale de limites d’abonnement.",
+  "d12ae4bf766e0817": "Aucune limite de profil de travail n'est disponible pour les environnements sélectionnés.",
+  "1479650934b6a1ac": "{environments} n'a pas pu actualiser les limites. Les dernières valeurs connues sont affichées.",
+  "64b58f9d619e07a0": "Aucune limite d'abonnement personnel n'est disponible pour les environnements sélectionnés.",
   "b29a752dd8ee9aa7": "Compte",
   "55a38e69338c54ee": "Masquer l’e-mail du compte",
   "0d3e9f1f27c0e780": "Afficher l’e-mail du compte",
   "9217e0c91cee3cf8": "Connecté",
   "5f12a194d158f9b1": "Source",
-  "65a7507ffde6d3f8": [
+  "3ff81a3f874ebb4b": "restants",
+  "412e3b93454812aa": [
     {
-      "t": "Text",
       "i": 1,
-      "c": [
-        {
-          "i": 2,
-          "k": "_gt_value_2",
-          "v": "v"
-        },
-        " %"
-      ]
+      "k": "_gt_value_1",
+      "v": "v"
     },
-    " ",
-    "restants"
+    " % restant"
   ],
   "6af5e3cf03861f55": [
     {
@@ -4917,13 +4975,13 @@
     " n’a pas pu actualiser les limites. Affichage des dernières valeurs connues."
   ],
   "726ece0c7139ce8a": "Ce compte ne signale plus de limites dans les environnements sélectionnés.",
-  "412e3b93454812aa": [
+  "cacaa00de9d94249": [
     {
       "i": 1,
       "k": "_gt_value_1",
       "v": "v"
     },
-    " % restant"
+    " restants"
   ],
   "82d204e1a9e7da17": [
     "Réinitialisation",
@@ -4971,6 +5029,9 @@
   "e4b6c8eab1e48ee2": "Afficher le libellé du compte",
   "1f76510e608a9292": "Utilisation…",
   "fd121a8a212b5242": "Cette connexion ne peut pas gérer les comptes des fournisseurs.",
+  "25ed7b9d733a32bb": "{month} · réinitialisation {resetDate}",
+  "35746006f96f5781": "Proche de la limite",
+  "3bb4cadb0251463b": "Au-dessus du rythme",
   "43e655305262c0c7": "Coût",
   "88151c994a23d697": "Tokens",
   "e59972943b073c66": "Limites",
@@ -5327,5 +5388,6 @@
   "ad208e3e32c85029": "Tout masquer",
   "3328503592789bed": "Zen",
   "856812e7e1fc445e": "Appels d’outils dans la discussion",
-  "8d545d54c0a9e950": "Masque les commandes, modifications et recherches lancées par les agents. Masquer les réussis garde les échecs. Zen n’affiche que les réponses finales. Les approbations, questions et erreurs s’affichent toujours."
+  "8d545d54c0a9e950": "Masque les commandes, modifications et recherches lancées par les agents. Masquer les réussis garde les échecs. Zen n’affiche que les réponses finales. Les approbations, questions et erreurs s’affichent toujours.",
+  "e27d2cb964df5dd5": "{source} : aucun compte signalé."
 }

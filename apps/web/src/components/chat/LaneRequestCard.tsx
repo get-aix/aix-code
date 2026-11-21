@@ -2,6 +2,7 @@ import { useAtomValue } from "@effect/atom-react";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import { threadAllowedLanes } from "@t3tools/shared/modelLanes";
 import type { EnvironmentId, OrchestrationV2TurnItem } from "@t3tools/contracts";
+import { T, useGT, useMessages } from "gt-react";
 import { CheckIcon, MinusIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -18,7 +19,8 @@ import { WorkLogRow } from "./WorkLog";
 type LaneRequestItem = Extract<OrchestrationV2TurnItem, { type: "lane_request" }>;
 
 function useLaneLabel(environmentId: EnvironmentId, lane: string): string {
-  return laneLabel(lane, aixProfileLabels(useEnvironmentProviders().get(environmentId) ?? []));
+  const m = useMessages();
+  return laneLabel(lane, aixProfileLabels(useEnvironmentProviders().get(environmentId) ?? []), m);
 }
 
 /** Inline card for an agent asking to run on a key outside its thread's lane. */
@@ -39,6 +41,7 @@ function PendingLaneRequest(props: {
   const { item } = props;
   const [busy, setBusy] = useState(false);
   const label = useLaneLabel(props.environmentId, item.lane);
+  const gt = useGT();
   const answer = useAtomCommand(modelLaneRequestEnvironment.answer, {
     label: "answer lane request",
   });
@@ -62,8 +65,8 @@ function PendingLaneRequest(props: {
       <div className="flex min-w-0 flex-col gap-1">
         <p className="text-sm font-medium text-foreground">
           {item.requestedFor === "task"
-            ? `Run a subagent on ${label}?`
-            : `Use ${label} in this thread?`}
+            ? gt("Run a subagent on {lane}?", { lane: label })
+            : gt("Use {lane} in this thread?", { lane: label })}
         </p>
         <p className="text-sm text-muted-foreground">
           {item.providerLabel}: {item.reason}
@@ -78,7 +81,7 @@ function PendingLaneRequest(props: {
             disabled={busy}
             onClick={() => void send("deny")}
           >
-            Deny
+            <T>Deny</T>
           </Button>
           <Button
             type="button"
@@ -87,15 +90,15 @@ function PendingLaneRequest(props: {
             disabled={busy}
             onClick={() => void send("allow-task")}
           >
-            Allow this task
+            <T>Allow this task</T>
           </Button>
           <Button type="button" size="xs" disabled={busy} onClick={() => void send("allow-thread")}>
-            Allow for this thread
+            <T>Allow for this thread</T>
           </Button>
         </div>
       ) : (
         <p className="text-xs text-muted-foreground">
-          Only a session that can operate this environment can answer this.
+          <T>Only a session that can operate this environment can answer this.</T>
         </p>
       )}
     </div>
@@ -113,6 +116,7 @@ function AnsweredLaneRequest(props: {
   );
   const updateThreadMetadata = useOrchestrationCommand(threadEnvironment.updateMetadata);
   const label = useLaneLabel(props.environmentId, item.lane);
+  const gt = useGT();
 
   if (item.laneStatus === "allowed_thread") {
     const stillAllowed = thread ? threadAllowedLanes(thread).includes(item.lane) : true;
@@ -131,12 +135,14 @@ function AnsweredLaneRequest(props: {
         data-v2-item-type={item.type}
         icon={<CheckIcon className="size-3.5 text-icon-muted" aria-hidden />}
         label={
-          stillAllowed ? `Allowed ${label} for this thread` : `Revoked ${label} for this thread`
+          stillAllowed
+            ? gt("Allowed {lane} for this thread", { lane: label })
+            : gt("Revoked {lane} for this thread", { lane: label })
         }
         trailing={
           stillAllowed && canAnswer ? (
             <Button type="button" size="xs" variant="ghost-muted" onClick={revoke}>
-              Revoke
+              <T>Revoke</T>
             </Button>
           ) : null
         }
@@ -146,10 +152,10 @@ function AnsweredLaneRequest(props: {
 
   const status =
     item.laneStatus === "allowed_task"
-      ? { icon: CheckIcon, label: `Allowed ${label} for this task` }
+      ? { icon: CheckIcon, label: gt("Allowed {lane} for this task", { lane: label }) }
       : item.laneStatus === "denied"
-        ? { icon: XIcon, label: `Denied ${label}` }
-        : { icon: MinusIcon, label: `Cancelled request for ${label}` };
+        ? { icon: XIcon, label: gt("Denied {lane}", { lane: label }) }
+        : { icon: MinusIcon, label: gt("Cancelled request for {lane}", { lane: label }) };
   return (
     <WorkLogRow
       data-v2-item-type={item.type}

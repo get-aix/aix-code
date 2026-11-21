@@ -349,17 +349,23 @@ function AddProjectToMachineDialog({ request }: { request: AddProjectToMachineRe
 
             {canSetProjectScope ? (
               <div className="flex flex-col gap-1.5">
-                <Label>Project scope</Label>
+                <Label>
+                  <T>Project scope</T>
+                </Label>
                 <ToggleGroup
-                  aria-label="Project scope"
+                  aria-label={gt("Project scope")}
                   value={[scope]}
                   onValueChange={(next) => {
                     const value = next[0];
                     if (value === "personal" || value === "work") setScope(value);
                   }}
                 >
-                  <Toggle value="personal">Personal</Toggle>
-                  <Toggle value="work">Work</Toggle>
+                  <Toggle value="personal">
+                    <T>Personal</T>
+                  </Toggle>
+                  <Toggle value="work">
+                    <T>Work</T>
+                  </Toggle>
                 </ToggleGroup>
               </div>
             ) : null}

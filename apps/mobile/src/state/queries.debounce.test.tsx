@@ -56,15 +56,18 @@ function setup() {
   vi.useFakeTimers();
   mocks.searchEntries.mockClear();
   const root = createRoot(document.createElement("div"));
-  let latest: ReturnType<typeof useComposerPathSearch> | null = null;
+  const probe: { latest: ReturnType<typeof useComposerPathSearch> | null } = { latest: null };
   function Probe({ target }: { readonly target: ComposerPathSearchTarget }) {
-    latest = useComposerPathSearch(target);
+    const value = useComposerPathSearch(target);
+    useLayoutEffect(() => {
+      probe.latest = value;
+    });
     return null;
   }
 
   return {
     get result() {
-      return latest;
+      return probe.latest;
     },
     render(target: ComposerPathSearchTarget) {
       act(() => root.render(<Probe target={{ ...target }} />));

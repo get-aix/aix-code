@@ -1,3 +1,4 @@
+import { useGT } from "gt-react-native";
 import { View } from "react-native";
 
 import { SegmentedControl } from "../../components/ui/SegmentedControl";
@@ -5,6 +6,7 @@ import { useMobileEnvironmentScope } from "./useMobileEnvironmentScope";
 
 export function EnvironmentScopeSwitcher(props: { readonly onScopeChange?: () => void }) {
   const { enabled, activeScope, setActiveScope } = useMobileEnvironmentScope();
+  const gt = useGT();
 
   if (!enabled) return null;
 
@@ -15,8 +17,8 @@ export function EnvironmentScopeSwitcher(props: { readonly onScopeChange?: () =>
         role="button"
         selected={activeScope}
         options={[
-          { value: "personal", label: "Personal" },
-          { value: "work", label: "Work" },
+          { value: "personal", label: gt("Personal") },
+          { value: "work", label: gt("Work") },
         ]}
         onSelect={(scope) => {
           if (scope === activeScope) return;

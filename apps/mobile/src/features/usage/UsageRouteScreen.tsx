@@ -321,8 +321,8 @@ function UsageScreen(props: {
             {scopeGroups.size > 1 ? (
               <SegmentedControl
                 options={[
-                  { value: "personal", label: "Personal" },
-                  { value: "work", label: "Work" },
+                  { value: "personal", label: gt("Personal") },
+                  { value: "work", label: gt("Work") },
                 ]}
                 selected={scope}
                 onSelect={(value) => {

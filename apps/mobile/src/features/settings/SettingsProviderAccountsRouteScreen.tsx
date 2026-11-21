@@ -102,6 +102,7 @@ function EnvironmentProviders({
   readonly providers: ReadonlyArray<ServerProvider>;
 }) {
   const { activeScope } = useMobileEnvironmentScope();
+  const gt = useGT();
   const [scope, setScope] = useState(activeScope);
   const [profileId, setProfileId] = useState<string | undefined>();
   const accounts = providers.filter(canManageProvider);
@@ -138,8 +139,8 @@ function EnvironmentProviders({
         <View className="gap-2 border-b border-border-subtle p-3">
           <SegmentedControl
             options={[
-              { value: "personal", label: "Personal" },
-              { value: "work", label: "Work" },
+              { value: "personal", label: gt("Personal") },
+              { value: "work", label: gt("Work") },
             ]}
             selected={scope}
             onSelect={(value) => setScope(value)}
@@ -147,7 +148,7 @@ function EnvironmentProviders({
           />
           {scope === "work" && hierarchy.profiles.length > 0 ? (
             <Menu
-              title="Work profile"
+              title={gt("Work profile")}
               actions={hierarchy.profiles.map((profile) => ({
                 id: profile.id,
                 title: profile.label,
@@ -155,7 +156,7 @@ function EnvironmentProviders({
               }))}
               onPressAction={({ nativeEvent }) => setProfileId(nativeEvent.event)}
             >
-              <ControlPill variant="pill" label={selectedProfile?.label ?? "Select profile"} />
+              <ControlPill variant="pill" label={selectedProfile?.label ?? gt("Select profile")} />
             </Menu>
           ) : null}
         </View>

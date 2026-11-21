@@ -239,9 +239,7 @@ function ProviderHeader(props: {
       accessibilityRole="header"
       className={cn("mx-4 min-h-9 flex-row items-center gap-1 pt-1", props.nested && "mt-1")}
     >
-      <View className="min-w-0 flex-1 flex-row items-center gap-2 px-1">
-        {content}
-      </View>
+      <View className="min-w-0 flex-1 flex-row items-center gap-2 px-1">{content}</View>
       {props.action}
     </View>
   );
@@ -449,12 +447,12 @@ function ThreadSettingsSessionProvider(
       (result) => {
         setRefreshingAixInstanceId(null);
         if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
-          Dialog.alert("Could not refresh aix catalogs", "Try again.");
+          Dialog.alert(gt("Could not refresh aix catalogs"), gt("Try again."));
         }
       },
       () => {
         setRefreshingAixInstanceId(null);
-        Dialog.alert("Could not refresh aix catalogs", "Try again.");
+        Dialog.alert(gt("Could not refresh aix catalogs"), gt("Try again."));
       },
     );
   };
@@ -920,6 +918,7 @@ function ThreadSettingsAixCatalogRefreshButton(props: {
   readonly disabled: boolean;
   readonly onRefresh: (instanceId: ProviderInstanceId) => void;
 }) {
+  const gt = useGT();
   const canRefresh = useAtomValue(
     serverEnvironment.refreshProviders.permissionAtom(props.environmentId),
   );
@@ -928,7 +927,7 @@ function ThreadSettingsAixCatalogRefreshButton(props: {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Refresh ${props.providerLabel} aix catalog`}
+      accessibilityLabel={gt("Refresh {provider} aix catalog", { provider: props.providerLabel })}
       accessibilityState={{ disabled: props.disabled, busy: props.refreshing }}
       className="size-10 items-center justify-center rounded-full active:bg-subtle"
       disabled={props.disabled}
@@ -1237,7 +1236,7 @@ function ThreadSettingsOptionsItem(props: {
           <Animated.View layout={THREAD_SETTINGS_OPTIONS_LAYOUT_TRANSITION}>
             <DisclosureRow
               isLast
-              label="Work profile"
+              label={gt("Work profile")}
               value={
                 hierarchy.profiles.find((profile) => profile.id === hierarchy.profileId)?.label
               }
@@ -1592,13 +1591,13 @@ function ThreadSettingsModelsScreen() {
     ? [
         {
           id: "favorites",
-          title: "Favorites",
+          title: gt("Favorites"),
           selected: pickerFilterIsFavorites(session.providerFilter),
           onPress: () => session.setProviderFilter(FAVORITES_PROVIDER_FILTER),
         },
         {
           id: "work-profile",
-          title: "Work profile",
+          title: gt("Work profile"),
           items: aixProfiles.map((profile) => ({
             id: `aix-profile:${profile.id}`,
             title: profile.label,
@@ -1608,7 +1607,7 @@ function ThreadSettingsModelsScreen() {
         },
         {
           id: "harness",
-          title: "Harness",
+          title: gt("Harness"),
           items: visibleProviderGroups.map((group) => ({
             id: `provider:${group.providerKey}`,
             title: group.providerLabel,
@@ -1692,8 +1691,8 @@ function ThreadSettingsModelsScreen() {
               size="compact"
               className="w-full"
               options={[
-                { value: "personal", label: "Personal" },
-                { value: "work", label: "Work" },
+                { value: "personal", label: gt("Personal") },
+                { value: "work", label: gt("Work") },
               ]}
               selected={session.projectScope}
               onSelect={session.setProjectScope}

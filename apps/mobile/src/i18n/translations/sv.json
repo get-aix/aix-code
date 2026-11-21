@@ -1224,7 +1224,6 @@
   "bb34eaf6ddc55a72": "Det här kontot har inga prenumerationsgränser.",
   "42a2622893a6bced": "Kunde inte läsa gränser.",
   "4897e228d3185c96": "Inga gränser rapporterades.",
-  "e27d2cb964df5dd5": "{source}: inga konton rapporterades.",
   "1b503134018285f4": "{days} d {hours} h",
   "164c674cf062933a": "{label} · {count} kvar · går ut om {expires}",
   "9c82c39589c23938": "{label} · {count} kvar",
@@ -1443,6 +1442,13 @@
   "218c111b4aa6e029": "Kunde inte läsa en inklistrad bild.",
   "ce88bed3d928cf6b": "Den här bilagan är inte längre tillgänglig. Bifoga filen igen.",
   "232298a82d027b3d": "Detaljer",
+  "acbf0b4710755dc1": "Personlig",
+  "a18d69acdf6b047d": "Arbete · {name}",
+  "f274ca0eb1463732": "Använd Personlig i {projectTitle}?",
+  "e5c55f64ff020cf9": "Använd nyckeln {keyName} i {projectTitle}?",
+  "d9fe7edae49a92d5": "{projectTitle} har ännu ingen arbetsnyckel. Den här tråden skulle använda {keyName} från och med nu.",
+  "61bb5a4b7c668632": "{projectTitle} använder {homeName}. Den här tråden skulle använda {keyName} från och med nu.",
+  "9f3cf9ac4041f9aa": "Använd {keyName} i den här tråden",
   "35fcb6312e278185": "Din organisations policy tillåter inte leverantören {label}.",
   "90548f7a4d620371": "Policyn för {organization} tillåter inte leverantören {label}.",
   "2c850e594aa60ad5": "Leverantören är inte tillåten",
@@ -1472,6 +1478,7 @@
   "49a888ab323521ae": "Tråden forkades",
   "5d865442753ef6c2": "Tråden skapades",
   "3604d2f52be9539e": "Länka {target}",
+  "8e0a33de1640c41f": "Begär åtkomst till leverantören {lane}",
   "646de37e0bec85f8": "Verktygsanrop",
   "5469bba2f5569925": "Föreslagen plan",
   "c3a88348c14f8258": "Planen uppdaterades",
@@ -2102,6 +2109,7 @@
   "9544305f2964486f": "Kunde inte visa diffen",
   "a488d0f5de859d6b": "Försök läsa in diff-vyn igen.",
   "0c72282254a37568": "Försök med diffen igen",
+  "48cbd77fffac4713": "Arbete",
   "08b661a161d6a90e": "Filen är inte tillgänglig",
   "8984762fe890a1c9": "Öppnar i filvisaren...",
   "6c3e294c1f7dbb84": "Läser in filen...",
@@ -2252,10 +2260,11 @@
   "bfbcb7fa64c13d58": "Lägg till en miljö för att läsa in projekt och starta kodsessioner.",
   "81a3f8580a37f609": "Miljön är inte tillgänglig",
   "b3ef0d49fe0d9702": "Den sparade miljön är offline. Kontrollera URL:en eller starta miljön och försök sedan igen.",
+  "7403c723c0ec360d": "Inga projekt hittades",
+  "ddd19b04779cf860": "{retryingLabels} svarade inte och försöker fortfarande igen. Dess projekt och trådar visas när den har anslutit.",
   "a044effb791c0a10": "Läser in trådar",
   "f1a2d9a807e69569": "Ansluter till miljön",
   "7832b2d3d77a4df6": "Läser in projekt och trådar från den sparade miljön.",
-  "7403c723c0ec360d": "Inga projekt hittades",
   "7701d3f6354f710b": "Den anslutna miljön rapporterade inga projekt.",
   "25ff20870084dd65": "Skapa en uppgift för att starta en ny kodkörning i ett av dina anslutna projekt.",
   "07641d43f54a7238": "Visa trådar från alla miljöer",
@@ -2458,6 +2467,7 @@
   "ca958433a5eefdb2": "Ny tråd i…",
   "b2de061402602d22": "Hantera miljöer",
   "09be015b51805a59": "Användning",
+  "3c858bc319e35205": "Visa {scope}-projekt",
   "e510d9a7b684fbfe": "Triagera ett ärende",
   "8e25bd5e884fefea": "På {environment}",
   "2688b982396717fc": "På den här datorn",
@@ -2529,6 +2539,7 @@
   "9d656a9e7b4c146c": "Öppna en mapp eller klona ett repo",
   "d9551846fba98b8d": "Mål för kloning",
   "c7a8a0c6f79e4577": "Klona projekt",
+  "2064ade9d3ba772b": "Projektomfång",
   "7c36d9988b605593": "Ge {app} åtkomst till {owner}",
   "9b771434a1d169dd": "Den är inte installerad där, så GitHub-begäranden för {repository} använder din egen inloggning och dess lägre hastighetsgräns.",
   "1eeda2f41f6a2140": "Installera",
@@ -3411,6 +3422,12 @@
   "aead92b761823bb0": "Kunde inte ta bort ”{project}”",
   "d94a4382aaf01787": "{count, plural, one {{count} utcheckning} other {{count} utcheckningar}}",
   "097a50ffe86aecc6": "Spara projektnamn",
+  "c768c841a052924c": "Flytta till Personlig",
+  "0e96841e5685bd64": "Flytta till Arbete",
+  "02a7800290dc16a7": "Anslut varje maskin med det här projektet för att ändra dess omfång.",
+  "eac1c44b061ca4c2": "I {scope}. Flyttar varje utcheckning av projektet mellan Personlig och Arbete.",
+  "e9a78b0c3ced93c5": "Arbetsnyckel",
+  "6466e5d76e3a7a51": "Anslut varje maskin med det här projektet för att ändra dess nyckel.",
   "7679d49fbd511b31": "Organisera",
   "da558d4aa2205fb0": "Fäst",
   "fc5c319684c43a4b": "Anslut alla datorer med det här projektet för att ändra detta.",
@@ -3431,6 +3448,8 @@
   "4614a422f1430cd7": "Namn",
   "89c5ab924f851b78": "Ta bort utcheckning",
   "c165e95dd1b35bfd": "Den här sessionen kan visa leverantörerna för {environment} men inte ändra deras inställningar.",
+  "d7937bd2001fce5e": "Arbetsprofil",
+  "45520a347d732098": "Välj profil",
   "d94f2f73976440c1": "Kunde inte uppdatera leverantörsinloggningen.",
   "2e5faa8c1b194a16": "Söker efter inloggningsmetoder…",
   "300d4800cd6292f9": "Ingen inloggning i appen erbjuds. Följ leverantörens dokumentation för att slutföra konfigurationen.",
@@ -3458,6 +3477,7 @@
   "acab38d4d065c020": "Visar kontots e-postadress",
   "16bc6f6dc21e6167": "Välj en ansluten miljö.",
   "229961ee1c32a532": "Begränsade behörigheter",
+  "a7da92a86bbfb1ce": "Inga leverantörer i den här profilen.",
   "7cc151a4ae532ee7": "Konfigurera en leverantör med inloggning i appen under Inställningar på webben eller skrivbordet.",
   "e91a8efa0de1b737": [
     "Ange koden ",
@@ -4036,13 +4056,25 @@
   "1c2f899f6eb7aa4b": "Inga färdigheter hittades.",
   "25b22a00dae2d1ec": "Inga matchande kommandon.",
   "f8d88331e2a1ec4c": "Inga resultat.",
+  "93c9cf1ff49a15d3": "{label}, gratis",
   "f361df7c168544f1": "Stäng fel",
   "73af9dd121cb467b": "Stäng feedbackmeddelandet",
   "7c1fee250333bb01": "Kopiera ID",
   "2b7fd345e4f4fd6e": "Avbryt redigering av köat meddelande",
   "b2ec7dff2dde1179": "Redigerar köat meddelande",
   "faeebf9714efe741": "Stäng användningsgränser",
+  "03db01060373e694": "{workGroupName} · Arbete",
+  "c296084b22189c04": "{workGroupName} · Arbete · återställs {resetDate}",
   "3b83ac2c1d6ca9ae": "Användningsgränser",
+  "75215acf672c9334": "· den här tråden",
+  "5b779ea046758266": [
+    {
+      "i": 1,
+      "k": "_gt_value_1",
+      "v": "v"
+    },
+    " projektsumma"
+  ],
   "7212b0e2653b17f3": "Datum och tid",
   "7982b3041b9ae1d0": "Varaktighet",
   "e456a25c2ed6b9e2": "Minuter",
@@ -4077,6 +4109,29 @@
   "ce591b4de647ecda": "Öppna {title}",
   "4a9a6f6111329b54": "Läs in {title} igen",
   "12f0890f800baa7a": "Sidan är inte tillgänglig",
+  "d54a6c973ed1560f": "Det gick inte att besvara begäran.",
+  "6d12d51cbe8a951b": "Tillåt för den här tråden",
+  "d793c3eea491dc13": "Tillåt den här uppgiften",
+  "305b690eaac3748e": "Det gick inte att återkalla",
+  "2f16c330adb654e9": "Lanen kunde inte återkallas.",
+  "e435a3e115eff471": [
+    "Använd ",
+    {
+      "i": 1,
+      "k": "_gt_value_1",
+      "v": "v"
+    },
+    " på ",
+    {
+      "i": 2,
+      "k": "_gt_value_2",
+      "v": "v"
+    },
+    "?"
+  ],
+  "7c5eb60743d53f71": "Neka",
+  "a1187ab91ba4bc41": "Den här sessionen kan inte besvara begäran.",
+  "224e9839195b63b2": "Återkalla",
   "9c5a2e144cefdf2f": "Endast läsning",
   "12d03e02951725b0": "Läs projekt och trådar. Kan inte starta, skicka meddelanden eller ändra något.",
   "63fd02d55f0e4417": "Länka en dator till den här miljön",
@@ -4384,6 +4439,9 @@
   "548123cb74c4abcf": "Användningsgränser är inte tillgängliga",
   "b0eadfef07c14ecb": "Leverantören rapporterar för närvarande inga gränser.",
   "da39f97188187260": "Bifogar inklistrad text",
+  "07008cf8449ab4ac": "Byt modell",
+  "32827696c1ff1a66": "Det gick inte att använda nyckeln",
+  "815527f5e9b1b933": "Meddelandet skickades inte.",
   "ec69e0a9202da9d3": "Nästa sändning behåller alla {tokens} token historik",
   "e5911cda35b05b57": "Nästa sändning komprimerar först {tokens} token historik",
   "ad83e67ab7244b26": "Komprimerar först",
@@ -4591,8 +4649,10 @@
   "510cb7d39f654dfc": "Ta bort från favoriter: {provider}, {model}",
   "39b92bb3a992a452": "Lägg till i favoriter: {provider}, {model}",
   "cbc2606e931511dd": "{provider}, {count, plural, one {{count} modell} other {{count} modeller}}",
+  "35e1c52bcd42fcea": "Det gick inte att uppdatera aix-katalogerna",
   "15033b76c4b20e76": "Modellen är inte tillgänglig",
   "ed063bb30064ac7e": "Konfigurera leverantören på webben eller skrivbordet, eller välj en annan modell.",
+  "0d7c9ddd60661e30": "Uppdatera aix-katalogen för {provider}",
   "440285ac659c7832": "Körläge",
   "a83559c38e1cd470": "Katalog",
   "16839051320ad525": "Hantera dolda modeller",
@@ -4605,6 +4665,7 @@
   "b589c01784b9a88c": "Hitta en modell",
   "9b0277205d8a9b04": "Alla leverantörer",
   "4314e052a3524c51": "Favoriter",
+  "683dc8c4b42d1a89": "Harness",
   "279ab25bdca98778": "Trådinställningar",
   "0ef86daa831dde67": "Avbryt trådinställningar",
   "cb27bc9ea63671c0": "Modellfilter",
@@ -4885,34 +4946,31 @@
   "b16fdf56b16d99c9": "I takt",
   "90f977e97ae8b6c6": "Under takten",
   "897aceb6c7196649": "Konto",
-  "811008ce95331531": "Segment {index}, {account}, {remaining} % kvar",
-  "bfb2d0ef476d295b": "Segment {index}, {account}, {remaining} % kvar, {timeLeft} % av fönstret kvar",
+  "fe8a0b7a0c5d9c6f": "Budget",
+  "bcf1937839647e7b": "{spent} av {total} använda",
+  "c72bc2247561be1d": "Segment {index}, {account}, {remaining} kvar",
+  "ce9654d70fc03401": "Segment {index}, {account}, {remaining} kvar, {timeLeft}% av fönstret kvar",
   "e71c96e5114f7718": "Visa kontodetaljer",
-  "27cd137302298f71": "Segment {index}, {account}, {remaining} % kvar, {resetsIn}, {credits, plural, one {{credits} återställningskredit sparad} other {{credits} återställningskrediter sparade}}",
-  "288ade531cfcf90c": "Segment {index}, {account}, {remaining} % kvar, {resetsIn}",
-  "f78edbddd70ee41d": "Segment {index}, {account}, {remaining} % kvar, {credits, plural, one {{credits} återställningskredit sparad} other {{credits} återställningskrediter sparade}}",
+  "932cb291ed3f7ade": "Segment {index}, {account}, {remaining} kvar, {resetsIn}, {credits, plural, other {{credits} återställningskrediter sparade}}",
+  "66067ccc941f1599": "Segment {index}, {account}, {remaining} kvar, {resetsIn}",
+  "d140651d728a84ac": "Segment {index}, {account}, {remaining} kvar, {credits, plural, other {{credits} återställningskrediter sparade}}",
   "d2d071e45a2d6b89": "Välj en miljö för att se gränser.",
-  "f411a8cef140a5ea": "Ingen leverantör i de valda miljöerna rapporterar abonnemangsgränser.",
+  "d12ae4bf766e0817": "Inga gränser för arbetsprofilen finns tillgängliga för de valda miljöerna.",
+  "1479650934b6a1ac": "{environments} kunde inte uppdatera gränserna. Visar de senast kända värdena.",
+  "64b58f9d619e07a0": "Inga personliga prenumerationsgränser finns tillgängliga för de valda miljöerna.",
   "b29a752dd8ee9aa7": "Konto",
   "55a38e69338c54ee": "Dölj kontots e-postadress",
   "0d3e9f1f27c0e780": "Visa kontots e-postadress",
   "9217e0c91cee3cf8": "Inloggad",
   "5f12a194d158f9b1": "Källa",
-  "65a7507ffde6d3f8": [
+  "3ff81a3f874ebb4b": "kvar",
+  "412e3b93454812aa": [
     {
-      "t": "Text",
       "i": 1,
-      "c": [
-        {
-          "i": 2,
-          "k": "_gt_value_2",
-          "v": "v"
-        },
-        " %"
-      ]
+      "k": "_gt_value_1",
+      "v": "v"
     },
-    " ",
-    "kvar"
+    " % kvar"
   ],
   "6af5e3cf03861f55": [
     {
@@ -4923,13 +4981,13 @@
     " kunde inte uppdatera gränserna. Visar de senast kända värdena."
   ],
   "726ece0c7139ce8a": "Kontot rapporterar inte längre gränser i de valda miljöerna.",
-  "412e3b93454812aa": [
+  "cacaa00de9d94249": [
     {
       "i": 1,
       "k": "_gt_value_1",
       "v": "v"
     },
-    " % kvar"
+    " kvar"
   ],
   "82d204e1a9e7da17": [
     "Återställs",
@@ -4977,6 +5035,9 @@
   "e4b6c8eab1e48ee2": "Visa kontoetikett",
   "1f76510e608a9292": "Använder…",
   "fd121a8a212b5242": "Den här anslutningen kan inte hantera leverantörskonton.",
+  "25ed7b9d733a32bb": "{month} · återställs {resetDate}",
+  "35746006f96f5781": "Nära gränsen",
+  "3bb4cadb0251463b": "Över takten",
   "43e655305262c0c7": "Kostnad",
   "88151c994a23d697": "Token",
   "e59972943b073c66": "Gränser",
@@ -5333,5 +5394,6 @@
   "ad208e3e32c85029": "Dölj alla",
   "3328503592789bed": "Zen",
   "856812e7e1fc445e": "Verktygsanrop i chatten",
-  "8d545d54c0a9e950": "Dölj kommandon, redigeringar och sökningar som agenter kör. Dölj lyckade behåller misslyckanden. Zen visar bara slutliga svar. Godkännanden, frågor och fel visas alltid."
+  "8d545d54c0a9e950": "Dölj kommandon, redigeringar och sökningar som agenter kör. Dölj lyckade behåller misslyckanden. Zen visar bara slutliga svar. Godkännanden, frågor och fel visas alltid.",
+  "e27d2cb964df5dd5": "{source}: inga konton rapporterades."
 }

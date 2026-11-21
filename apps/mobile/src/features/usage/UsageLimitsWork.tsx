@@ -5,6 +5,7 @@ import {
   paceRemainingPercent,
 } from "@t3tools/shared/usageLimits";
 import { formatUsd } from "@t3tools/shared/usageFormat";
+import { useGT, useMessages } from "gt-react-native";
 import { View } from "react-native";
 import { AppText as Text } from "../../components/ui/AppText";
 
@@ -17,9 +18,12 @@ export function UsageLimitsWork({
   presentations: LimitPresentations;
   now: number;
 }) {
+  const gt = useGT();
+  const m = useMessages();
   const usage = groupWorkUsage(
     collectLimitAccounts(presentations, { includeUnsupportedAix: true }),
     now,
+    m,
   );
   const rows = usage.groups.flatMap((group) => group.rows);
   const reset = rows
@@ -34,8 +38,7 @@ export function UsageLimitsWork({
     <View className="gap-3">
       <View className="gap-2 rounded-[24px] border-continuous bg-grouped-card p-4">
         <Text className="text-xs text-foreground-muted">
-          {month}
-          {resetDate ? ` · resets ${resetDate}` : ""}
+          {resetDate === null ? month : gt("{month} · resets {resetDate}", { month, resetDate })}
         </Text>
         <Text className="text-3xl font-t3-bold tabular-nums text-foreground">
           {formatUsd(usage.spent)} <Text className="text-sm text-foreground-muted">spent</Text>
@@ -115,6 +118,7 @@ function KeyRow({ row, now, divider }: { row: WorkUsageRow; now: number; divider
   const tone =
     row.status === "nearLimit" ? "destructive" : row.status === "overPace" ? "warning" : null;
   const amounts = window?.amounts;
+  const gt = useGT();
   return (
     <View className={`gap-1.5 py-2.5 ${divider ? "border-t border-border-subtle" : ""}`}>
       <View className="flex-row flex-wrap items-center justify-between gap-x-3 gap-y-1">
@@ -127,7 +131,7 @@ function KeyRow({ row, now, divider }: { row: WorkUsageRow; now: number; divider
               <Text
                 className={`text-xs font-t3-medium ${tone === "destructive" ? "text-danger-foreground" : "text-warning-foreground"}`}
               >
-                {row.status === "nearLimit" ? "Near limit" : "Over pace"}
+                {row.status === "nearLimit" ? gt("Near limit") : gt("Over pace")}
               </Text>
             </View>
           ) : null}

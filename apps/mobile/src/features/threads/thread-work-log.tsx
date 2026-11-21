@@ -57,7 +57,11 @@ import { useAtomCommand } from "../../state/use-atom-command";
 import { toolActivityFaviconUrl } from "@t3tools/shared/favicon";
 import { isJavaScriptReplTool } from "@t3tools/shared/toolActivity";
 import { useMarkdownCodeHighlight } from "./markdownCodeHighlightState";
-import { highlightCommand, type HighlightedLines } from "../../lib/highlights";
+import {
+  highlightCommand,
+  type HighlightedLines,
+  mapHighlightedTokens,
+} from "../../lib/highlights";
 import {
   commandHighlightLanguage,
   withVisibleControlCharacters,
@@ -841,24 +845,14 @@ function HighlightedCodeText({
   readonly code: string;
   readonly lines: HighlightedLines | null;
 }) {
-  let offset = 0;
-  const highlighted = lines?.flatMap((line, lineIndex) => {
-    const separator = lineIndex > 0 ? "\n" : "";
-    offset += separator.length;
-    return [
-      separator,
-      ...line.map((token) => {
-        const start = offset;
-        offset += token.content.length;
-        // Plain RN Text inherits the mono font; AppText would reset it to sans.
-        return (
-          <RNText key={start} style={token.color ? { color: token.color } : undefined}>
-            {token.content}
-          </RNText>
-        );
-      }),
-    ];
-  });
+  // Plain RN Text inherits the mono font; AppText would reset it to sans.
+  const highlighted = lines
+    ? mapHighlightedTokens(lines, (token, start) => (
+        <RNText key={start} style={token.color ? { color: token.color } : undefined}>
+          {token.content}
+        </RNText>
+      ))
+    : undefined;
   return (
     <Text selectable className="font-mono text-2xs leading-normal text-foreground">
       {highlighted ?? code}

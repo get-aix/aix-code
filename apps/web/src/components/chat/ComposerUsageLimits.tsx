@@ -253,6 +253,7 @@ function WorkUsageLimitsRows({
   readonly providerInstanceId: ProviderInstanceId | null;
   readonly now: number;
 }) {
+  const gt = useGT();
   const work = composerWorkUsage(accounts, providerInstanceId);
   if (!work) return null;
   const { ordered, name: groupName, projectAmounts } = work;
@@ -271,7 +272,10 @@ function WorkUsageLimitsRows({
             >
               {accountLabel(account)}
               {index === 0 && work.isThread ? (
-                <span className="text-muted-foreground"> · this thread</span>
+                <span className="text-muted-foreground">
+                  {" · "}
+                  <T>this thread</T>
+                </span>
               ) : null}
             </span>
             {window?.amounts ? (
@@ -292,7 +296,9 @@ function WorkUsageLimitsRows({
       })}
       {projectAmounts ? (
         <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 border-t py-2">
-          <span className="text-xs text-muted-foreground">{groupName} project total</span>
+          <span className="text-xs text-muted-foreground">
+            {gt("{group} project total", { group: groupName })}
+          </span>
           <span className="text-sm tabular-nums">
             <b>{formatUsd(projectAmounts.spent)}</b>
             <span className="text-muted-foreground"> / {formatUsd(projectAmounts.total)}</span>

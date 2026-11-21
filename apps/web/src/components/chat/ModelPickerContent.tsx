@@ -280,7 +280,9 @@ function AixCatalogControls(props: {
   const canRefresh = useAtomValue(
     serverEnvironment.refreshProviders.permissionAtom(props.environmentId),
   );
-  const status = aixCatalogStatus(props.entry.snapshot, props.entry.aixProfile);
+  const gt = useGT();
+  const messages = useMessages();
+  const status = aixCatalogStatus(props.entry.snapshot, props.entry.aixProfile, messages);
   if (!status) return null;
   const unavailable = status.kind !== "current";
 
@@ -299,13 +301,13 @@ function AixCatalogControls(props: {
         )}
       >
         {status.kind === "stale"
-          ? `Stale catalog: ${status.message} `
+          ? `${gt("Stale catalog: {message}", { message: status.message })} `
           : status.kind === "warning"
             ? `${status.message} `
             : status.kind === "unavailable"
-              ? `Catalog unavailable: ${status.message} `
+              ? `${gt("Catalog unavailable: {message}", { message: status.message })} `
               : ""}
-        {props.refreshing ? "Refreshing…" : ""}
+        {props.refreshing ? gt("Refreshing…") : ""}
       </p>
       {canRefresh ? (
         <Button
@@ -316,10 +318,10 @@ function AixCatalogControls(props: {
           onClick={() => {
             if (!props.refreshing) props.onRefresh(props.entry.instanceId);
           }}
-          aria-label="Refresh aix catalogs"
+          aria-label={gt("Refresh aix catalogs")}
         >
           <RefreshCwIcon aria-hidden="true" />
-          Refresh
+          <T>Refresh</T>
         </Button>
       ) : null}
     </div>

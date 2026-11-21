@@ -1224,7 +1224,6 @@
   "bb34eaf6ddc55a72": "Dieses Konto hat keine Abonnementlimits.",
   "42a2622893a6bced": "Limits konnten nicht gelesen werden.",
   "4897e228d3185c96": "Keine Limits gemeldet.",
-  "e27d2cb964df5dd5": "{source}: Keine Konten gemeldet.",
   "1b503134018285f4": "{days} T. {hours} Std.",
   "164c674cf062933a": "{label} · noch {count} · läuft ab in {expires}",
   "9c82c39589c23938": "{label} · noch {count}",
@@ -1443,6 +1442,13 @@
   "218c111b4aa6e029": "Ein eingefügtes Bild konnte nicht gelesen werden.",
   "ce88bed3d928cf6b": "Dieser Anhang ist nicht mehr verfügbar. Hänge die Datei erneut an.",
   "232298a82d027b3d": "Details",
+  "acbf0b4710755dc1": "Persönlich",
+  "a18d69acdf6b047d": "Arbeit · {name}",
+  "f274ca0eb1463732": "Persönlich in {projectTitle} verwenden?",
+  "e5c55f64ff020cf9": "Den Schlüssel {keyName} in {projectTitle} verwenden?",
+  "d9fe7edae49a92d5": "{projectTitle} hat noch keinen Arbeitsschlüssel. Dieser Thread würde ab sofort {keyName} verwenden.",
+  "61bb5a4b7c668632": "{projectTitle} verwendet {homeName}. Dieser Thread würde ab sofort {keyName} verwenden.",
+  "9f3cf9ac4041f9aa": "{keyName} in diesem Thread verwenden",
   "35fcb6312e278185": "Die Richtlinie deiner Organisation erlaubt den Anbieter {label} nicht.",
   "90548f7a4d620371": "Die Richtlinie von {organization} erlaubt den Anbieter {label} nicht.",
   "2c850e594aa60ad5": "Anbieter nicht erlaubt",
@@ -1472,6 +1478,7 @@
   "49a888ab323521ae": "Thread geforkt",
   "5d865442753ef6c2": "Thread erstellt",
   "3604d2f52be9539e": "{target} verknüpfen",
+  "8e0a33de1640c41f": "Zugriff auf {lane}-Anbieter anfordern",
   "646de37e0bec85f8": "Tool-Aufruf",
   "5469bba2f5569925": "Vorgeschlagener Plan",
   "c3a88348c14f8258": "Plan aktualisiert",
@@ -2102,6 +2109,7 @@
   "9544305f2964486f": "Diff konnte nicht angezeigt werden",
   "a488d0f5de859d6b": "Versuch, die Diff-Ansicht erneut zu laden.",
   "0c72282254a37568": "Diff erneut laden",
+  "48cbd77fffac4713": "Arbeit",
   "08b661a161d6a90e": "Datei nicht verfügbar",
   "8984762fe890a1c9": "Wird im Datei-Viewer geöffnet...",
   "6c3e294c1f7dbb84": "Datei wird geladen...",
@@ -2252,10 +2260,11 @@
   "bfbcb7fa64c13d58": "Füge eine Umgebung hinzu, um Projekte zu laden und Coding-Sitzungen zu starten.",
   "81a3f8580a37f609": "Umgebung nicht verfügbar",
   "b3ef0d49fe0d9702": "Die gespeicherte Umgebung ist offline. Prüfe die URL oder starte die Umgebung und versuch es dann erneut.",
+  "7403c723c0ec360d": "Keine Projekte gefunden",
+  "ddd19b04779cf860": "{retryingLabels} hat nicht geantwortet und versucht es weiterhin. Projekte und Threads erscheinen, sobald eine Verbindung besteht.",
   "a044effb791c0a10": "Threads werden geladen",
   "f1a2d9a807e69569": "Verbindung zur Umgebung wird hergestellt",
   "7832b2d3d77a4df6": "Projekte und Threads werden aus der gespeicherten Umgebung geladen.",
-  "7403c723c0ec360d": "Keine Projekte gefunden",
   "7701d3f6354f710b": "Die verbundene Umgebung hat keine Projekte gemeldet.",
   "25ff20870084dd65": "Erstelle eine Aufgabe, um eine neue Coding-Laufzeit in einem deiner verbundenen Projekte zu starten.",
   "07641d43f54a7238": "Threads aus allen Umgebungen anzeigen",
@@ -2458,6 +2467,7 @@
   "ca958433a5eefdb2": "Neuer Thread in…",
   "b2de061402602d22": "Umgebungen verwalten",
   "09be015b51805a59": "Nutzung",
+  "3c858bc319e35205": "{scope}-Projekte anzeigen",
   "e510d9a7b684fbfe": "Ein Issue einordnen",
   "8e25bd5e884fefea": "Auf {environment}",
   "2688b982396717fc": "Auf diesem Rechner",
@@ -2529,6 +2539,7 @@
   "9d656a9e7b4c146c": "Einen Ordner öffnen oder ein Repository klonen",
   "d9551846fba98b8d": "Klonziel",
   "c7a8a0c6f79e4577": "Projekt klonen",
+  "2064ade9d3ba772b": "Projektbereich",
   "7c36d9988b605593": "{app} Zugriff auf {owner} geben",
   "9b771434a1d169dd": "Dort ist es nicht installiert, daher verwenden GitHub-Anfragen für {repository} dein eigenes Login und dessen niedrigeres Rate-Limit.",
   "1eeda2f41f6a2140": "Installieren",
@@ -3410,6 +3421,12 @@
   "aead92b761823bb0": "„{project}“ konnte nicht entfernt werden",
   "d94a4382aaf01787": "{count, plural, one {{count} Checkout} other {{count} Checkouts}}",
   "097a50ffe86aecc6": "Projektnamen speichern",
+  "c768c841a052924c": "Zu Persönlich verschieben",
+  "0e96841e5685bd64": "Zu Arbeit verschieben",
+  "02a7800290dc16a7": "Verbinde jeden Rechner mit diesem Projekt, um den Bereich zu ändern.",
+  "eac1c44b061ca4c2": "In {scope}. Verschiebt jede Kopie dieses Projekts zwischen Persönlich und Arbeit.",
+  "e9a78b0c3ced93c5": "Arbeitsschlüssel",
+  "6466e5d76e3a7a51": "Verbinde jeden Rechner mit diesem Projekt, um den Schlüssel zu ändern.",
   "7679d49fbd511b31": "Organisieren",
   "da558d4aa2205fb0": "Anheften",
   "fc5c319684c43a4b": "Verbinde jeden Rechner mit diesem Projekt, um das zu ändern.",
@@ -3430,6 +3447,8 @@
   "4614a422f1430cd7": "Name",
   "89c5ab924f851b78": "Checkout entfernen",
   "c165e95dd1b35bfd": "Diese Sitzung kann die Anbieter von {environment} anzeigen, aber ihre Einstellungen nicht ändern.",
+  "d7937bd2001fce5e": "Arbeitsprofil",
+  "45520a347d732098": "Profil auswählen",
   "d94f2f73976440c1": "Anbieter-Anmeldung konnte nicht aktualisiert werden.",
   "2e5faa8c1b194a16": "Anmeldemethoden werden ermittelt…",
   "300d4800cd6292f9": "Keine In-App-Anmeldung angeboten. Folge der Dokumentation des Anbieters, um die Einrichtung abzuschließen.",
@@ -3457,6 +3476,7 @@
   "acab38d4d065c020": "Zeigt die Konto-E-Mail an",
   "16bc6f6dc21e6167": "Wähle eine verbundene Umgebung.",
   "229961ee1c32a532": "Eingeschränkte Berechtigungen",
+  "a7da92a86bbfb1ce": "Keine Anbieter in diesem Profil.",
   "7cc151a4ae532ee7": "Konfiguriere einen Anbieter mit In-App-Anmeldung in den Einstellungen im Web oder auf dem Desktop.",
   "e91a8efa0de1b737": [
     "Gib den Code ",
@@ -4035,13 +4055,25 @@
   "1c2f899f6eb7aa4b": "Keine Skills gefunden.",
   "25b22a00dae2d1ec": "Keine passenden Befehle.",
   "f8d88331e2a1ec4c": "Keine Ergebnisse.",
+  "93c9cf1ff49a15d3": "{label}, frei",
   "f361df7c168544f1": "Fehler schließen",
   "73af9dd121cb467b": "Feedback-Hinweis schließen",
   "7c1fee250333bb01": "ID kopieren",
   "2b7fd345e4f4fd6e": "Bearbeiten der eingereihten Nachricht abbrechen",
   "b2ec7dff2dde1179": "Eingereihte Nachricht wird bearbeitet",
   "faeebf9714efe741": "Nutzungslimits ausblenden",
+  "03db01060373e694": "{workGroupName} · Arbeit",
+  "c296084b22189c04": "{workGroupName} · Arbeit · setzt zurück am {resetDate}",
   "3b83ac2c1d6ca9ae": "Nutzungslimits",
+  "75215acf672c9334": "· dieser Thread",
+  "5b779ea046758266": [
+    {
+      "i": 1,
+      "k": "_gt_value_1",
+      "v": "v"
+    },
+    " Projektsumme"
+  ],
   "7212b0e2653b17f3": "Datum und Uhrzeit",
   "7982b3041b9ae1d0": "Dauer",
   "e456a25c2ed6b9e2": "Minuten",
@@ -4076,6 +4108,28 @@
   "ce591b4de647ecda": "{title} öffnen",
   "4a9a6f6111329b54": "{title} neu laden",
   "12f0890f800baa7a": "Seite nicht verfügbar",
+  "d54a6c973ed1560f": "Die Anfrage konnte nicht beantwortet werden.",
+  "6d12d51cbe8a951b": "Für diesen Thread erlauben",
+  "d793c3eea491dc13": "Diese Aufgabe erlauben",
+  "305b690eaac3748e": "Widerruf nicht möglich",
+  "2f16c330adb654e9": "Die Lane konnte nicht widerrufen werden.",
+  "e435a3e115eff471": [
+    {
+      "i": 1,
+      "k": "_gt_value_1",
+      "v": "v"
+    },
+    " auf ",
+    {
+      "i": 2,
+      "k": "_gt_value_2",
+      "v": "v"
+    },
+    " verwenden?"
+  ],
+  "7c5eb60743d53f71": "Ablehnen",
+  "a1187ab91ba4bc41": "Diese Sitzung kann diese Anfrage nicht beantworten.",
+  "224e9839195b63b2": "Widerrufen",
   "9c5a2e144cefdf2f": "Nur lesen",
   "12d03e02951725b0": "Projekte und Threads lesen. Kann nichts starten, keine Nachrichten senden und nichts ändern.",
   "63fd02d55f0e4417": "Einen Rechner mit dieser Umgebung verknüpfen",
@@ -4384,6 +4438,9 @@
   "548123cb74c4abcf": "Nutzungslimits nicht verfügbar",
   "b0eadfef07c14ecb": "Dieser Anbieter meldet derzeit keine Limits.",
   "da39f97188187260": "Eingefügter Text wird angehängt",
+  "07008cf8449ab4ac": "Modell ändern",
+  "32827696c1ff1a66": "Schlüssel konnte nicht verwendet werden",
+  "815527f5e9b1b933": "Diese Nachricht wurde nicht gesendet.",
   "ec69e0a9202da9d3": "Beim nächsten Senden bleiben alle {tokens} Tokens des Verlaufs erhalten",
   "e5911cda35b05b57": "Beim nächsten Senden werden zuerst {tokens} Tokens des Verlaufs komprimiert",
   "ad83e67ab7244b26": "Komprimiert zuerst",
@@ -4591,8 +4648,10 @@
   "510cb7d39f654dfc": "Aus Favoriten entfernen: {provider}, {model}",
   "39b92bb3a992a452": "Zu Favoriten hinzufügen: {provider}, {model}",
   "cbc2606e931511dd": "{provider}, {count, plural, one {{count} Modell} other {{count} Modelle}}",
+  "35e1c52bcd42fcea": "Aix-Kataloge konnten nicht aktualisiert werden",
   "15033b76c4b20e76": "Modell nicht verfügbar",
   "ed063bb30064ac7e": "Richte diesen Anbieter im Web oder auf dem Desktop ein oder wähle ein anderes Modell.",
+  "0d7c9ddd60661e30": "{provider}-aix-Katalog aktualisieren",
   "440285ac659c7832": "Laufzeit",
   "a83559c38e1cd470": "Katalog",
   "16839051320ad525": "Ausgeblendete Modelle verwalten",
@@ -4605,6 +4664,7 @@
   "b589c01784b9a88c": "Modell suchen",
   "9b0277205d8a9b04": "Alle Anbieter",
   "4314e052a3524c51": "Favoriten",
+  "683dc8c4b42d1a89": "Harness",
   "279ab25bdca98778": "Thread-Einstellungen",
   "0ef86daa831dde67": "Thread-Einstellungen abbrechen",
   "cb27bc9ea63671c0": "Modellfilter",
@@ -4885,34 +4945,31 @@
   "b16fdf56b16d99c9": "Im Tempo",
   "90f977e97ae8b6c6": "Unter dem Tempo",
   "897aceb6c7196649": "Konto",
-  "811008ce95331531": "Segment {index}, {account}, {remaining} % übrig",
-  "bfb2d0ef476d295b": "Segment {index}, {account}, {remaining} % übrig, {timeLeft} % des Zeitfensters übrig",
+  "fe8a0b7a0c5d9c6f": "Budget",
+  "bcf1937839647e7b": "{spent} von {total} ausgegeben",
+  "c72bc2247561be1d": "Segment {index}, {account}, {remaining} übrig",
+  "ce9654d70fc03401": "Segment {index}, {account}, {remaining} übrig, {timeLeft}% des Zeitfensters übrig",
   "e71c96e5114f7718": "Kontodetails anzeigen",
-  "27cd137302298f71": "Segment {index}, {account}, {remaining} % übrig, {resetsIn}, {credits, plural, one {{credits} Reset-Guthaben angespart} other {{credits} Reset-Guthaben angespart}}",
-  "288ade531cfcf90c": "Segment {index}, {account}, {remaining} % übrig, {resetsIn}",
-  "f78edbddd70ee41d": "Segment {index}, {account}, {remaining} % übrig, {credits, plural, one {{credits} Reset-Guthaben angespart} other {{credits} Reset-Guthaben angespart}}",
+  "932cb291ed3f7ade": "Segment {index}, {account}, {remaining} übrig, {resetsIn}, {credits, plural, other {{credits} Reset-Guthaben gesammelt}}",
+  "66067ccc941f1599": "Segment {index}, {account}, {remaining} übrig, {resetsIn}",
+  "d140651d728a84ac": "Segment {index}, {account}, {remaining} übrig, {credits, plural, other {{credits} Reset-Guthaben gesammelt}}",
   "d2d071e45a2d6b89": "Wähle eine Umgebung, um Limits zu sehen.",
-  "f411a8cef140a5ea": "Kein Anbieter in den ausgewählten Umgebungen meldet Abo-Limits.",
+  "d12ae4bf766e0817": "Für die ausgewählten Umgebungen sind keine Limits für das Arbeitsprofil verfügbar.",
+  "1479650934b6a1ac": "{environments} konnte die Limits nicht aktualisieren. Es werden die zuletzt bekannten Werte angezeigt.",
+  "64b58f9d619e07a0": "Für die ausgewählten Umgebungen sind keine persönlichen Abo-Limits verfügbar.",
   "b29a752dd8ee9aa7": "Konto",
   "55a38e69338c54ee": "Konto-E-Mail ausblenden",
   "0d3e9f1f27c0e780": "Konto-E-Mail anzeigen",
   "9217e0c91cee3cf8": "Angemeldet",
   "5f12a194d158f9b1": "Quelle",
-  "65a7507ffde6d3f8": [
-    "noch",
-    " ",
+  "3ff81a3f874ebb4b": "übrig",
+  "412e3b93454812aa": [
     {
-      "t": "Text",
       "i": 1,
-      "c": [
-        {
-          "i": 2,
-          "k": "_gt_value_2",
-          "v": "v"
-        },
-        " %"
-      ]
-    }
+      "k": "_gt_value_1",
+      "v": "v"
+    },
+    " % übrig"
   ],
   "6af5e3cf03861f55": [
     {
@@ -4923,13 +4980,13 @@
     " konnte die Limits nicht aktualisieren. Die zuletzt bekannten Werte werden angezeigt."
   ],
   "726ece0c7139ce8a": "Dieses Konto meldet in den ausgewählten Umgebungen keine Limits mehr.",
-  "412e3b93454812aa": [
+  "cacaa00de9d94249": [
     {
       "i": 1,
       "k": "_gt_value_1",
       "v": "v"
     },
-    " % übrig"
+    " übrig"
   ],
   "82d204e1a9e7da17": [
     "Zurückgesetzt",
@@ -4977,6 +5034,9 @@
   "e4b6c8eab1e48ee2": "Kontobezeichnung anzeigen",
   "1f76510e608a9292": "Wird verwendet…",
   "fd121a8a212b5242": "Diese Verbindung kann keine Anbieterkonten verwalten.",
+  "25ed7b9d733a32bb": "{month} · setzt am {resetDate} zurück",
+  "35746006f96f5781": "Fast am Limit",
+  "3bb4cadb0251463b": "Über dem Tempo",
   "43e655305262c0c7": "Kosten",
   "88151c994a23d697": "Tokens",
   "e59972943b073c66": "Limits",
@@ -5333,5 +5393,6 @@
   "ad208e3e32c85029": "Alle ausblenden",
   "3328503592789bed": "Zen",
   "856812e7e1fc445e": "Tool-Aufrufe im Chat",
-  "8d545d54c0a9e950": "Die Befehle, Bearbeitungen und Suchen ausblenden, die Agenten ausführen. „Erfolgreiche ausblenden“ behält Fehler. „Zen“ zeigt nur endgültige Antworten. Genehmigungen, Fragen und Fehler werden immer angezeigt."
+  "8d545d54c0a9e950": "Die Befehle, Bearbeitungen und Suchen ausblenden, die Agenten ausführen. „Erfolgreiche ausblenden“ behält Fehler. „Zen“ zeigt nur endgültige Antworten. Genehmigungen, Fragen und Fehler werden immer angezeigt.",
+  "e27d2cb964df5dd5": "{source}: Keine Konten gemeldet."
 }

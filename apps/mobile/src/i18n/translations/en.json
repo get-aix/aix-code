@@ -1224,7 +1224,6 @@
   "bb34eaf6ddc55a72": "This account has no subscription limits.",
   "42a2622893a6bced": "Could not read limits.",
   "4897e228d3185c96": "No limits reported.",
-  "e27d2cb964df5dd5": "{source}: No accounts reported.",
   "1b503134018285f4": "{days}d {hours}h",
   "164c674cf062933a": "{label} · {count} left · expires in {expires}",
   "9c82c39589c23938": "{label} · {count} left",
@@ -1443,6 +1442,13 @@
   "218c111b4aa6e029": "Could not read a pasted image.",
   "ce88bed3d928cf6b": "This attachment is no longer available. Attach the file again.",
   "232298a82d027b3d": "Details",
+  "acbf0b4710755dc1": "Personal",
+  "a18d69acdf6b047d": "Work · {name}",
+  "f274ca0eb1463732": "Use Personal in {projectTitle}?",
+  "e5c55f64ff020cf9": "Use the {keyName} key in {projectTitle}?",
+  "d9fe7edae49a92d5": "{projectTitle} has no work key yet. This thread would use {keyName} from now on.",
+  "61bb5a4b7c668632": "{projectTitle} uses {homeName}. This thread would use {keyName} from now on.",
+  "9f3cf9ac4041f9aa": "Use {keyName} in this thread",
   "35fcb6312e278185": "Your organization policy does not allow the {label} provider.",
   "90548f7a4d620371": "{organization}''s policy does not allow the {label} provider.",
   "2c850e594aa60ad5": "Provider not allowed",
@@ -1472,6 +1478,7 @@
   "49a888ab323521ae": "Thread forked",
   "5d865442753ef6c2": "Thread created",
   "3604d2f52be9539e": "Link {target}",
+  "8e0a33de1640c41f": "Request {lane} provider access",
   "646de37e0bec85f8": "Tool call",
   "5469bba2f5569925": "Proposed plan",
   "c3a88348c14f8258": "Plan updated",
@@ -2102,6 +2109,7 @@
   "9544305f2964486f": "Could not display diff",
   "a488d0f5de859d6b": "Try loading the diff view again.",
   "0c72282254a37568": "Retry diff",
+  "48cbd77fffac4713": "Work",
   "08b661a161d6a90e": "File unavailable",
   "8984762fe890a1c9": "Opening in file viewer...",
   "6c3e294c1f7dbb84": "Loading file...",
@@ -2252,10 +2260,11 @@
   "bfbcb7fa64c13d58": "Add an environment to load projects and start coding sessions.",
   "81a3f8580a37f609": "Environment unavailable",
   "b3ef0d49fe0d9702": "The saved environment is offline. Check the URL or start the environment, then retry.",
+  "7403c723c0ec360d": "No projects found",
+  "ddd19b04779cf860": "{retryingLabels} did not respond and is still retrying. Its projects and threads appear once it connects.",
   "a044effb791c0a10": "Loading threads",
   "f1a2d9a807e69569": "Connecting to environment",
   "7832b2d3d77a4df6": "Loading projects and threads from the saved environment.",
-  "7403c723c0ec360d": "No projects found",
   "7701d3f6354f710b": "The connected environment did not report any projects.",
   "25ff20870084dd65": "Create a task to start a new coding runtime in one of your connected projects.",
   "07641d43f54a7238": "Show threads from every environment",
@@ -2458,6 +2467,7 @@
   "ca958433a5eefdb2": "New thread in…",
   "b2de061402602d22": "Manage environments",
   "09be015b51805a59": "Usage",
+  "3c858bc319e35205": "Show {scope} projects",
   "e510d9a7b684fbfe": "Triage an issue",
   "8e25bd5e884fefea": "On {environment}",
   "2688b982396717fc": "On this machine",
@@ -2529,6 +2539,7 @@
   "9d656a9e7b4c146c": "Open a folder or clone a repository",
   "d9551846fba98b8d": "Clone destination",
   "c7a8a0c6f79e4577": "Clone project",
+  "2064ade9d3ba772b": "Project scope",
   "7c36d9988b605593": "Give {app} access to {owner}",
   "9b771434a1d169dd": "It isn't installed there, so GitHub requests for {repository} use your own login and its lower rate limit.",
   "1eeda2f41f6a2140": "Install",
@@ -3411,6 +3422,12 @@
   "aead92b761823bb0": "Failed to remove \"{project}\"",
   "d94a4382aaf01787": "{count, plural, one {{count} checkout} other {{count} checkouts}}",
   "097a50ffe86aecc6": "Save project name",
+  "c768c841a052924c": "Move to Personal",
+  "0e96841e5685bd64": "Move to Work",
+  "02a7800290dc16a7": "Connect every machine with this project to change its scope.",
+  "eac1c44b061ca4c2": "In {scope}. Moves every checkout of this project between Personal and Work.",
+  "e9a78b0c3ced93c5": "Work key",
+  "6466e5d76e3a7a51": "Connect every machine with this project to change its key.",
   "7679d49fbd511b31": "Organize",
   "da558d4aa2205fb0": "Pin",
   "fc5c319684c43a4b": "Connect every machine with this project to change this.",
@@ -3431,6 +3448,8 @@
   "4614a422f1430cd7": "Name",
   "89c5ab924f851b78": "Remove checkout",
   "c165e95dd1b35bfd": "This session can view {environment}''s providers but can't change their settings.",
+  "d7937bd2001fce5e": "Work profile",
+  "45520a347d732098": "Select profile",
   "d94f2f73976440c1": "Could not update provider sign-in.",
   "2e5faa8c1b194a16": "Discovering sign-in methods…",
   "300d4800cd6292f9": "No in-app sign-in advertised. Follow the provider's docs to finish setup.",
@@ -3458,6 +3477,7 @@
   "acab38d4d065c020": "Reveals the account email",
   "16bc6f6dc21e6167": "Select a connected environment.",
   "229961ee1c32a532": "Limited permissions",
+  "a7da92a86bbfb1ce": "No providers in this profile.",
   "7cc151a4ae532ee7": "Configure a provider with in-app sign-in in web or desktop Settings.",
   "e91a8efa0de1b737": [
     "Enter code ",
@@ -4036,13 +4056,25 @@
   "1c2f899f6eb7aa4b": "No skills found.",
   "25b22a00dae2d1ec": "No matching commands.",
   "f8d88331e2a1ec4c": "No results.",
+  "93c9cf1ff49a15d3": "{label}, free",
   "f361df7c168544f1": "Dismiss error",
   "73af9dd121cb467b": "Dismiss feedback notice",
   "7c1fee250333bb01": "Copy ID",
   "2b7fd345e4f4fd6e": "Cancel editing queued message",
   "b2ec7dff2dde1179": "Editing queued message",
   "faeebf9714efe741": "Dismiss usage limits",
+  "03db01060373e694": "{workGroupName} · Work",
+  "c296084b22189c04": "{workGroupName} · Work · resets {resetDate}",
   "3b83ac2c1d6ca9ae": "Usage limits",
+  "75215acf672c9334": "· this thread",
+  "5b779ea046758266": [
+    {
+      "i": 1,
+      "k": "_gt_value_1",
+      "v": "v"
+    },
+    " project total"
+  ],
   "7212b0e2653b17f3": "Date and time",
   "7982b3041b9ae1d0": "Duration",
   "e456a25c2ed6b9e2": "Minutes",
@@ -4077,6 +4109,29 @@
   "ce591b4de647ecda": "Open {title}",
   "4a9a6f6111329b54": "Reload {title}",
   "12f0890f800baa7a": "Page unavailable",
+  "d54a6c973ed1560f": "Could not answer the request.",
+  "6d12d51cbe8a951b": "Allow for this thread",
+  "d793c3eea491dc13": "Allow this task",
+  "305b690eaac3748e": "Could not revoke",
+  "2f16c330adb654e9": "The lane could not be revoked.",
+  "e435a3e115eff471": [
+    "Use ",
+    {
+      "i": 1,
+      "k": "_gt_value_1",
+      "v": "v"
+    },
+    " on ",
+    {
+      "i": 2,
+      "k": "_gt_value_2",
+      "v": "v"
+    },
+    "?"
+  ],
+  "7c5eb60743d53f71": "Deny",
+  "a1187ab91ba4bc41": "This session cannot answer this request.",
+  "224e9839195b63b2": "Revoke",
   "9c5a2e144cefdf2f": "Read only",
   "12d03e02951725b0": "Read projects and threads. Cannot start, message or change anything.",
   "63fd02d55f0e4417": "Link a machine to this environment",
@@ -4385,6 +4440,9 @@
   "548123cb74c4abcf": "Usage limits unavailable",
   "b0eadfef07c14ecb": "This provider does not currently report limits.",
   "da39f97188187260": "Attaching pasted text",
+  "07008cf8449ab4ac": "Change model",
+  "32827696c1ff1a66": "Could not use the key",
+  "815527f5e9b1b933": "This message was not sent.",
   "ec69e0a9202da9d3": "Next send keeps all {tokens} tokens of history",
   "e5911cda35b05b57": "Next send compacts {tokens} tokens of history first",
   "ad83e67ab7244b26": "Compacts first",
@@ -4592,8 +4650,10 @@
   "510cb7d39f654dfc": "Remove from favorites: {provider}, {model}",
   "39b92bb3a992a452": "Add to favorites: {provider}, {model}",
   "cbc2606e931511dd": "{provider}, {count, plural, one {{count} model} other {{count} models}}",
+  "35e1c52bcd42fcea": "Could not refresh aix catalogs",
   "15033b76c4b20e76": "Model unavailable",
   "ed063bb30064ac7e": "Set up this provider on web or desktop, or select another model.",
+  "0d7c9ddd60661e30": "Refresh {provider} aix catalog",
   "440285ac659c7832": "Runtime",
   "a83559c38e1cd470": "Catalog",
   "16839051320ad525": "Manage hidden models",
@@ -4606,6 +4666,7 @@
   "b589c01784b9a88c": "Find a model",
   "9b0277205d8a9b04": "All providers",
   "4314e052a3524c51": "Favorites",
+  "683dc8c4b42d1a89": "Harness",
   "279ab25bdca98778": "Thread settings",
   "0ef86daa831dde67": "Cancel thread settings",
   "cb27bc9ea63671c0": "Model filters",
@@ -4886,34 +4947,31 @@
   "b16fdf56b16d99c9": "On pace",
   "90f977e97ae8b6c6": "Under pace",
   "897aceb6c7196649": "Account",
-  "811008ce95331531": "Segment {index}, {account}, {remaining}% left",
-  "bfb2d0ef476d295b": "Segment {index}, {account}, {remaining}% left, {timeLeft}% of the window left",
+  "fe8a0b7a0c5d9c6f": "Budget",
+  "bcf1937839647e7b": "{spent} of {total} spent",
+  "c72bc2247561be1d": "Segment {index}, {account}, {remaining} left",
+  "ce9654d70fc03401": "Segment {index}, {account}, {remaining} left, {timeLeft}% of the window left",
   "e71c96e5114f7718": "Show account details",
-  "27cd137302298f71": "Segment {index}, {account}, {remaining}% left, {resetsIn}, {credits, plural, other {{credits} reset credits banked}}",
-  "288ade531cfcf90c": "Segment {index}, {account}, {remaining}% left, {resetsIn}",
-  "f78edbddd70ee41d": "Segment {index}, {account}, {remaining}% left, {credits, plural, other {{credits} reset credits banked}}",
+  "932cb291ed3f7ade": "Segment {index}, {account}, {remaining} left, {resetsIn}, {credits, plural, other {{credits} reset credits banked}}",
+  "66067ccc941f1599": "Segment {index}, {account}, {remaining} left, {resetsIn}",
+  "d140651d728a84ac": "Segment {index}, {account}, {remaining} left, {credits, plural, other {{credits} reset credits banked}}",
   "d2d071e45a2d6b89": "Select an environment to see limits.",
-  "f411a8cef140a5ea": "No provider on the selected environments reports subscription limits.",
+  "d12ae4bf766e0817": "No Work profile limits are available for the selected environments.",
+  "1479650934b6a1ac": "{environments} could not refresh limits. Showing the last known values.",
+  "64b58f9d619e07a0": "No personal subscription limits are available for the selected environments.",
   "b29a752dd8ee9aa7": "Account",
   "55a38e69338c54ee": "Hide account email",
   "0d3e9f1f27c0e780": "Reveal account email",
   "9217e0c91cee3cf8": "Signed in",
   "5f12a194d158f9b1": "Source",
-  "65a7507ffde6d3f8": [
+  "3ff81a3f874ebb4b": "left",
+  "412e3b93454812aa": [
     {
-      "t": "Text",
       "i": 1,
-      "c": [
-        {
-          "i": 2,
-          "k": "_gt_value_2",
-          "v": "v"
-        },
-        "%"
-      ]
+      "k": "_gt_value_1",
+      "v": "v"
     },
-    " ",
-    "left"
+    "% left"
   ],
   "6af5e3cf03861f55": [
     {
@@ -4924,13 +4982,13 @@
     " could not refresh limits. Showing the last known values."
   ],
   "726ece0c7139ce8a": "This account is no longer reporting limits on the selected environments.",
-  "412e3b93454812aa": [
+  "cacaa00de9d94249": [
     {
       "i": 1,
       "k": "_gt_value_1",
       "v": "v"
     },
-    "% left"
+    " left"
   ],
   "82d204e1a9e7da17": [
     "Resets",
@@ -4978,6 +5036,9 @@
   "e4b6c8eab1e48ee2": "Reveal account label",
   "1f76510e608a9292": "Using…",
   "fd121a8a212b5242": "This connection cannot manage provider accounts.",
+  "25ed7b9d733a32bb": "{month} · resets {resetDate}",
+  "35746006f96f5781": "Near limit",
+  "3bb4cadb0251463b": "Over pace",
   "43e655305262c0c7": "Cost",
   "88151c994a23d697": "Tokens",
   "e59972943b073c66": "Limits",
@@ -5334,5 +5395,6 @@
   "ad208e3e32c85029": "Hide all",
   "3328503592789bed": "Zen",
   "856812e7e1fc445e": "Tool calls in chat",
-  "8d545d54c0a9e950": "Hide the commands, edits, and searches agents run. Hide successful keeps failures. Zen shows only final answers. Approvals, questions, and errors always show."
+  "8d545d54c0a9e950": "Hide the commands, edits, and searches agents run. Hide successful keeps failures. Zen shows only final answers. Approvals, questions, and errors always show.",
+  "e27d2cb964df5dd5": "{source}: No accounts reported."
 }

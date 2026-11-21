@@ -6,6 +6,7 @@ import {
 } from "@t3tools/client-runtime/state/runtime";
 import type { EnvironmentId, OrchestrationV2ProjectedTurnItem, ThreadId } from "@t3tools/contracts";
 import { threadAllowedLanes } from "@t3tools/shared/modelLanes";
+import { T, useGT, useMessages, Var } from "gt-react-native";
 import { useState } from "react";
 import { Pressable, View, type ColorValue } from "react-native";
 
@@ -37,8 +38,9 @@ export function LaneRequestCard(props: {
 }) {
   const { item } = props.projectedItem;
   const providers = useAtomValue(serverEnvironment.providersValueAtom(props.environmentId)) ?? [];
+  const messages = useMessages();
   if (item.type !== "lane_request") return null;
-  const title = laneTitle(item.lane, providers);
+  const title = laneTitle(item.lane, providers, messages);
   if (item.laneStatus === "pending") {
     return (
       <PendingLaneRequest
@@ -67,6 +69,7 @@ function PendingLaneRequest(props: {
   readonly title: string;
 }) {
   const { item } = props;
+  const gt = useGT();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const answer = useAtomCommand(modelLaneRequestEnvironment.answer, {
@@ -91,7 +94,7 @@ function PendingLaneRequest(props: {
     }).finally(() => setPending(false));
     if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
       const failure = squashAtomCommandFailure(result);
-      setError(failure instanceof Error ? failure.message : "Could not answer the request.");
+      setError(failure instanceof Error ? failure.message : gt("Could not answer the request."));
     }
   };
 
@@ -99,7 +102,9 @@ function PendingLaneRequest(props: {
     <View className="mb-3 gap-3 rounded-[20px] border border-border bg-card-alt p-4">
       <View className="gap-1">
         <Text className="font-t3-bold text-base text-foreground">
-          Use {item.providerLabel} on {props.title}?
+          <T>
+            Use <Var>{item.providerLabel}</Var> on <Var>{props.title}</Var>?
+          </T>
         </Text>
         {item.reason.trim() ? (
           <Text className="font-sans text-sm leading-5 text-foreground-muted">{item.reason}</Text>
@@ -117,14 +122,14 @@ function PendingLaneRequest(props: {
       {canAnswer ? (
         <>
           <Button
-            label="Allow for this thread"
+            label={gt("Allow for this thread")}
             disabled={pending}
             onPress={() => void submit("allow-thread")}
             tone="primary"
             fullWidth
           />
           <Button
-            label="Allow this task"
+            label={gt("Allow this task")}
             disabled={pending}
             onPress={() => void submit("allow-task")}
             tone="secondary"
@@ -139,13 +144,15 @@ function PendingLaneRequest(props: {
               className="px-1 py-1 active:opacity-60 disabled:opacity-50"
               onPress={() => void submit("deny")}
             >
-              <Text className="font-sans text-xs text-foreground-muted">Deny</Text>
+              <Text className="font-sans text-xs text-foreground-muted">
+                <T>Deny</T>
+              </Text>
             </Pressable>
           </View>
         </>
       ) : (
         <Text className="font-sans text-xs text-foreground-muted">
-          This session cannot answer this request.
+          <T>This session cannot answer this request.</T>
         </Text>
       )}
     </View>
@@ -160,6 +167,7 @@ function ResolvedLaneRequest(props: {
   readonly iconColor: ColorValue;
 }) {
   const { item } = props;
+  const gt = useGT();
   const thread = useThreadShell(scopeThreadRef(props.environmentId, props.threadId));
   const updateMetadata = useAtomCommand(threadEnvironment.updateMetadata, {
     reportFailure: false,
@@ -182,8 +190,8 @@ function ResolvedLaneRequest(props: {
     if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
       const failure = squashAtomCommandFailure(result);
       Dialog.alert(
-        "Could not revoke",
-        failure instanceof Error ? failure.message : "The lane could not be revoked.",
+        gt("Could not revoke"),
+        failure instanceof Error ? failure.message : gt("The lane could not be revoked."),
       );
     }
   };
@@ -204,7 +212,9 @@ function ResolvedLaneRequest(props: {
           className="px-1 py-1 active:opacity-60 disabled:opacity-50"
           onPress={() => void revoke()}
         >
-          <Text className="font-sans text-xs text-foreground-muted">Revoke</Text>
+          <Text className="font-sans text-xs text-foreground-muted">
+            <T>Revoke</T>
+          </Text>
         </Pressable>
       ) : null}
     </View>

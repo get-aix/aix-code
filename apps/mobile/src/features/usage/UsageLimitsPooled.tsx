@@ -731,7 +731,7 @@ export function UsageLimitAccountScreen({ route }: AccountScreenProps) {
             </View>
             <View className="gap-3 rounded-[24px] border-continuous bg-grouped-card p-4">
               <Text className="text-sm font-t3-medium text-foreground">
-                {account.profileName ? "Budget" : window.label}
+                {account.profileName ? gt("Budget") : window.label}
               </Text>
               <Text className="text-3xl font-t3-bold tabular-nums text-foreground">
                 <T>

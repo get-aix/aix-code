@@ -605,16 +605,19 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
     followUp: ActiveTurnComposerAction | undefined,
   ) => {
     const homeLane = projectHomeLane(laneProject);
-    const copy = sendLaneConfirmCopy({
-      projectTitle: laneProject.title,
-      homeName: homeLane === null ? null : laneKeyName(homeLane, providerList),
-      lane: sendLane,
-      keyName: laneKeyName(sendLane, providerList),
-    });
+    const copy = sendLaneConfirmCopy(
+      {
+        projectTitle: laneProject.title,
+        homeName: homeLane === null ? null : laneKeyName(homeLane, providerList, messages),
+        lane: sendLane,
+        keyName: laneKeyName(sendLane, providerList, messages),
+      },
+      messages,
+    );
     Dialog.confirm({
       title: copy.title,
       message: copy.message,
-      cancelText: "Change model",
+      cancelText: gt("Change model"),
       confirmText: copy.confirmText,
       onCancel: () => settingsSheetPresentation.open(),
       onConfirm: () => {
@@ -633,7 +636,7 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
           });
           if (granted._tag === "Failure") {
             if (!isAtomCommandInterrupted(granted)) {
-              Dialog.alert("Could not use the key", "This message was not sent.");
+              Dialog.alert(gt("Could not use the key"), gt("This message was not sent."));
             }
             return;
           }

@@ -7,7 +7,8 @@ import {
   type ResolvedKeybindingsConfig,
 } from "@t3tools/contracts";
 import { RegistryContext } from "@effect/atom-react";
-import { T, useGT } from "gt-react";
+import { msg, T, useGT } from "gt-react";
+import { m } from "~/i18n/messages";
 import {
   createContext,
   memo,
@@ -177,8 +178,8 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
         if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
           toastManager.add({
             type: "error",
-            title: "Could not refresh aix catalogs",
-            description: "Try again.",
+            title: m(msg("Could not refresh aix catalogs")),
+            description: m(msg("Try again.")),
           });
         }
       },
@@ -186,8 +187,8 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
         setRefreshingAixInstanceId(null);
         toastManager.add({
           type: "error",
-          title: "Could not refresh aix catalogs",
-          description: "Try again.",
+          title: m(msg("Could not refresh aix catalogs")),
+          description: m(msg("Try again.")),
         });
       },
     );

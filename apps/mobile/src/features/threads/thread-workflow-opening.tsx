@@ -15,6 +15,7 @@ import { useState } from "react";
 import { Pressable, View } from "react-native";
 
 import { AppText as Text } from "../../components/ui/AppText";
+import { mapHighlightedTokens } from "../../lib/highlights";
 import { environmentThreadDetails } from "../../state/threads";
 import { useAppearancePreferences } from "../settings/appearance/AppearancePreferencesProvider";
 import { useMarkdownCodeHighlight } from "./markdownCodeHighlightState";
@@ -169,23 +170,13 @@ function WorkflowScript(props: { readonly script: string }) {
   const lineCount = script.split("\n").length;
   const canFold = lineCount > FOLDED_SCRIPT_LINES;
   const shownLines = canFold && !expanded ? FOLDED_SCRIPT_LINES : lineCount;
-  let offset = 0;
-  const highlighted = lines?.slice(0, shownLines).flatMap((line, lineIndex) => {
-    const separator = lineIndex > 0 ? "\n" : "";
-    offset += separator.length;
-    return [
-      separator,
-      ...line.map((token) => {
-        const start = offset;
-        offset += token.content.length;
-        return (
-          <Text key={start} style={token.color ? { color: token.color } : undefined}>
-            {token.content}
-          </Text>
-        );
-      }),
-    ];
-  });
+  const highlighted = lines
+    ? mapHighlightedTokens(lines.slice(0, shownLines), (token, start) => (
+        <Text key={start} style={token.color ? { color: token.color } : undefined}>
+          {token.content}
+        </Text>
+      ))
+    : undefined;
   return (
     <View className="gap-1">
       <View className="rounded-lg bg-subtle px-3 py-2.5">

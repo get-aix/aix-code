@@ -69,8 +69,14 @@ function deriveEmptyState(
   const retryingLabels = retryingAfterFailureLabels(catalogState);
   if (retryingLabels !== null) {
     return {
-      title: projectCount === 0 ? "No projects found" : "No threads yet",
-      detail: `${retryingLabels} did not respond and is still retrying. Its projects and threads appear once it connects.`,
+      title:
+        projectCount === 0 ? resolve(msg("No projects found")) : resolve(msg("No threads yet")),
+      detail: resolve(
+        msg(
+          "{retryingLabels} did not respond and is still retrying. Its projects and threads appear once it connects.",
+          { retryingLabels },
+        ),
+      ),
       loading: false,
     };
   }

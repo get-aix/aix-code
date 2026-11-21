@@ -73,7 +73,7 @@ import {
   type ParamListBase,
 } from "@react-navigation/native";
 import { SymbolView } from "../../components/ui/AppSymbol";
-import { msg, useGT, useMessages } from "gt-react-native";
+import { msg, T, useGT, useMessages } from "gt-react-native";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Platform, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -1384,8 +1384,8 @@ export function AddProjectNewScreen(props: { readonly environmentId?: string | s
             <SegmentedControl
               selected={scope}
               options={[
-                { value: "personal", label: "Personal" },
-                { value: "work", label: "Work" },
+                { value: "personal", label: gt("Personal") },
+                { value: "work", label: gt("Work") },
               ]}
               onSelect={setScope}
             />
@@ -1552,8 +1552,8 @@ export function AddProjectLocalFolderScreen(props: { readonly environmentId?: st
             <SegmentedControl
               selected={scope}
               options={[
-                { value: "personal", label: "Personal" },
-                { value: "work", label: "Work" },
+                { value: "personal", label: gt("Personal") },
+                { value: "work", label: gt("Work") },
               ]}
               onSelect={setScope}
             />
@@ -1730,12 +1730,14 @@ export function AddProjectDestinationScreen(props: {
         <>
           {canSetProjectScope ? (
             <View className="gap-2">
-              <Text className="text-sm font-t3-medium text-foreground-muted">Project scope</Text>
+              <Text className="text-sm font-t3-medium text-foreground-muted">
+                <T>Project scope</T>
+              </Text>
               <SegmentedControl
                 selected={scope}
                 options={[
-                  { value: "personal", label: "Personal" },
-                  { value: "work", label: "Work" },
+                  { value: "personal", label: gt("Personal") },
+                  { value: "work", label: gt("Work") },
                 ]}
                 onSelect={setScope}
               />

@@ -1,3 +1,6 @@
+import { msg } from "gt-react";
+
+import { m, type MessageResolver } from "~/i18n/messages";
 import {
   isLaneAllowed,
   laneOfInstanceId,
@@ -38,8 +41,12 @@ export function aixProfileLabels(
   return labels;
 }
 
-export function laneLabel(lane: string, profileLabels?: ReadonlyMap<string, string>): string {
-  if (lane === "personal") return "Personal";
+export function laneLabel(
+  lane: string,
+  profileLabels?: ReadonlyMap<string, string>,
+  resolve: MessageResolver = m,
+): string {
+  if (lane === "personal") return resolve(msg("Personal"));
   const profile = lane.slice("aix:".length);
-  return `Work · ${profileLabels?.get(profile) ?? profile}`;
+  return resolve(msg("Work · {profile}", { profile: profileLabels?.get(profile) ?? profile }));
 }

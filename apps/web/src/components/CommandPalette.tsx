@@ -1866,7 +1866,9 @@ function OpenCommandPaletteDialog(props: {
       kind: "action",
       value: "action:project-scope",
       searchTerms: ["move", "project", destinationScope],
-      title: `Move project to ${destinationScope === "work" ? "Work" : "Personal"}`,
+      title: gt("Move project to {scope}", {
+        scope: destinationScope === "work" ? gt("Work") : gt("Personal"),
+      }),
       description: currentProjectGroup.displayName,
       icon: <ArrowLeftRightIcon className={ITEM_ICON_CLASS} />,
       run: async () => moveProjectGroupScope(currentProjectGroup),
@@ -1907,7 +1909,9 @@ function OpenCommandPaletteDialog(props: {
     kind: "action",
     value: `action:show-${projectScopeAction}-projects`,
     searchTerms: ["show projects", "switch scope", projectScopeAction],
-    title: `Show ${projectScopeAction === "work" ? "Work" : "Personal"} projects`,
+    title: gt("Show {scope} projects", {
+      scope: projectScopeAction === "work" ? gt("Work") : gt("Personal"),
+    }),
     icon: <FolderIcon className={ITEM_ICON_CLASS} />,
     run: async () => setActiveEnvironmentScope(projectScopeAction),
   });
@@ -1920,7 +1924,7 @@ function OpenCommandPaletteDialog(props: {
       kind: "action",
       value: "action:refresh-aix-catalogs",
       searchTerms: ["refresh aix catalogs", "sync aix models", "reload aix"],
-      title: "Refresh aix catalogs",
+      title: gt("Refresh aix catalogs"),
       icon: <RefreshCwIcon className={ITEM_ICON_CLASS} />,
       run: async () => {
         const results = await Promise.all(
@@ -1933,7 +1937,7 @@ function OpenCommandPaletteDialog(props: {
         );
         const failure = results.find((result) => result._tag === "Failure");
         if (failure?._tag === "Failure") throw squashAtomCommandFailure(failure);
-        toastManager.add({ type: "success", title: "aix catalogs refreshed" });
+        toastManager.add({ type: "success", title: m(msg("aix catalogs refreshed")) });
       },
     });
   }
@@ -3251,23 +3255,31 @@ function OpenCommandPaletteDialog(props: {
       newProjectFlow !== null ? (
         canSetProjectScope ? (
           <div className="flex items-center justify-between gap-3 border-b px-4 py-2">
-            <span className="text-sm text-muted-foreground">Project scope</span>
+            <span className="text-sm text-muted-foreground">
+              <T>Project scope</T>
+            </span>
             <ToggleGroup
-              aria-label="Project scope"
+              aria-label={gt("Project scope")}
               value={[projectCreateScope]}
               onValueChange={(next) => {
                 const value = next[0];
                 if (value === "personal" || value === "work") setProjectCreateScope(value);
               }}
             >
-              <Toggle value="personal">Personal</Toggle>
-              <Toggle value="work">Work</Toggle>
+              <Toggle value="personal">
+                <T>Personal</T>
+              </Toggle>
+              <Toggle value="work">
+                <T>Work</T>
+              </Toggle>
             </ToggleGroup>
           </div>
         ) : showUnsupportedWorkProjectNote ? (
           <div className="border-b px-4 py-2 text-sm text-muted-foreground">
-            This project will be added to Personal because this server does not support Work
-            projects.
+            <T>
+              This project will be added to Personal because this server does not support Work
+              projects.
+            </T>
           </div>
         ) : null
       ) : null}

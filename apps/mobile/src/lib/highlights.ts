@@ -138,3 +138,23 @@ export function highlightCode(
     source.highlightLine(index, scheme)!,
   );
 }
+
+/** Renders each token with its offset in the code; line breaks between lines are strings. */
+export function mapHighlightedTokens<Rendered>(
+  lines: HighlightedLines,
+  render: (token: HighlightedToken, start: number) => Rendered,
+): Array<string | Rendered> {
+  let offset = 0;
+  return lines.flatMap((line, lineIndex) => {
+    const separator = lineIndex > 0 ? "\n" : "";
+    offset += separator.length;
+    return [
+      separator,
+      ...line.map((token) => {
+        const start = offset;
+        offset += token.content.length;
+        return render(token, start);
+      }),
+    ];
+  });
+}
