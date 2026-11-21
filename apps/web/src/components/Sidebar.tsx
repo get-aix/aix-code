@@ -59,11 +59,11 @@ import {
 import {
   AuthOrchestrationOperateScope,
   type ContextMenuSource,
-  ProjectId,
   type ScopedThreadRef,
   type ThreadId,
 } from "@t3tools/contracts";
 import {
+  olderSettledScopesFor,
   resolveListedAncestorThreadRef,
   type OlderSettledScope,
 } from "@t3tools/client-runtime/state/threads";
@@ -435,7 +435,7 @@ function useSidebarThreads(input: {
   readonly scopedProjectKeys: ReadonlySet<string> | null;
   readonly serverConfigs: ReadonlyMap<EnvironmentId, EnvironmentServerConfig>;
   readonly connectedEnvironmentIds: readonly EnvironmentId[];
-  readonly scopedEnvironmentIds: readonly EnvironmentId[];
+  readonly olderSettledScopes: ReadonlyArray<OlderSettledScope>;
   readonly optimisticDrop: SidebarOptimisticDrop | null;
   readonly threads: readonly EnvironmentThreadShell[];
   readonly delegatedUnderParent: ReadonlySet<string>;
@@ -450,7 +450,7 @@ function useSidebarThreads(input: {
     scopedProjectKeys,
     serverConfigs,
     connectedEnvironmentIds,
-    scopedEnvironmentIds,
+    olderSettledScopes,
     optimisticDrop,
     threads,
     delegatedUnderParent,
@@ -512,7 +512,7 @@ function useSidebarThreads(input: {
     partition;
   // Older settled threads load in pages; the shelf lists them only as far as they are loaded.
   const olderSettledShelf = useOlderSettledShelf({
-    scopes: olderSettledScopes(scopedEnvironmentIds, scopedProjectKeys),
+    scopes: olderSettledScopes,
     expanded: settledShelfExpanded,
     visibleCount: settledVisibleCount,
   });
@@ -731,23 +731,6 @@ function partitionSidebarThreads(input: SidebarThreadPartitionInput) {
     visibleThreads: visible,
     snoozeNow: preciseNow,
   };
-}
-
-/** Builds older-settled query scopes from selected projects, grouped by environment. */
-function olderSettledScopes(
-  environmentIds: ReadonlyArray<EnvironmentId>,
-  scopedProjectKeys: ReadonlySet<string> | null,
-): ReadonlyArray<OlderSettledScope> {
-  if (scopedProjectKeys === null) {
-    return environmentIds.map((environmentId) => ({ environmentId, projectIds: null }));
-  }
-  return environmentIds.flatMap((environmentId) => {
-    const prefix = `${environmentId}:`;
-    const projectIds = [...scopedProjectKeys].flatMap((key) =>
-      key.startsWith(prefix) ? [ProjectId.make(key.slice(prefix.length))] : [],
-    );
-    return projectIds.length === 0 ? [] : [{ environmentId, projectIds }];
-  });
 }
 
 function isOptimisticDropReleased(input: {
@@ -1043,7 +1026,6 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const [threadSearchQuery, setThreadSearchQuery] = useState("");
   const [searchHighlightKey, setSearchHighlightKey] = useState<string | null>(null);
   const connectedEnvironmentIds = useConnectedEnvironmentIds();
-  const scopedEnvironmentIds = [...serverConfigs.keys()];
   const queuePendingFileDrop = useSidebarPendingFileDropStore((s) => s.queuePendingFileDrop);
   const clearPendingFileDrop = useSidebarPendingFileDropStore((s) => s.clearPendingFileDrop);
   const [renamingThreadRef, setRenamingThreadRef] = useState<ScopedThreadRef | null>(null);
@@ -1235,6 +1217,11 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const scopedProjectGroups = revealWidensScope ? [] : chosenProjectGroups;
   const scopedProjectRefs = scopedProjectGroups.flatMap((project) => project.memberProjectRefs);
   const scopedProjectKeys = revealWidensScope ? null : chosenScopeProjectKeys;
+  const olderSettledScopes = olderSettledScopesFor({
+    projects: allProjects,
+    activeScope,
+    narrowedKeys: scopedProjectKeys,
+  });
   const threadSearch = useThreadSearch(
     connectedEnvironmentIds,
     threadSearchQuery,
@@ -1408,7 +1395,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     scopedProjectKeys,
     serverConfigs,
     connectedEnvironmentIds,
-    scopedEnvironmentIds,
+    olderSettledScopes,
     optimisticDrop,
     threads: listedThreads,
     delegatedUnderParent,

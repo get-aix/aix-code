@@ -37,6 +37,7 @@ import {
   createOlderSettledThreadAtoms,
   isListedSettledThread,
   olderSettledCountKey,
+  olderSettledScopesFor,
   settledShelfFrontier,
   unloadedOlderSettledCount,
   wantedOlderSettledPages,
@@ -204,6 +205,41 @@ it("counts older threads the client does not hold, once", () => {
       ],
     }),
   ).toBe(18);
+});
+
+describe("olderSettledScopesFor", () => {
+  const envB = EnvironmentId.make("env-b");
+  const personal = ProjectId.make("personal");
+  const work = ProjectId.make("work");
+  const projects = [
+    { environmentId, id: personal, scope: "personal" },
+    { environmentId, id: work, scope: "work" },
+    { environmentId: envB, id: ProjectId.make("work-b"), scope: "work" },
+  ];
+
+  it("lists only the active scope's projects, grouped by environment", () => {
+    expect(olderSettledScopesFor({ projects, activeScope: "work", narrowedKeys: null })).toEqual([
+      { environmentId, projectIds: [work] },
+      { environmentId: envB, projectIds: [ProjectId.make("work-b")] },
+    ]);
+  });
+
+  it("narrows to the sidebar's selected projects and drops environments left empty", () => {
+    expect(
+      olderSettledScopesFor({
+        projects,
+        activeScope: "work",
+        narrowedKeys: new Set([`${envB}:work-b`]),
+      }),
+    ).toEqual([{ environmentId: envB, projectIds: [ProjectId.make("work-b")] }]);
+    expect(
+      olderSettledScopesFor({
+        projects,
+        activeScope: "work",
+        narrowedKeys: new Set([`${environmentId}:personal`]),
+      }),
+    ).toEqual([]);
+  });
 });
 
 describe("wantedOlderSettledPages", () => {
