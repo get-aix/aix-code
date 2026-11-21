@@ -1,0 +1,150 @@
+# Soft-fork guardrails
+
+This fork survives only as a soft fork: it adds features on top of upstream
+(`pingdotgg/t3code`) and keeps pulling upstream stable releases. Upstream lands roughly 2,000
+commits every two weeks, so every rule below keeps fork code in fork-owned namespaces, files, and
+seams. Fork code that spreads into shared hot files turns each upstream sync into a manual merge.
+Each rule names the reason it exists; if a reason stops holding, change the rule here.
+
+## 1. SQLite migrations and downgrade safety
+
+- Never insert fork migrations into `effect_sql_migrations`, and never renumber files in
+  `apps/server/src/persistence/Migrations/`. Upstream owns that ledger and those numbers. The
+  fork's ledger-repair code in [`ForkMigrations.ts`](../../apps/server/src/persistence/ForkMigrations.ts)
+  moves legacy fork rows out of it; do not add new ones.
+- Put fork DDL only in [`ForkMigrations.ts`](../../apps/server/src/persistence/ForkMigrations.ts).
+  Each migration is tracked in `fork_migrations`, must be idempotent, and must stay schema-aware:
+  `hasPendingForkMigrations` checks both `fork_migrations` and the live schema via
+  `missingForkSchemaMigrations` (`PRAGMA table_info` / `sqlite_master`), so new fork migrations must
+  update `missingForkSchemaMigrations` as well.
+- Fork migrations run only when the caller includes them. The gate in
+  [`Migrations.ts`](../../apps/server/src/persistence/Migrations.ts) is
+  `toMigrationInclusive === undefined || toMigrationInclusive >= latestMigrationId`. Partial
+  upstream migration tests depend on this; do not run fork DDL below that threshold.
+- Keep [`ForkEject.ts`](../../apps/server/src/persistence/ForkEject.ts) (`t3 fork-eject`) in step
+  with every fork-only row, event, or index. Eject must remove what the fork added and nothing
+  upstream owns. Its test is [`ForkEject.test.ts`](../../apps/server/src/persistence/ForkEject.test.ts).
+
+## 2. Caches, budgets, and upstream APIs
+
+- Never bump an upstream cache version or delete an upstream cache file. The fork's usage scan cache
+  lives in [`usageScanCache.ts`](../../apps/server/src/usage/usageScanCache.ts): upstream's cache
+  version stays untouched, and fork state goes to `usage-scan-cache-aix-v1.json`, which the reader
+  validates (`forkVersion` and the `ws`/`tws` bounds) before use.
+- Never edit [`agentContextBudget.json`](../../apps/server/src/provider/agentContextBudget.json).
+  It must match upstream byte for byte. Fork tool-list growth goes into the named allowance in
+  [`AgentContextBudget.test.ts`](../../apps/server/src/provider/AgentContextBudget.test.ts), which
+  adds it to the upstream value.
+- Never delete upstream `@public` exports, upstream unit tests, or non-AIX Personal-mode behavior.
+  Example: `collectLimitNotices` in [`usageLimitsCopy.ts`](../../packages/shared/src/usageLimitsCopy.ts)
+  is the non-AIX limit-notice path.
+- Keep `apps/desktop/src/**` at zero code diff against upstream whenever server-side defaults are
+  enough. The AIX opt-out `T3CODE_AIX=0` (or `false`) is read in
+  [`ProviderInstanceSync.ts`](../../apps/server/src/aix/ProviderInstanceSync.ts), so the desktop
+  shell needs no change for it.
+
+## 3. Hot-file isolation and concurrency
+
+- Keep inline diffs small in high-churn upstream files: `Orchestrator.ts`, `CodexAdapterV2.ts`,
+  `ClaudeAdapterV2.ts`, `OrchestratorMcpService.ts`, and `ProjectionStore.ts`. Put fork logic in
+  fork-owned modules and call them from the hot file. Existing examples:
+  [`ModelLanePolicy.ts`](../../apps/server/src/orchestration-v2/ModelLanePolicy.ts),
+  [`CodexAixClientProxy.ts`](../../apps/server/src/orchestration-v2/Adapters/CodexAixClientProxy.ts),
+  and the decorator driver [`OpenCodeAixDriver.ts`](../../apps/server/src/provider/Drivers/OpenCodeAixDriver.ts).
+- Enforce single-use lane grants (`allowed_task`) inside a serialized orchestrator command. Take
+  the parent thread's dispatch lock before the child's (see `dispatchWithReceipt` alongside
+  `withSubagentParentLock` in
+  [`Orchestrator.ts`](../../apps/server/src/orchestration-v2/Orchestrator.ts)), and commit the
+  consumption in the same transaction as the events it authorizes. Never check a grant outside the
+  orchestrator and act on it later; two turns can both see an unconsumed grant.
+- `ModelLaneNotAllowedError` is a user-changeable refusal. The orchestrator returns it without
+  writing a rejected command receipt (see the refusal branch in
+  [`Orchestrator.ts`](../../apps/server/src/orchestration-v2/Orchestrator.ts)), so a retry with the
+  same `clientRequestId` succeeds after the user approves. Any attachments the command claimed must
+  be released on refusal; see [`ThreadMessageIntake.ts`](../../apps/server/src/orchestration-v2/ThreadMessageIntake.ts).
+  A permanent receipt for a refusal the user can undo blocks that retry.
+
+## 4. Metadata over magic strings, and centralized security
+
+- Classify AIX providers from explicit `aixProfile` metadata via
+  [`modelLanes.ts`](../../packages/shared/src/modelLanes.ts). Do not write `startsWith("aix-")` or
+  SQL `LIKE 'aix-%'`: a manually added instance named `aix-*` is Work only if its metadata says
+  so. Instance IDs are built with a prefix in
+  [`ProviderInstanceSync.ts`](../../apps/server/src/aix/ProviderInstanceSync.ts), but that prefix is
+  not a classification. Several web and mobile call sites still use the prefix heuristic; treat them
+  as migration debt, not as a pattern to copy.
+- Filter SQLite usage queries by the explicit configured AIX instance IDs, and skip the query when
+  there are none. [`UsageService.ts`](../../apps/server/src/usage/UsageService.ts) does this; an empty
+  `IN ()` list or an unfiltered scan is a regression.
+- HTTPS and loopback endpoint validation lives only in
+  [`AixDiscovery.ts`](../../apps/server/src/provider/AixDiscovery.ts). It returns two distinct
+  reasons, `"insecure-endpoint"` (plain HTTP to a non-loopback host) and `"invalid-endpoint"`
+  (unparseable URLs, non-`http:`/`https:` schemes, empty hostnames, or URLs containing userinfo). Do
+  not merge them, and do not re-implement the check in a driver.
+- Collation uses a fixed locale. [`ModelCatalog.ts`](../../apps/server/src/aix/ModelCatalog.ts) sorts
+  with `"en"`, so order does not depend on the user's language. Do not hardcode another locale.
+
+## 5. Workflows, CI gates, and upstream syncs
+
+- Never edit upstream `.github/workflows/*.yml` files or add an inline `if:` guard to them. Fork
+  workflows live in their own files with fork-specific names: `Fork CI`
+  (`fork-ci.yml`), `Fork Release` (`fork-release.yml`), `Fork Release Desktop`
+  (`fork-release-desktop.yml`), `Nitestack Android APK` (`mobile-android-fork.yml`), and
+  `Upstream Stable Sync` (`upstream-stable-sync.yml`). The fork-owned list is in
+  [`configure-fork-github.sh`](../../scripts/configure-fork-github.sh).
+- After an upstream sync adds new upstream workflow files, run
+  `bash scripts/configure-fork-github.sh` (add `--dry-run` to preview) to disable them in the GitHub
+  repository settings. Disabling lives in GitHub, not in the tree, which is why upstream files stay
+  untouched.
+- The five `Fork CI` checks are required on `main`: `Fork Quality`, `Fork Server`, `Fork Web`,
+  `Fork Desktop Build`, and `Fork Mobile Type and Unit`. Their names are fixed in
+  [`fork-ci-checks.cjs`](../../.github/scripts/fork-ci-checks.cjs), which the sync uses to decide
+  merges. Renaming a job without updating that list makes the sync refuse to merge.
+- `Fork Quality` runs `vp fmt --check`, `vp lint --report-unused-disable-directives`,
+  `vp run i18n:check`, `vp run knip:check`, `node --test scripts/fork-invariants.test.mjs`,
+  typechecks for contracts, shared, client-runtime, and web, and the shared and client-runtime
+  tests. See [`fork-ci.yml`](../../.github/workflows/fork-ci.yml).
+- Keep `flake.nix` with exactly one `hash = "sha256-..."` assignment under `pnpmDeps`.
+  [`update-flake-pnpm-hash.mjs`](../../scripts/update-flake-pnpm-hash.mjs) rewrites that line on
+  lockfile changes, and `validateSyncBranch` in
+  [`upstream-stable-sync.mjs`](../../scripts/upstream-stable-sync.mjs) expects that shape. A second
+  hash line, or a hash on another line, breaks both.
+
+## 6. UI, i18n, and the local toolchain
+
+- Wrap every user-facing fork string in the project's i18n helpers (`<T>`, `gt()`, `m(msg())`).
+  Translate each new key into all nine non-English locales in
+  [`apps/web/src/i18n/translations/`](../../apps/web/src/i18n/translations/) and
+  [`apps/mobile/src/i18n/translations/`](../../apps/mobile/src/i18n/translations/): `de`, `es`, `fr`,
+  `ja`, `ko`, `pt-BR`, `ru`, `sv`, and `zh`. Do not commit English text as a translation. Check that
+  placeholders and their order match the English string. Then run `vp run i18n:generate` and
+  `vp run i18n:check`; see [AGENTS.md](../../AGENTS.md#hit-every-surface).
+- Use the repo-pinned `./node_modules/.bin/vp`. A global `vp` can be a different version and produce
+  formatting or lint output that CI rejects.
+
+## Automated enforcement
+
+These checks run without a human remembering the rule. Extend the existing test when a rule gains a
+new case.
+
+| Guardrail                                                                                                                                | Enforced by                                                                               |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Translations complete                                                                                                                    | `vp run i18n:check` in `Fork Quality`                                                     |
+| Unused exports and dependencies                                                                                                          | `vp run knip:check` in `Fork Quality`                                                     |
+| Lint and unused disable directives                                                                                                       | `vp lint --report-unused-disable-directives` in `Fork Quality`                            |
+| Workflow isolation, migration ledger, cache namespace, `aix-`/SQL heuristics, endpoint guard, `T3CODE_AIX`, flake hash, `@public` export | [`fork-invariants.test.mjs`](../../scripts/fork-invariants.test.mjs) in `Fork Quality`    |
+| Required checks match sync expectations                                                                                                  | [`fork-ci-checks.test.cjs`](../../.github/scripts/fork-ci-checks.test.cjs)                |
+| Sync branch shape and merge gating                                                                                                       | [`upstream-stable-sync.test.mjs`](../../scripts/upstream-stable-sync.test.mjs)            |
+| Single flake hash on lockfile updates                                                                                                    | [`update-flake-pnpm-hash.test.mjs`](../../scripts/update-flake-pnpm-hash.test.mjs)        |
+| Context budget matches upstream plus allowance                                                                                           | [`AgentContextBudget.test.ts`](../../apps/server/src/provider/AgentContextBudget.test.ts) |
+| Fork-only schema is ejectable                                                                                                            | [`ForkEject.test.ts`](../../apps/server/src/persistence/ForkEject.test.ts)                |
+
+These cannot be fully checked statically, so review must still catch them: English text copied into
+non-English catalogs or swapped placeholders, large inline blocks added to upstream hot files
+instead of fork modules, and upstream `agentContextBudget.json` edits that shift baseline numbers.
+
+## Changing a guardrail
+
+Change this page, the [skill](../../.agents/skills/soft-fork-guardrails/SKILL.md), and the code or
+test that enforces the rule in the same pull request. Keep the reason next to the rule, and rewrite a
+rule when its reason changes rather than adding a note beneath it.
