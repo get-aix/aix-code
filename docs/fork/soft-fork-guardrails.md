@@ -98,8 +98,9 @@ Each rule names the reason it exists; if a reason stops holding, change the rule
   untouched.
 - The five `Fork CI` checks are required on `main`: `Fork Quality`, `Fork Server`, `Fork Web`,
   `Fork Desktop Build`, and `Fork Mobile Type and Unit`. Their names are fixed in
-  [`fork-ci-checks.cjs`](../../.github/scripts/fork-ci-checks.cjs), which the sync uses to decide
-  merges. Renaming a job without updating that list makes the sync refuse to merge.
+  [`fork-ci-checks.cjs`](../../.github/scripts/fork-ci-checks.cjs), which the sync uses to verify
+  exact-head CI before queueing releases. Renaming a job without updating that list makes the sync
+  refuse to queue releases.
 - `Fork Quality` runs `vp fmt --check`, `vp lint --report-unused-disable-directives`,
   `vp run i18n:check`, `vp run knip:check`, `node --test scripts/fork-invariants.test.mjs`,
   typechecks for contracts, shared, client-runtime, and web, and the shared and client-runtime

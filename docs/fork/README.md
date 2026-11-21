@@ -70,8 +70,10 @@ Always pass `--repo OWNER/t3code` to later mutating `gh` commands.
 
 Work from the fork's `main`; use `feature/<topic>`, `fix/<topic>`, or `chore/<topic>` branches and
 open PRs against the fork's `main`. Use conventional commit titles. The daily stable sync opens a
-PR for a newer upstream release and merges it only after all five exact-head `Fork CI` jobs succeed
-under protected `main`. Conflicts or stale checks leave the sync unmerged for manual repair.
+PR for a newer upstream release with a maintainer review checklist and runs all five `Fork CI` jobs
+on its exact head. A maintainer reviews and merges the PR manually; once `main` CI passes on the
+merge commit, `Upstream Stable Sync` queues the build-only `Fork Release`. Conflicts leave the sync
+branch uncreated for manual repair.
 
 Fork `main` takes only published upstream stable tags; never merge upstream `main`. A stable tag is
 skipped until it contains every upstream commit already present in fork `main`.

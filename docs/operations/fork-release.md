@@ -22,8 +22,10 @@ workflows in GitHub repository settings using `scripts/configure-fork-github.sh`
   Android, and Nix artifacts and publishes only when `publish` is checked or automatic publication
   is enabled. It calls `Fork Release Desktop` (`fork-release-desktop.yml`) per desktop target and
   `Nitestack Android APK` (`mobile-android-fork.yml`) for the APK.
-- `Upstream Stable Sync` (`.github/workflows/upstream-stable-sync.yml`) opens and merges sync pull
-  requests on `Fork CI` completion; see [Stable upstream sync](#stable-upstream-sync).
+- `Upstream Stable Sync` (`.github/workflows/upstream-stable-sync.yml`) opens sync pull requests
+  for newer upstream stable releases (for manual maintainer review and merge) and queues the
+  build-only `Fork Release` once `main` CI passes on the merged commit; see
+  [Stable upstream sync](#stable-upstream-sync).
 
 ## Release checklist
 
@@ -108,16 +110,15 @@ daily. An empty stable list or no newer stable version succeeds without writing 
 run is a dry run unless `dry_run` is cleared, and `target_tag` can select a published stable tag.
 Drafts, prereleases, and tags with test labels are ignored.
 
-When a newer compatible stable release exists, the workflow creates a stable-tag branch and pull request.
-The push to that exact branch runs the five `Fork CI` jobs: `Fork Quality`, `Fork Server`,
-`Fork Web`, `Fork Desktop Build`, and `Fork Mobile Type and Unit`. The completion handler accepts only the latest successful
-push run attempt for the current PR head, verifies each named job individually, checks that the PR
-is up to date with `main`, and uses GitHub's ordinary protected merge endpoint. Failed, skipped,
-cancelled, missing, stale, or other-head checks never permit the merge. Conflicts stop before merge
-for a maintainer to repair. The automated job does not request an administrative bypass.
+When a newer compatible stable release exists, the workflow creates a stable-tag branch and opens a
+pull request containing a maintainer review checklist (flagging any new upstream workflows,
+migrations, Nix/native-sensitive changes, fork hot files, or `README.md` edits). The push to that
+exact branch runs all five `Fork CI` jobs: `Fork Quality`, `Fork Server`, `Fork Web`,
+`Fork Desktop Build`, and `Fork Mobile Type and Unit`.
 
-If `main` advances while the sync checks are running, the handler leaves the PR open and unmerged.
-Update its branch and let the resulting push run all five checks again before the next merge attempt.
+Automatic merging is disabled: a maintainer reviews the checklist and merges the PR manually with a
+merge commit once all five checks pass. Conflicts stop before opening a PR so a maintainer can
+resolve them by hand.
 
 Fork `main` accepts only published upstream stable tags; never merge upstream `main`. A tag is
 eligible only when it contains every upstream commit already present in fork `main`.
@@ -152,17 +153,17 @@ this implementation does not change repository settings:
 - Add Actions secrets `FORK_SYNC_APP_ID` and `FORK_SYNC_APP_PRIVATE_KEY` for a GitHub App installed
   only on `get-aix/t3code`, with exactly `actions:write`, `administration:read`, `contents:write`,
   `pull_requests:write`, and `workflows:write`. Administration read inspects branch protection and rulesets. Contents
-  and pull-request write push the sync branch and open and merge its PR. Actions write lets the
+  and pull-request write push the sync branch and open its PR. Actions write lets the
   main-CI completion job dispatch the `Fork Release` workflow. Workflows write lets the
   publisher set the release tag and `release` branch on a source commit whose workflow files differ
   from `main`, which `GITHUB_TOKEN` refuses. The branch-creation token is scoped to
   administration, contents, and pull requests. The App must not have repository administrator access and must not be a
   ruleset bypass actor.
-- The merge job uses the App token for the protected merge; the main-CI completion job uses it for
-  release dispatch. Their `GITHUB_TOKEN`
+- The main-CI completion job uses the App token for release dispatch; sync PRs are merged manually
+  by a maintainer. Their `GITHUB_TOKEN`
   is limited to contents read for checkout; the release publisher requests `contents:write`. The
   repository's read-only default can remain in place because each job declares its own scoped
-  permissions. The workflow does not approve pull requests or use GitHub's auto-merge setting.
+  permissions. The workflow never approves or merges pull requests.
 - Keep `FORK_AUTO_PUBLISH_STABLE_RELEASES` unset until ongoing automatic publication is explicitly
   authorized. Setting it to `true` is that standing authorization. The default workflow and
   build-only path do not create tags or draft releases.

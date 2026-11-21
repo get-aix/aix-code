@@ -808,39 +808,6 @@ function getWorkflowRunJobs(runId, attempt) {
   return pages.flat();
 }
 
-function getSyncPullRequest(branch, state = "all") {
-  const output = run(
-    "gh",
-    [
-      "pr",
-      "list",
-      "--repo",
-      FORK_REPOSITORY,
-      "--state",
-      state,
-      "--base",
-      "main",
-      "--json",
-      "number,headRefName,headRefOid,headRepository,baseRefName,baseRefOid,isDraft,mergedAt,state,title,url",
-      "--limit",
-      "1000",
-    ],
-    { githubOperation: "openSyncPullRequests" },
-  );
-  let pullRequests;
-  try {
-    pullRequests = JSON.parse(output);
-    if (!Array.isArray(pullRequests)) throw new Error("not an array");
-  } catch {
-    throw new Error("GitHub returned invalid JSON while checking for a sync pull request.");
-  }
-  const matches = getSyncPullRequests(pullRequests).filter(
-    (pullRequest) => pullRequest.headRefName === branch,
-  );
-  if (matches.length > 1) throw new Error("Multiple sync pull requests use branch " + branch + ".");
-  return matches[0];
-}
-
 function runProtectionGitHub(args, githubOperation) {
   const token = process.env.PROTECTION_GH_TOKEN;
   if (!token) {
@@ -990,176 +957,95 @@ export function queueForkRelease({
   return true;
 }
 
-async function mergeSyncPullRequestFromCi() {
-  const eventRunId = process.env.WORKFLOW_RUN_ID;
-  const eventBranch = process.env.WORKFLOW_RUN_BRANCH;
-  if (!eventRunId || !eventBranch?.startsWith(BRANCH_PREFIX)) return;
+const FORK_HOT_FILES = [
+  "apps/server/src/orchestration-v2/Orchestrator.ts",
+  "apps/server/src/orchestration-v2/ProjectionStore.ts",
+  "apps/server/src/orchestration-v2/Adapters/CodexAdapterV2.ts",
+  "apps/server/src/orchestration-v2/Adapters/ClaudeAdapterV2.ts",
+  "apps/server/src/orchestration-v2/OrchestratorMcpService.ts",
+];
 
-  const eventAttempt = Number(process.env.WORKFLOW_RUN_ATTEMPT);
-  const eventRun = getWorkflowRun(eventRunId);
-  validateForkCiCompletion({
-    run: eventRun,
-    eventConclusion: process.env.WORKFLOW_RUN_CONCLUSION,
-    eventRunId,
-    eventAttempt,
-    expectedBranch: eventBranch,
-    expectedSha: process.env.WORKFLOW_RUN_SHA,
-  });
+/**
+ * Builds a concise maintainer review checklist from the files added or changed
+ * between the previous integrated upstream base and the target stable tag.
+ */
+export function buildSyncReviewChecklist({ addedWorkflows = [], changedFiles = [] } = {}) {
+  const items = [];
 
-  const pullRequest = getSyncPullRequest(eventBranch);
-  if (!pullRequest) {
-    console.log("No open sync pull request matches completed fork CI; no merge action taken.");
-    return;
-  }
-  if (
-    pullRequest.headRepository?.nameWithOwner?.toLowerCase() !== FORK_REPOSITORY.toLowerCase() ||
-    pullRequest.baseRefName !== "main" ||
-    (pullRequest.state === "OPEN" && pullRequest.isDraft)
-  ) {
-    throw new Error("The sync pull request is not a PR from the fork into main.");
-  }
-  if (pullRequest.state === "CLOSED" && !pullRequest.mergedAt) {
-    console.log("The matching sync pull request is closed without a merge; no release queued.");
-    return;
-  }
-
-  const { release, commitPrefix } = releaseFromBranch(eventBranch, getPublishedReleases());
-  const mainRef = "refs/remotes/origin/main";
-  git(["fetch", "origin", "main"]);
-  git([
-    "fetch",
-    "--no-tags",
-    UPSTREAM_URL,
-    `+refs/tags/${release.tag_name}:refs/tags/upstream/${release.tag_name}`,
-  ]);
-  git(["fetch", "--no-tags", UPSTREAM_URL, "+refs/heads/main:refs/remotes/upstream/main"]);
-  const targetCommit = resolveTagCommit(release.tag_name);
-  if (!targetCommit.startsWith(commitPrefix)) {
-    throw new Error("The sync branch name does not match the published upstream tag commit.");
-  }
-  const upstreamCommitsPresentInMain = findUpstreamCommitsAlreadyInForkMain({
-    forkMainCommits: commitsAt(mainRef),
-    upstreamMainCommits: commitsAt("refs/remotes/upstream/main"),
-  });
-  const missingUpstreamCommits = stableTagMissingCommits(
-    release.tag_name,
-    upstreamCommitsPresentInMain,
-  );
-  if (missingUpstreamCommits.length > 0) {
-    const message = describeSkippedStableTags({
-      tags: [release.tag_name],
-      missingCommitsByTag: { [release.tag_name]: missingUpstreamCommits },
-      upstreamCommitCount: upstreamCommitsPresentInMain.length,
-    });
-    console.log(message);
-    await writeStepSummary(message);
-    return;
-  }
-
-  let branchCommit;
-  if (pullRequest.state === "OPEN") {
-    branchCommit = getRemoteBranchCommit(eventBranch);
-    if (!branchCommit || branchCommit !== pullRequest.headRefOid) {
-      throw new Error(
-        "The sync pull request head changed while its CI results were being checked.",
-      );
-    }
+  if (addedWorkflows.length > 0) {
+    items.push(
+      `- [ ] **New upstream workflows added** (${addedWorkflows.map((file) => `\`${file}\``).join(", ")}): after merging, run \`bash scripts/configure-fork-github.sh --dry-run\` and then \`bash scripts/configure-fork-github.sh\` to disable them in repository settings.`,
+    );
   } else {
-    const merged = JSON.parse(
-      run("gh", ["api", `repos/${FORK_REPOSITORY}/pulls/${pullRequest.number}`], {
-        githubOperation: "syncPullRequestMerge",
-      }),
-    );
-    if (
-      merged.merged !== true ||
-      !merged.merge_commit_sha ||
-      merged.head?.sha !== pullRequest.headRefOid
-    ) {
-      throw new Error(
-        "The closed sync pull request does not have a verified merge commit and head.",
-      );
-    }
-    const mergeParents = git(["show", "-s", "--format=%P", merged.merge_commit_sha]).split(" ");
-    if (mergeParents.length !== 2 || mergeParents[1] !== pullRequest.headRefOid) {
-      throw new Error(
-        "The sync pull request merge commit does not contain its recorded head as parent.",
-      );
-    }
-    branchCommit = pullRequest.headRefOid;
+    items.push("- [ ] Confirm no new upstream `.github/workflows/*.yml` files need disabling.");
   }
-  validateSyncBranch({
-    branch: eventBranch,
-    branchCommit,
-    mainRef,
-    targetTag: release.tag_name,
-    targetCommit,
-  });
 
-  const latestCiRun = selectLatestForkCiRun(getForkCiRuns(eventBranch, branchCommit), {
-    expectedBranch: eventBranch,
-    expectedSha: branchCommit,
-  });
-  if (latestCiRun.databaseId !== Number(eventRunId)) {
-    throw new Error(
-      "A newer exact-head CI run exists; only its completion event may trigger a merge.",
+  const migrationChanges = changedFiles.filter((file) =>
+    file.startsWith("apps/server/src/persistence/Migrations/"),
+  );
+  if (migrationChanges.length > 0) {
+    items.push(
+      `- [ ] **Upstream SQLite migrations changed** (${migrationChanges.length} file${migrationChanges.length === 1 ? "" : "s"}): verify \`ForkMigrations.ts\` and \`ForkEject.ts\` remain compatible.`,
     );
   }
-  if (eventRun.head_sha?.toLowerCase() !== branchCommit.toLowerCase()) {
-    throw new Error("The completed CI run does not match the current sync pull request head.");
+
+  const nixSensitiveChanges = changedFiles.filter(
+    (file) =>
+      file === "pnpm-lock.yaml" ||
+      file === "package.json" ||
+      file === "flake.nix" ||
+      file.startsWith("native/"),
+  );
+  if (nixSensitiveChanges.length > 0) {
+    items.push(
+      `- [ ] **Nix / native-sensitive files changed** (${nixSensitiveChanges
+        .slice(0, 5)
+        .map((file) => `\`${file}\``)
+        .join(
+          ", ",
+        )}${nixSensitiveChanges.length > 5 ? `, +${nixSensitiveChanges.length - 5} more` : ""}): \`Fork CI\` does not build \`flake.nix\`; verify the Nix build in the post-merge build-only \`Fork Release\`.`,
+    );
   }
-  const workflowRun = getWorkflowRun(latestCiRun.databaseId);
-  const jobs = getWorkflowRunJobs(latestCiRun.databaseId, eventAttempt);
-  validateForkCiRun({
-    run: workflowRun,
-    jobs,
-    expectedBranch: eventBranch,
-    expectedSha: branchCommit,
+
+  const touchedHotFiles = FORK_HOT_FILES.filter((file) => changedFiles.includes(file));
+  if (touchedHotFiles.length > 0) {
+    items.push(
+      `- [ ] **Fork hot files touched** (${touchedHotFiles.map((file) => `\`${file}\``).join(", ")}): spot-check fork seams (model lanes, AIX proxies, Personal/Work boundaries).`,
+    );
+  }
+
+  if (changedFiles.includes("README.md")) {
+    items.push(
+      "- [ ] **Upstream `README.md` changed:** check whether the embedded upstream README section in `README.md` needs a refresh.",
+    );
+  }
+
+  items.push(
+    "- [ ] Merge manually with a merge commit once all five `Fork CI` checks pass; `main` CI will then queue the build-only `Fork Release`.",
+  );
+
+  return items.join("\n");
+}
+
+function collectUpstreamDiffSignals(baseCommit, targetCommit) {
+  const raw = git(["diff", "--name-status", `${baseCommit}..${targetCommit}`], {
+    allowFailure: true,
   });
-
-  getMainProtection();
-
-  if (pullRequest.state === "OPEN") {
-    const currentMainSha = git(["rev-parse", mainRef]);
-    if (pullRequest.baseRefOid !== currentMainSha) {
-      throw new Error("The sync pull request is behind main; update and rerun CI before merging.");
+  if (!raw) return { addedWorkflows: [], changedFiles: [] };
+  const addedWorkflows = [];
+  const changedFiles = [];
+  for (const line of raw.split("\n")) {
+    if (!line.trim()) continue;
+    const parts = line.split("\t");
+    const status = parts[0] ?? "";
+    const file = parts[parts.length - 1] ?? "";
+    if (!file) continue;
+    changedFiles.push(file);
+    if (status.startsWith("A") && /^\.github\/workflows\/.+\.ya?ml$/.test(file)) {
+      addedWorkflows.push(file);
     }
-    let merged = false;
-    try {
-      const result = JSON.parse(
-        runWithSyncApp(
-          "gh",
-          [
-            "api",
-            "--method",
-            "PUT",
-            `repos/${FORK_REPOSITORY}/pulls/${pullRequest.number}/merge`,
-            "-f",
-            `sha=${branchCommit}`,
-            "-f",
-            "merge_method=merge",
-          ],
-          { githubOperation: "syncPullRequestMerge" },
-        ),
-      );
-      merged = result.merged === true;
-    } catch (error) {
-      const updated = runWithSyncApp(
-        "gh",
-        ["api", `repos/${FORK_REPOSITORY}/pulls/${pullRequest.number}`],
-        { githubOperation: "syncPullRequestMerge" },
-      );
-      const current = JSON.parse(updated);
-      if (!current.merged || current.head?.sha !== branchCommit) throw error;
-      merged = true;
-    }
-    if (!merged) throw new Error("GitHub did not confirm the sync pull request merge.");
-  } else if (pullRequest.state !== "CLOSED" || !pullRequest.mergedAt) {
-    throw new Error("The sync pull request is not in a verified merged state.");
   }
-
-  const message = `Merged upstream stable ${release.tag_name} after all five checks succeeded on exact PR head ${branchCommit}. Release dispatch waits for all five checks on the resulting integration commit on main.`;
-  console.log(message);
-  await writeStepSummary(message);
+  return { addedWorkflows, changedFiles };
 }
 
 async function queueReleaseFromMainCi() {
@@ -1259,8 +1145,9 @@ function writeOutput(name, value) {
 async function main() {
   requireFork();
   if (process.env.UPSTREAM_SYNC_MODE === "merge-on-ci") {
-    await mergeSyncPullRequestFromCi();
-    return;
+    throw new Error(
+      "Automatic merging of upstream sync pull requests is disabled; review and merge the PR manually.",
+    );
   }
   if (process.env.UPSTREAM_SYNC_MODE === "release-after-main-ci") {
     await queueReleaseFromMainCi();
@@ -1338,7 +1225,7 @@ async function main() {
       await writeStepSummary(message);
       return;
     }
-    const message = `Existing sync pull request ${branch} verified; merge automation waits for successful push checks on its exact head.`;
+    const message = `Existing sync pull request ${branch} verified; waiting for maintainer review and manual merge once Fork CI passes.`;
     await writeOutput("requires_write", "false");
     console.log(message);
     await writeStepSummary(message);
@@ -1514,17 +1401,22 @@ async function main() {
             "\n",
           )}${commits.length > 60 ? `\n- … and ${commits.length - 60} more upstream commits` : ""}`
       : "No upstream commit messages were found between the recorded stable tags.";
+  const diffSignals = collectUpstreamDiffSignals(baseCommit, targetCommit);
+  const reviewChecklist = buildSyncReviewChecklist(diffSignals);
   const body = [
     `This pull request synchronizes upstream stable release **${targetTag}** (${targetCommit}).`,
     "",
-    "The update branch is based on fork `main` and uses only this upstream stable tag; it never merges upstream `main`. If the tag commit is not already in fork `main`, the branch merges that tag while preserving fork commits. If the tag is already present, the branch records only the stable marker. The branch is pushed first so eligible push checks run on its exact head SHA. Automatic merge requires all five fork checks and strict protected-main rules; it never uses an administrator bypass.",
+    "The update branch is based on fork `main` and uses only this upstream stable tag; it never merges upstream `main`. If the tag commit is not already in fork `main`, the branch merges that tag while preserving fork commits. If the tag is already present, the branch records only the stable marker. Automatic merging is disabled: a maintainer must review and merge this PR manually after all five `Fork CI` checks pass.",
     "",
     ...(skippedTagSummary ? [skippedTagSummary, ""] : []),
+    "### Maintainer review checklist",
+    reviewChecklist,
+    "",
     "### Upstream change summary",
     changeSummary,
     "",
     "### Verification",
-    "- The GitHub App token pushes the branch and opens this PR so CI runs on its exact head without workflow approval. Merge automation waits for all five checks to succeed on that exact SHA.",
+    "- The GitHub App token pushes the branch and opens this PR so `Fork CI` runs on its exact head without workflow approval. Once merged into `main`, `main` CI queues the build-only `Fork Release` automatically.",
   ].join("\n");
   if (dryRun) {
     const summary = `## Upstream stable sync: ${targetTag}\n\n${skippedTagSummary ? `${skippedTagSummary}\n\n` : ""}${changeSummary}\n\nDry run only; no branch was pushed and no pull request was created.`;
@@ -1536,7 +1428,7 @@ async function main() {
   await NodeFSP.writeFile(bodyPath, `${body}\n`);
   if (!existingBranchCommit) git(["push", "origin", `HEAD:refs/heads/${branch}`]);
   const pullRequestUrl = createSyncPullRequest(branch, targetTag, bodyPath);
-  const summary = `## Upstream stable sync: ${targetTag}\n\n${skippedTagSummary ? `${skippedTagSummary}\n\n` : ""}${changeSummary}\n\nCreated the sync pull request: ${pullRequestUrl}\n\nFork CI was triggered by the push of ${branch}. The CI completion workflow verifies all five checks against the exact head before protected merging.`;
+  const summary = `## Upstream stable sync: ${targetTag}\n\n${skippedTagSummary ? `${skippedTagSummary}\n\n` : ""}${changeSummary}\n\nCreated the sync pull request: ${pullRequestUrl}\n\nFork CI was triggered by the push of ${branch}. Review and merge the PR manually once all five checks pass.`;
   console.log(summary);
   await writeStepSummary(summary);
 }

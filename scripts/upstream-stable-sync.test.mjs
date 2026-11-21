@@ -8,6 +8,7 @@ import * as NodeURL from "node:url";
 import ForkCiChecks from "../.github/scripts/fork-ci-checks.cjs";
 
 import {
+  buildSyncReviewChecklist,
   classifyGitHubFailure,
   describeSkippedStableTags,
   findUpstreamCommitsAlreadyInForkMain,
@@ -1057,7 +1058,7 @@ NodeTest.test(
       const recovered = await fixture.readState();
       NodeAssert.equal(recovered.pullRequests.length, 1);
       NodeAssert.equal(recovered.runs.length, 0);
-      NodeAssert.match(retry.output, /waits for successful push checks on its exact head/);
+      NodeAssert.match(retry.output, /waiting for maintainer review and manual merge/);
 
       const third = fixture.runSync();
       NodeAssert.equal(third.status, 0, third.output);
@@ -1303,7 +1304,7 @@ NodeTest.test(
 );
 
 NodeTest.test(
-  "merge handler checks the exact PR head and queues only after exact integration-commit CI",
+  "manual merge of a sync PR queues the matching fork release after exact integration-commit CI",
   async () => {
     const fixture = await createSyncFixture({ manifestVersionOverrides: { "v0.1.10": "0.1.9" } });
     try {
@@ -1327,21 +1328,20 @@ NodeTest.test(
           "packages/contracts/package.json",
         ],
       );
-      const result = fixture.runSync({ env: event.env });
-      NodeAssert.equal(result.status, 0, result.output);
+
+      // Automatic merge mode must fail closed and never call the merge endpoint.
+      const autoMergeAttempt = fixture.runSync({ env: event.env });
+      NodeAssert.equal(autoMergeAttempt.status, 1, autoMergeAttempt.output);
       NodeAssert.match(
-        result.output,
-        /Release dispatch waits for all five checks on the resulting integration commit/,
+        autoMergeAttempt.output,
+        /Automatic merging of upstream sync pull requests is disabled/,
       );
       const state = await fixture.readState();
-      NodeAssert.equal(state.mergeCalls, 1);
-      NodeAssert.equal(state.syncAppWrites, 1);
+      NodeAssert.equal(state.mergeCalls, 0);
+      NodeAssert.equal(state.syncAppWrites, 0);
       NodeAssert.equal(state.runs.length, 0);
-      const mergeCall = (await fixture.readCalls()).find(
-        (args) => args.includes("--method") && args.includes("PUT"),
-      );
-      NodeAssert.ok(mergeCall.includes(`sha=${event.headSha}`));
 
+      // Maintainer merges the sync PR manually with a merge commit.
       fixture.git(fixture.checkout, [
         "fetch",
         "origin",
@@ -1427,7 +1427,7 @@ NodeTest.test(
         /All five Fork CI checks succeeded on integration commit/,
       );
       const finalState = await fixture.readState();
-      NodeAssert.equal(finalState.syncAppWrites, 2);
+      NodeAssert.equal(finalState.syncAppWrites, 1);
       NodeAssert.equal(finalState.runs.length, 1);
       NodeAssert.equal(
         finalState.runs[0].displayTitle,
@@ -1440,118 +1440,29 @@ NodeTest.test(
   },
 );
 
-NodeTest.test("merge handler never falls back to the workflow token for sync writes", async () => {
-  const fixture = await createSyncFixture();
-  try {
-    const event = await prepareSuccessfulCiEvent(fixture);
-    const result = fixture.runSync({ env: { ...event.env, SYNC_APP_TOKEN: "" } });
-    NodeAssert.equal(result.status, 1, result.output);
-    NodeAssert.match(result.output, /sync GitHub App token is required/);
-    const state = await fixture.readState();
-    NodeAssert.equal(state.mergeCalls, 0);
-    NodeAssert.equal(state.syncAppWrites, 0);
-    NodeAssert.equal(state.runs.length, 0);
-  } finally {
-    await NodeFSP.rm(fixture.root, { recursive: true, force: true });
-  }
-});
-
-NodeTest.test("merge handler leaves a PR open when main moved after its checks", async () => {
-  const fixture = await createSyncFixture();
-  try {
-    const event = await prepareSuccessfulCiEvent(fixture);
-    const movedMain = NodePath.join(fixture.root, "moved-main");
-    fixture.git(fixture.root, ["clone", "--branch", "main", fixture.fork, movedMain]);
-    fixture.git(movedMain, ["config", "user.name", "T17 fixture"]);
-    fixture.git(movedMain, ["config", "user.email", "t17-fixture@example.invalid"]);
-    await NodeFSP.writeFile(NodePath.join(movedMain, "main-moved.txt"), "advance main\n");
-    fixture.git(movedMain, ["add", "main-moved.txt"]);
-    fixture.git(movedMain, ["commit", "-m", "advance main after sync CI"]);
-    fixture.git(movedMain, ["push", "origin", "HEAD:refs/heads/main"]);
-
-    const result = fixture.runSync({ env: event.env });
-    NodeAssert.equal(result.status, 1, result.output);
-    NodeAssert.match(result.output, /pull request is behind main/);
-    const state = await fixture.readState();
-    NodeAssert.equal(state.mergeCalls, 0);
-    NodeAssert.equal(state.syncAppWrites, 0);
-    NodeAssert.equal(state.runs.length, 0);
-    NodeAssert.equal(state.pullRequests[0].state, "OPEN");
-  } finally {
-    await NodeFSP.rm(fixture.root, { recursive: true, force: true });
-  }
-});
-
-NodeTest.test("merge handler refuses pending workflow runs", async () => {
-  const fixture = await createSyncFixture();
-  try {
-    const event = await prepareSuccessfulCiEvent(fixture);
-    const state = await fixture.readState();
-    state.workflowRun.status = "in_progress";
-    state.workflowRun.conclusion = null;
-    state.ciRuns[0].status = "in_progress";
-    state.ciRuns[0].conclusion = null;
-    await fixture.writeState(state);
-
-    const result = fixture.runSync({
-      env: { ...event.env, WORKFLOW_RUN_CONCLUSION: "in_progress" },
+NodeTest.test(
+  "buildSyncReviewChecklist flags new workflows, migrations, Nix files, hot files, and README",
+  () => {
+    const checklist = buildSyncReviewChecklist({
+      addedWorkflows: [".github/workflows/new-upstream.yml"],
+      changedFiles: [
+        ".github/workflows/new-upstream.yml",
+        "apps/server/src/persistence/Migrations/105_NewTable.ts",
+        "pnpm-lock.yaml",
+        "native/resource-monitor/Cargo.lock",
+        "apps/server/src/orchestration-v2/Orchestrator.ts",
+        "README.md",
+      ],
     });
-    NodeAssert.equal(result.status, 1, result.output);
-    NodeAssert.match(result.output, /Only the successful completion/);
-    const finalState = await fixture.readState();
-    NodeAssert.equal(finalState.mergeCalls, 0);
-    NodeAssert.equal(finalState.syncAppWrites, 0);
-    NodeAssert.equal(finalState.runs.length, 0);
-  } finally {
-    await NodeFSP.rm(fixture.root, { recursive: true, force: true });
-  }
-});
-
-NodeTest.test("merge handler refuses a skipped required check", async () => {
-  const fixture = await createSyncFixture();
-  try {
-    const event = await prepareSuccessfulCiEvent(fixture);
-    const state = await fixture.readState();
-    state.workflowJobs.find((job) => job.name === "Fork Server").conclusion = "skipped";
-    await fixture.writeState(state);
-
-    const result = fixture.runSync({ env: event.env });
-    NodeAssert.equal(result.status, 1, result.output);
-    NodeAssert.match(result.output, /Required fork CI job Fork Server concluded skipped/);
-    const finalState = await fixture.readState();
-    NodeAssert.equal(finalState.mergeCalls, 0);
-    NodeAssert.equal(finalState.syncAppWrites, 0);
-    NodeAssert.equal(finalState.runs.length, 0);
-  } finally {
-    await NodeFSP.rm(fixture.root, { recursive: true, force: true });
-  }
-});
-
-NodeTest.test("merge handler rejects a PR head race after the successful CI event", async () => {
-  const fixture = await createSyncFixture();
-  try {
-    const event = await prepareSuccessfulCiEvent(fixture);
-    const branchWorktree = NodePath.join(fixture.root, "advanced-sync-branch");
-    fixture.git(fixture.root, ["clone", "--branch", event.branch, fixture.fork, branchWorktree]);
-    fixture.git(branchWorktree, ["config", "user.name", "T17 fixture"]);
-    fixture.git(branchWorktree, ["config", "user.email", "t17-fixture@example.invalid"]);
-    await NodeFSP.writeFile(NodePath.join(branchWorktree, "raced.txt"), "advanced after CI\n");
-    fixture.git(branchWorktree, ["add", "raced.txt"]);
-    fixture.git(branchWorktree, ["commit", "-m", "advance sync branch after CI"]);
-
-    const state = await fixture.readState();
-    state.advanceBranchOnPullRequestLookup = { worktree: branchWorktree, branch: event.branch };
-    await fixture.writeState(state);
-    const result = fixture.runSync({ env: event.env });
-    NodeAssert.equal(result.status, 1, result.output);
-    NodeAssert.match(result.output, /head changed while its CI results were being checked/);
-    const finalState = await fixture.readState();
-    NodeAssert.equal(finalState.mergeCalls, 0);
-    NodeAssert.equal(finalState.runs.length, 0);
-  } finally {
-    await NodeFSP.rm(fixture.root, { recursive: true, force: true });
-  }
-});
+    NodeAssert.match(checklist, /configure-fork-github\.sh/);
+    NodeAssert.match(checklist, /new-upstream\.yml/);
+    NodeAssert.match(checklist, /Upstream SQLite migrations changed/);
+    NodeAssert.match(checklist, /Nix \/ native-sensitive files changed/);
+    NodeAssert.match(checklist, /Fork hot files touched.*Orchestrator\.ts/);
+    NodeAssert.match(checklist, /Upstream `README\.md` changed/);
+    NodeAssert.match(checklist, /Merge manually with a merge commit/);
+  },
+);
 
 NodeTest.test("stops on unexpected changes in an existing update branch", async () => {
   const fixture = await createSyncFixture();
@@ -1699,15 +1610,21 @@ NodeTest.test("a non-conflicting stable merge retains fork files", async () => {
   }
 });
 
-NodeTest.test("sync completion listens only to the distinct Fork CI workflow", async () => {
-  const workflow = await NodeFSP.readFile(
-    new URL("../.github/workflows/upstream-stable-sync.yml", import.meta.url),
-    "utf8",
-  );
-  NodeAssert.match(workflow, /workflows: \[Fork CI\]/);
-  NodeAssert.match(workflow, /scripts\/update-flake-pnpm-hash\.test\.mjs/);
-  NodeAssert.match(workflow, /cachix\/install-nix-action@/);
-});
+NodeTest.test(
+  "sync completion listens only to the distinct Fork CI workflow and requires manual merge",
+  async () => {
+    const workflow = await NodeFSP.readFile(
+      new URL("../.github/workflows/upstream-stable-sync.yml", import.meta.url),
+      "utf8",
+    );
+    NodeAssert.match(workflow, /workflows: \[Fork CI\]/);
+    NodeAssert.match(workflow, /scripts\/update-flake-pnpm-hash\.test\.mjs/);
+    NodeAssert.match(workflow, /cachix\/install-nix-action@/);
+    NodeAssert.doesNotMatch(workflow, /\bmerge_after_ci:/);
+    NodeAssert.doesNotMatch(workflow, /UPSTREAM_SYNC_MODE:\s*merge-on-ci/);
+    NodeAssert.doesNotMatch(workflow, /automation\/upstream-stable-\*/);
+  },
+);
 
 NodeTest.test(
   "validateSyncBranch accepts a flake.nix hash commit only when pnpm-lock.yaml changed and only pnpmDeps.hash differs",
