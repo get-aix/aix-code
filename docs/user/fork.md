@@ -170,7 +170,7 @@ vp run dev
 
 Open the URL printed at startup (`main` contains unreleased fork changes). Give each independent T3
 server its own `T3CODE_HOME` if you run an upstream server on the same machine. On NixOS, you can
-use the minimal [devenv shell](../operations/devenv.md).
+use the [devenv shell](../operations/devenv.md).
 
 To update a clean checkout:
 

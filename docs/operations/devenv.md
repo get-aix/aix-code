@@ -1,8 +1,9 @@
 # Reproducible NixOS development environment
 
-The repository includes a minimal pinned `devenv` shell for development on NixOS. It provides
-Node.js 26, pnpm 12, `git`, `pkg-config`, and `libsecret`. It does not install project
-dependencies or start T3 Code automatically.
+The repository includes a pinned `devenv` shell for development on NixOS. It provides Node.js 26,
+pnpm 12, `git`, `pkg-config`, `libsecret`, and the shared libraries the headless Chromium used by
+the Vitest browser tests (`*.browser.test.tsx`) needs. It does not install project dependencies or
+start T3 Code automatically.
 
 From the repository root, enter the shell and install dependencies:
 
