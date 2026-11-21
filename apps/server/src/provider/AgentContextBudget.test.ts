@@ -49,7 +49,16 @@ import { buildCodexAdditionalContext } from "./CodexDeveloperInstructions.ts";
 import { DocumentText } from "./DocumentText.ts";
 import { EnvironmentThemeService } from "../environmentTheme.ts";
 import { ProviderRegistry } from "./ProviderRegistry.ts";
-import budget from "./agentContextBudget.json" with { type: "json" };
+import upstreamBudget from "./agentContextBudget.json" with { type: "json" };
+
+// Fork-only MCP tools (request_model_lane) add to the upstream tool list. The delta lives here,
+// not in agentContextBudget.json, so that file stays identical to upstream and syncs cleanly.
+// Growth past this delta still fails the test.
+const FORK_MCP_TOOL_LIST_ALLOWANCE_BYTES = 1379;
+const budget = {
+  ...upstreamBudget,
+  mcpToolListJsonBytes: upstreamBudget.mcpToolListJsonBytes + FORK_MCP_TOOL_LIST_ALLOWANCE_BYTES,
+};
 
 // Registration only stores tool definitions, so the handlers' services are never called.
 const toolHandlerServices = Layer.mergeAll(
@@ -159,7 +168,7 @@ it.effect("agent context matches the committed budget", () =>
 
     expect(
       measured,
-      "Set agentContextBudget.json to the measured values. Before you cut text to fit, run the evals that cover it (evals/README.md).",
+      "Measured values differ from agentContextBudget.json plus the fork allowance. Set the JSON to the upstream values and the allowance to the fork delta. Before you cut text to fit, run the evals that cover it (evals/README.md).",
     ).toEqual(budget);
   }).pipe(Effect.provide(layerAdvertisedTools)),
 );

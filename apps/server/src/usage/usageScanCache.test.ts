@@ -2,7 +2,9 @@ import { describe, expect, it } from "@effect/vitest";
 
 import {
   decodeScanCache,
+  LEGACY_SCAN_CACHE_FILE_NAMES,
   makeScanCacheWriter,
+  SCAN_CACHE_FILE_NAME,
   type CachedFile,
   type ScanCache,
 } from "./usageScanCache.ts";
@@ -107,7 +109,7 @@ describe("scan cache round trip", () => {
     });
     const state = initialCodexScanState();
     for (const line of [
-      { type: "session_meta", payload: { id: "session-c", model_provider: "t3_aix" } },
+      { type: "session_meta", payload: { id: "session-c", model_provider: "openai" } },
       { type: "turn_context", payload: { model: "gpt-6-astra", turn_id: "native-turn" } },
       {
         type: "event_msg",
@@ -122,7 +124,6 @@ describe("scan cache round trip", () => {
     const pending = {
       ...record({
         provider: "codex",
-        scope: "work",
         model: "gpt-6-astra",
         sessionId: "session-c",
         dedupeKey: null,
@@ -138,7 +139,6 @@ describe("scan cache round trip", () => {
       records: [
         record({
           provider: "codex",
-          scope: "work",
           model: "gpt-6-astra",
           rateModel: "gpt-6",
           dedupeKey: null,
@@ -425,4 +425,83 @@ describe("scan cache round trip", () => {
     const restored = decodeScanCache(JSON.parse(JSON.stringify(poisoned)), TEST_FORMAT_MAP);
     expect(restored.has("/a.jsonl")).toBe(false);
   });
+
+  it("round-trips work scope per record in the fork's document", () => {
+    const cache = cacheWith([
+      [
+        "/mixed.jsonl",
+        100,
+        [record(), record({ scope: "work", dedupeKey: "msg_2:" }), record({ dedupeKey: "msg_3:" })],
+      ],
+    ]);
+    const document = parse(makeScanCacheWriter()(cache, {}));
+
+    expect(document).toMatchObject({ version: 17, forkVersion: 1 });
+    expect(document.files["/mixed.jsonl"]).toMatchObject({ ws: [1], tws: [] });
+    expect(decodeScanCache(document, TEST_FORMAT_MAP)).toEqual(cache);
+  });
+
+  it("decodes an upstream v17 document, which carries no work scope", () => {
+    const encoded = parse(
+      makeScanCacheWriter()(cacheWith([["/a.jsonl", 100, [record({ scope: "work" })]]]), {}),
+    );
+    const upstream = JSON.parse(
+      JSON.stringify({
+        ...encoded,
+        forkVersion: undefined,
+        files: Object.fromEntries(
+          Object.entries(encoded.files).map(([path, file]) => [
+            path,
+            { ...(file as object), ws: undefined, tws: undefined },
+          ]),
+        ),
+      }),
+    );
+
+    expect(decodeScanCache(upstream, TEST_FORMAT_MAP)).toEqual(
+      cacheWith([["/a.jsonl", 100, [record()]]]),
+    );
+  });
+
+  it("keeps the fork cache out of upstream's v17 and v18 file names", () => {
+    expect(SCAN_CACHE_FILE_NAME).toBe("usage-scan-cache-aix-v1.json");
+    expect(LEGACY_SCAN_CACHE_FILE_NAMES).not.toContain("usage-scan-cache-v17.json");
+    expect(LEGACY_SCAN_CACHE_FILE_NAMES).not.toContain("usage-scan-cache-v18.json");
+  });
+
+  it.each([
+    ["non-array ws", { ws: "corrupt" }],
+    ["non-integer ws", { ws: [0.5] }],
+    ["string element in ws", { ws: ["0"] }],
+    ["negative ws", { ws: [-1] }],
+    ["out-of-range ws", { ws: [1] }],
+    ["non-array tws", { tws: 123 }],
+    ["out-of-range tws", { tws: [0] }],
+  ])("rejects an entry with corrupt work indexes (%s)", (_label, patch) => {
+    const encoded = parse(
+      makeScanCacheWriter()(cacheWith([["/a.jsonl", 100, [record({ scope: "work" })]]]), {}),
+    );
+    const poisoned = {
+      ...encoded,
+      files: {
+        "/a.jsonl": {
+          ...encoded.files["/a.jsonl"]!,
+          ...patch,
+        },
+      },
+    };
+
+    expect(decodeScanCache(JSON.parse(JSON.stringify(poisoned)), TEST_FORMAT_MAP).size).toBe(0);
+  });
+
+  it.each([0, 2, 1.5, "1", null])(
+    "rejects a document with unsupported forkVersion (%s)",
+    (forkVersion) => {
+      const encoded = parse(makeScanCacheWriter()(cacheWith([["/a.jsonl", 100, [record()]]]), {}));
+      expect(
+        decodeScanCache(JSON.parse(JSON.stringify({ ...encoded, forkVersion })), TEST_FORMAT_MAP)
+          .size,
+      ).toBe(0);
+    },
+  );
 });

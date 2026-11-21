@@ -610,6 +610,28 @@ describe("UsageService", () => {
             },
           })}
         )`;
+        yield* sql`INSERT INTO orchestration_v2_projection_provider_threads (
+          provider_thread_id, thread_id, owner_node_id, provider, driver,
+          provider_instance_id, provider_session_id, status, first_run_ordinal,
+          last_run_ordinal, updated_at, payload_json
+        ) VALUES (
+          'custom-aix-provider-thread', 'custom-aix-thread', NULL, 'aix-custom', 'claudeAgent',
+          'aix-custom', 'custom-aix-provider-session', 'idle', 1,
+          1, '2026-08-01T10:00:00.000Z', ${encodeUnknownJsonString({
+            id: "custom-aix-provider-thread",
+            driver: "claudeAgent",
+            providerInstanceId: "aix-custom",
+            providerSessionId: "custom-aix-provider-session",
+            nativeThreadRef: {
+              driver: "claudeAgent",
+              nativeId: "claude-personal-session",
+              strength: "strong",
+            },
+          })}
+        )`;
+        if (!configured) {
+          yield* sql`ALTER TABLE orchestration_v2_projection_provider_threads RENAME TO saved_provider_threads`;
+        }
         const service = yield* UsageService.make;
         return yield* service.readSummary(WINDOW);
       }).pipe(
@@ -626,12 +648,15 @@ describe("UsageService", () => {
 
       assert.deepStrictEqual(
         summary.buckets.map(({ provider, scope }) => `${provider}:${scope}`).sort(),
-        ["claude:personal", "claude:work", "codex:personal", "codex:work"],
+        configured
+          ? ["claude:personal", "claude:work", "codex:personal", "codex:work"]
+          : ["claude:personal", "codex:personal", "codex:work"],
       );
       const claudeSource = summary.sources.find(
         ({ fingerprint }) => fingerprint.provider === "claude",
       );
-      assert.deepStrictEqual(claudeSource?.distinctSessionsByScope, { personal: 1, work: 1 });
+      assert.equal(claudeSource?.distinctSessionsByScope?.personal, configured ? 1 : 2);
+      assert.equal(claudeSource?.distinctSessionsByScope?.work, configured ? 1 : 0);
     }),
   );
 
@@ -3564,7 +3589,7 @@ describe("UsageService", () => {
             60 + 20 * (version === 4 ? 1 : 2),
           );
           yield* upgraded.awaitPersisted;
-          assert.strictEqual(SCAN_CACHE_FILE_NAME, "usage-scan-cache-v18.json");
+          assert.strictEqual(SCAN_CACHE_FILE_NAME, "usage-scan-cache-aix-v1.json");
           assert.deepStrictEqual(
             (yield* Effect.promise(() => NodeFSP.readdir(stateDir)))
               .filter((name) => name.startsWith("usage-scan-cache"))
