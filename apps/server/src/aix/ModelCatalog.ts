@@ -122,8 +122,8 @@ export function catalogModels(models: readonly ListedModel[]): CatalogModel[] {
     .map(toModel)
     .sort(
       (left, right) =>
-        left.displayName.localeCompare(right.displayName, "de", { numeric: true }) ||
-        left.id.localeCompare(right.id),
+        left.displayName.localeCompare(right.displayName, "en", { numeric: true }) ||
+        left.id.localeCompare(right.id, "en"),
     );
 }
 

@@ -148,6 +148,62 @@ it.effect("resolves distinct LiteLLM endpoints and the official Anthropic endpoi
   }),
 );
 
+it.effect("accepts HTTPS and loopback HTTP endpoints but rejects remote HTTP", () =>
+  Effect.gen(function* () {
+    for (const endpoint of [
+      "https://gateway.example.test",
+      "http://127.0.0.1:4000",
+      "http://localhost:4000",
+      "http://[::1]:4000",
+    ]) {
+      const resolved = yield* withAix(resolveEnvironment("endpoint-test"), () => ({
+        stdout: JSON.stringify({
+          AIX_PROFILE: "endpoint-test",
+          OPENAI_BASE_URL: endpoint,
+          OPENAI_API_KEY: secretSentinel,
+        }),
+      }));
+      assert.equal(resolved.endpoint, endpoint);
+    }
+
+    for (const [envKey, endpoint] of [
+      ["OPENAI_BASE_URL", "http://gateway.example.test"],
+      ["OPENAI_BASE_URL", "HTTP://gateway.example.test"],
+      ["OPENAI_BASE_URL", "http://localhost.example.test"],
+      ["ANTHROPIC_BASE_URL", "http://gateway.example.test"],
+    ] as const) {
+      const rejected = yield* Effect.result(
+        withAix(resolveEnvironment("endpoint-test"), () => ({
+          stdout: JSON.stringify({
+            AIX_PROFILE: "endpoint-test",
+            [envKey]: endpoint,
+            OPENAI_API_KEY: secretSentinel,
+            ANTHROPIC_API_KEY: secretSentinel,
+          }),
+        })),
+      );
+      assert.equal(Result.isFailure(rejected) && rejected.failure.reason, "insecure-endpoint");
+    }
+
+    for (const invalidUrl of [
+      "not-a-url",
+      "https://user:pass@gateway.example.test",
+      "file:///etc/passwd",
+    ]) {
+      const rejected = yield* Effect.result(
+        withAix(resolveEnvironment("endpoint-test"), () => ({
+          stdout: JSON.stringify({
+            AIX_PROFILE: "endpoint-test",
+            OPENAI_BASE_URL: invalidUrl,
+            OPENAI_API_KEY: secretSentinel,
+          }),
+        })),
+      );
+      assert.equal(Result.isFailure(rejected) && rejected.failure.reason, "invalid-endpoint");
+    }
+  }),
+);
+
 it.effect("classifies an otherwise unknown endpoint by the gateway kind aix reports", () =>
   Effect.gen(function* () {
     const kind = (gatewayKind: string) =>

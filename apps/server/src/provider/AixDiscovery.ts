@@ -18,6 +18,7 @@ const FailureReason = Schema.Literals([
   "invalid-json",
   "invalid-schema",
   "invalid-endpoint",
+  "insecure-endpoint",
   "output-too-large",
 ]);
 
@@ -341,6 +342,11 @@ const classifyEndpoint = (endpoint: URL, gatewayKind: string | undefined): AixEn
   return gatewayKind === "litellm" ? "litellm" : "unknown";
 };
 
+const isSecureEndpoint = (endpoint: URL): boolean =>
+  endpoint.protocol === "https:" ||
+  (endpoint.protocol === "http:" &&
+    ["localhost", "127.0.0.1", "[::1]"].includes(endpoint.hostname));
+
 export const resolveEnvironment = Effect.fn("AixDiscovery.resolveEnvironment")(function* (
   profileName: string,
 ): Effect.fn.Return<
@@ -371,6 +377,9 @@ export const resolveEnvironment = Effect.fn("AixDiscovery.resolveEnvironment")(f
     endpoint.password.length > 0
   ) {
     return yield* new AixDiscoveryError({ reason: "invalid-endpoint" });
+  }
+  if (!isSecureEndpoint(endpoint)) {
+    return yield* new AixDiscoveryError({ reason: "insecure-endpoint" });
   }
 
   const endpointKind = classifyEndpoint(endpoint, environment.AIX_GATEWAY_KIND);

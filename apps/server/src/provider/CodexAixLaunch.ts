@@ -116,18 +116,15 @@ export const resolveCodexAixLaunch = Effect.fn("CodexAixLaunch.resolve")(functio
   }
 
   const resolved = yield* AixDiscovery.resolveEnvironment(profileName).pipe(
-    Effect.mapError(() => new CodexAixLaunchError({ reason: "invalid-profile" })),
+    Effect.mapError(
+      (cause) =>
+        new CodexAixLaunchError({
+          reason: cause.reason === "insecure-endpoint" ? "insecure-endpoint" : "invalid-profile",
+        }),
+    ),
   );
   if (resolved.endpointKind === "anthropic") {
     return yield* new CodexAixLaunchError({ reason: "unsupported-endpoint" });
-  }
-
-  const endpoint = new URL(resolved.endpoint);
-  if (
-    endpoint.protocol === "http:" &&
-    !["localhost", "127.0.0.1", "[::1]"].includes(endpoint.hostname)
-  ) {
-    return yield* new CodexAixLaunchError({ reason: "insecure-endpoint" });
   }
 
   const environment = { ...input.environment };

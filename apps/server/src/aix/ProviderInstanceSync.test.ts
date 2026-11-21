@@ -40,6 +40,7 @@ import {
   planAixInstanceSync,
   routeAixModels,
   runAixCatalogRefreshLoop,
+  syncAixFromEnvironment,
   syncAixProviderInstances,
   withAixCatalogStatus,
 } from "./ProviderInstanceSync.ts";
@@ -757,6 +758,52 @@ describe("syncAixProviderInstances", () => {
     } satisfies ServerSettingsService["Service"];
     return { counted, writes, payloads };
   });
+
+  effectIt.effect("enables AIX sync by default when T3CODE_AIX is unset", () =>
+    Effect.gen(function* () {
+      yield* syncAixFromEnvironment({}, sourceFor());
+      const defaultSettings = yield* (yield* ServerSettingsService).getSettings;
+      expect(
+        defaultSettings.providerInstances[ProviderInstanceId.make("aix-codex-work")],
+      ).toBeDefined();
+    }).pipe(Effect.provide(aixTestLayer)),
+  );
+
+  effectIt.effect(
+    "opts out of AIX sync without probing aix and disables previously synced instances when T3CODE_AIX is 0 or false",
+    () =>
+      Effect.gen(function* () {
+        const listProfilesCalls = yield* Ref.make(0);
+        const baseSource = sourceFor();
+        const trackedSource: AixSyncSource = {
+          ...baseSource,
+          listProfiles: Ref.update(listProfilesCalls, (n) => n + 1).pipe(
+            Effect.andThen(baseSource.listProfiles),
+          ),
+        };
+
+        for (const value of ["0", " 0 ", "false", "FALSE", " false "]) {
+          yield* syncAixFromEnvironment({ T3CODE_AIX: value }, trackedSource);
+        }
+        expect(yield* Ref.get(listProfilesCalls)).toBe(0);
+        const initialSettings = yield* (yield* ServerSettingsService).getSettings;
+        expect(
+          initialSettings.providerInstances[ProviderInstanceId.make("aix-codex-work")],
+        ).toBeUndefined();
+
+        // Sync once enabled, then disable via T3CODE_AIX=0 and verify managed instances are disabled without probing aix.
+        yield* syncAixFromEnvironment({}, trackedSource);
+        expect(yield* Ref.get(listProfilesCalls)).toBe(1);
+        yield* syncAixFromEnvironment({ T3CODE_AIX: "0" }, trackedSource);
+        expect(yield* Ref.get(listProfilesCalls)).toBe(1);
+        const afterOptOut = yield* (yield* ServerSettingsService).getSettings;
+        const managed = afterOptOut.providerInstances[ProviderInstanceId.make("aix-codex-work")];
+        expect(managed?.enabled).toBe(false);
+        expect((managed?.config as Record<string, unknown> | undefined)?.aixDisabledBySync).toBe(
+          true,
+        );
+      }).pipe(Effect.provide(aixTestLayer)),
+  );
 
   effectIt.effect("creates instances for both profiles, and a refresh writes nothing", () =>
     Effect.gen(function* () {

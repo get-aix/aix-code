@@ -49,15 +49,14 @@ export const resolveClaudeProviderInstanceEnvironment = Effect.fn(
     return yield* new ClaudeAixProfileError({ reason: "invalid-reference" });
   }
 
-  const resolved = yield* AixDiscovery.resolveEnvironment(profileReference.value.trim());
+  const resolved = yield* AixDiscovery.resolveEnvironment(profileReference.value.trim()).pipe(
+    Effect.mapError((cause) =>
+      cause.reason === "insecure-endpoint"
+        ? new ClaudeAixProfileError({ reason: "insecure-endpoint" })
+        : cause,
+    ),
+  );
   const directAnthropic = resolved.endpointKind === "anthropic";
-  const endpoint = new URL(resolved.endpoint);
-  if (
-    endpoint.protocol === "http:" &&
-    !["localhost", "127.0.0.1", "[::1]"].includes(endpoint.hostname)
-  ) {
-    return yield* new ClaudeAixProfileError({ reason: "insecure-endpoint" });
-  }
 
   return [
     ...(environment ?? []).filter(

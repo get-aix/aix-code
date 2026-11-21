@@ -7,6 +7,7 @@ import {
   type ServerProvider,
 } from "@t3tools/contracts";
 import * as NodeUtil from "node:util";
+import * as HostProcess from "@t3tools/shared/HostProcess";
 import * as Context from "effect/Context";
 import * as DateTime from "effect/DateTime";
 import * as Duration from "effect/Duration";
@@ -33,6 +34,7 @@ import { type AixModelRoute, routeCatalogModel } from "./ModelRouting.ts";
 
 /** Read by the Codex, Claude, and OpenCode drivers at launch. */
 const AIX_PROFILE_VARIABLE = "T3_AIX_PROFILE";
+const AIX_ENABLED_ENVIRONMENT_VARIABLE = "T3CODE_AIX";
 
 const CODEX = ProviderDriverKind.make("codex");
 const CLAUDE_CODE = ProviderDriverKind.make("claudeAgent");
@@ -520,6 +522,30 @@ export const syncAixProviderInstances = Effect.fn("AixProviderInstanceSync.sync"
   },
 );
 
+/** AIX sync defaults on; the host can temporarily disable it with `T3CODE_AIX=0` or `false`. */
+const isAixEnabled = (environment: Readonly<Record<string, string | undefined>>): boolean => {
+  const enabledValue = environment[AIX_ENABLED_ENVIRONMENT_VARIABLE]?.trim().toLowerCase();
+  return enabledValue !== "0" && enabledValue !== "false";
+};
+
+export const syncAixFromEnvironment = Effect.fn("AixProviderInstanceSync.syncFromEnvironment")(
+  function* (
+    environment: Readonly<Record<string, string | undefined>>,
+    source: AixSyncSource,
+    options: {
+      readonly cache?: AixSyncCache;
+      readonly force?: boolean;
+      readonly onStatusChange?: (profile: string) => Effect.Effect<void>;
+    } = {},
+  ) {
+    yield* syncAixProviderInstances({
+      enabled: isAixEnabled(environment),
+      source,
+      ...options,
+    });
+  },
+);
+
 const liveSource = Effect.gen(function* () {
   const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
   return {
@@ -600,6 +626,7 @@ export const streamAixProfileStatusChanges = (profileName: string) =>
   );
 
 const make = Effect.gen(function* () {
+  const environment = yield* HostProcess.Environment;
   const settings = yield* ServerSettingsService;
   const digest = yield* Digest.Digest;
   const backgroundPolicy = yield* BackgroundPolicy.BackgroundPolicy;
@@ -610,9 +637,7 @@ const make = Effect.gen(function* () {
   const refresh = Effect.fn("AixProviderInstanceSync.refresh")(function* (input: {
     readonly force: boolean;
   }) {
-    yield* syncAixProviderInstances({
-      enabled: true,
-      source,
+    yield* syncAixFromEnvironment(environment, source, {
       cache,
       force: input.force,
       onStatusChange: (profile) =>
@@ -625,11 +650,13 @@ const make = Effect.gen(function* () {
   });
 
   yield* refresh({ force: false }).pipe(Effect.forkScoped);
-  yield* runAixCatalogRefreshLoop({
-    cache,
-    shouldRunScopeWork: backgroundPolicy.shouldRunScopeWork({ type: "provider-status" }),
-    refresh,
-  }).pipe(Effect.forkScoped);
+  if (isAixEnabled(environment)) {
+    yield* runAixCatalogRefreshLoop({
+      cache,
+      shouldRunScopeWork: backgroundPolicy.shouldRunScopeWork({ type: "provider-status" }),
+      refresh,
+    }).pipe(Effect.forkScoped);
+  }
 
   return AixProviderInstanceSync.of({
     refresh,

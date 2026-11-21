@@ -157,19 +157,17 @@ export const resolveOpenCodeAixEnvironment = Effect.fn("OpenCodeAixLaunch.resolv
     }
 
     const resolved = yield* AixDiscovery.resolveEnvironment(input.profileName).pipe(
-      Effect.mapError(() => new OpenCodeAixLaunchError({ reason: "profile-unavailable" })),
+      Effect.mapError(
+        (cause) =>
+          new OpenCodeAixLaunchError({
+            reason:
+              cause.reason === "insecure-endpoint" ? "insecure-endpoint" : "profile-unavailable",
+          }),
+      ),
     );
     if (resolved.endpointKind === "anthropic") {
       return yield* new OpenCodeAixLaunchError({ reason: "unsupported-endpoint" });
     }
-    const endpoint = new URL(resolved.endpoint);
-    if (
-      endpoint.protocol === "http:" &&
-      !["localhost", "127.0.0.1", "[::1]"].includes(endpoint.hostname)
-    ) {
-      return yield* new OpenCodeAixLaunchError({ reason: "insecure-endpoint" });
-    }
-
     const path = yield* Path.Path;
     const fileSystem = yield* FileSystem.FileSystem;
     const profileRoot = path.join(
