@@ -6,8 +6,9 @@ The `Nitestack Android APK` workflow builds a signed, sideloadable Android APK o
 redirect. It cannot be installed alongside the Play Store app, and Android refuses to update one
 with the other because the signing keys differ. Run it manually from
 `main` for the standalone Actions artifact `t3-code-android-<run-id>`, containing
-`T3-Code-<version>.apk`, its checksum, and metadata. The existing upstream `Release` workflow
-reuses this Android build and also builds the Windows installer and matching Nix package. Its
+`T3-Code-<version>.apk`, its checksum, and metadata. The `Fork Release` workflow
+(`.github/workflows/fork-release.yml`) reuses this Android build and also builds the Windows
+installer, macOS arm64 zip, Linux x64 CLI runtime, and matching Nix package. Its
 default is build-only: download `t3-code-installers-<version>-<12-character-commit>` from the
 Actions run to test `T3-Code-<version>.apk` and `T3-Code-<version>-x64.exe` without creating a tag,
 draft, or GitHub release. If the source has no upstream sync marker, supply the full 40-character
@@ -18,10 +19,13 @@ release version.
 
 The canonical Android app version comes from the stable application version, which the release workflow
 checks against the server, desktop, web, and contracts manifests. Android `versionCode` is
-`MAJOR * 1000000 + MINOR * 1000 + PATCH`, so each increasing release version produces a larger code.
-Minor and patch components must be at most 999, and the result must be within Android's positive
-version-code range. Prerelease versions are rejected. The workflow verifies the APK's embedded name
-and code against the selected Expo configuration before uploading it.
+`(MAJOR * 1000000 + MINOR * 1000 + PATCH) * 100 + revision`. A stable release uses revision `99`, so
+`0.1.10` is `101099`. A fork fix `X.Y.(Z+1)-aix.N` uses revision `N` (1 to 98), so `0.1.11-aix.1` is
+`101101`: it installs over `0.1.10` and sorts below upstream `0.1.11` (`101199`). Minor and patch
+components must be at most 999, and the result must be within Android's positive version-code range.
+Only `MAJOR.MINOR.PATCH` and `MAJOR.MINOR.PATCH-aix.N` versions are accepted; other prerelease
+suffixes are rejected. The workflow verifies the APK's embedded name and code against the selected
+Expo configuration before uploading it.
 
 ## Configure the signing key
 
@@ -61,9 +65,9 @@ Android refuses to install a lower `versionCode` over a newer one. A canonical f
 
 - **The build stops before installing dependencies.** One of the four signing secrets is missing or empty. Check the secret names, not their values.
 - **"APK signature does not match the configured upload keystore".** The `ANDROID_KEY_ALIAS` or a password belongs to a different key than `ANDROID_KEYSTORE_BASE64`. The log prints both certificate digests. Compare them with `keytool -list -v` on the backed-up keystore.
-- **Generating the Android project fails on the version.** The tag or `version` input is not plain `MAJOR.MINOR.PATCH`, or a component is above 999. Push a corrected tag.
+- **Generating the Android project fails on the version.** The tag or `version` input is not `MAJOR.MINOR.PATCH` or `MAJOR.MINOR.PATCH-aix.N` (N from 1 to 98), or a component is above 999. Push a corrected tag.
 - **"APK version does not match".** The built APK's version name or code differs from the Expo configuration. Check that no config plugin or Gradle setting overrides them.
 - **Android reports "App not installed" or a package conflict.** The installed app has a different signing certificate or a higher `versionCode`. See [Update and rollback](#update-and-rollback) and [Key rotation](#key-rotation-and-integrations).
 - **The release workflow rejects the source.** The exact commit must be contained in fork `main`,
-  have a successful `CI` run on `main`, and use the same stable version across the application
+  have a successful `Fork CI` run on `main`, and use the same stable version across the application
   manifests. See the [fork release runbook](./fork-release.md#release-checklist).

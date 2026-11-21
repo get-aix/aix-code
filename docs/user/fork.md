@@ -55,9 +55,23 @@ Your threads, projects, and settings carry over, because the fork uses the same 
 Projects start in the Personal scope. Move your work projects to Work as described in
 [Personal and Work](./work-personal.md#move-a-project).
 
-To go back to upstream T3 Code, uninstall the fork and install upstream the same way. Upstream
-doesn't know aix profiles or scopes, so aix providers stop working and all projects show together.
-Your own provider sign-ins keep working.
+To go back to upstream T3 Code, quit T3 Code, uninstall the fork, and install upstream the same
+way. Upstream doesn't know aix profiles, scopes, budgets, or model lane requests, so aix providers
+stop working and all projects show together. Your own provider sign-ins keep working.
+
+Fork schema changes are tracked in a separate `fork_migrations` ledger so upstream migrations remain
+aligned, and the fork usage scan cache is stored separately (`usage-scan-cache-aix-v1.json`) without
+modifying upstream's cache files. If any threads contain fork-only `lane_request` items—or if you
+want to strip all fork database state before opening the database in upstream T3 Code—run:
+
+```sh
+t3 fork-eject --dry-run
+t3 fork-eject
+```
+
+To pause aix without switching builds, set `T3CODE_AIX=0` on the server or turn off the aix provider
+instances in Settings → Providers. Sync keeps manually disabled instances off until you turn them
+back on.
 
 ## Updates
 

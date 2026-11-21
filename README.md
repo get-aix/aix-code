@@ -127,8 +127,8 @@ switch over from upstream T3 Code.
    aix status acme
    ```
 
-3. Start T3 Code. The desktop app and Nix package turn aix on for you. If you run `t3` yourself,
-   set `T3CODE_AIX=1`. Restart T3 after installing aix so it finds the command.
+3. Start T3 Code. aix integration is on by default (set `T3CODE_AIX=0` to disable it). Restart T3
+   after installing aix so it finds the command.
 
 4. Add a project, then move it to Work from the command palette (`Ctrl+K` / `⌘K`, **Move project
    to Work**) or **Project settings → Project scope**.

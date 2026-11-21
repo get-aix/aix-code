@@ -9,18 +9,37 @@ The Nix package is `t3code-<version>` and uses the upstream `t3` and `t3code-des
 T3 Code app name, and default state directory. Install it instead of upstream T3 Code; the Android
 APK uses the official package ID and replaces the store app.
 
+## Workflows
+
+Upstream workflow files stay untouched in git so merges do not conflict on them; disable upstream
+workflows in GitHub repository settings using `scripts/configure-fork-github.sh` (supports
+`--dry-run`). Fork-owned workflows use distinct names:
+
+- `Fork CI` (`.github/workflows/fork-ci.yml`) runs the five required checks (`Fork Quality`,
+  `Fork Server`, `Fork Web`, `Fork Desktop Build`, and `Fork Mobile Type and Unit`) on fork pull
+  requests and `main`.
+- `Fork Release` (`.github/workflows/fork-release.yml`) builds the Windows, macOS, Linux CLI,
+  Android, and Nix artifacts and publishes only when `publish` is checked or automatic publication
+  is enabled. It calls `Fork Release Desktop` (`fork-release-desktop.yml`) per desktop target and
+  `Nitestack Android APK` (`mobile-android-fork.yml`) for the APK.
+- `Upstream Stable Sync` (`.github/workflows/upstream-stable-sync.yml`) opens and merges sync pull
+  requests on `Fork CI` completion; see [Stable upstream sync](#stable-upstream-sync).
+
 ## Release checklist
 
 1. Start from a reviewed commit on fork `main`, and verify the remotes as in the
    [fork bootstrap](../fork/README.md#bootstrap-from-an-upstream-clone).
-2. Confirm `CI` passed on that exact commit. The release workflow verifies the four fork jobs on
-   its exact source commit and rejects a source commit outside `main`.
+2. Confirm `Fork CI` passed on that exact commit. The release workflow verifies all five fork jobs
+   on its exact source commit and rejects a source commit outside `main`.
 3. Confirm `apps/server`, `apps/desktop`, `apps/web`, and `packages/contracts` use the same stable
    `MAJOR.MINOR.PATCH` version. The Nix flake reads its package version from the server manifest.
+   When `pnpm-lock.yaml` changes during an upstream sync, `scripts/upstream-stable-sync.mjs` runs
+   `scripts/update-flake-pnpm-hash.mjs` to update `pnpmDeps.hash` in `flake.nix` automatically (for
+   manual lockfile changes, run `node scripts/update-flake-pnpm-hash.mjs`).
 4. Run the redaction tests and the diff sweep from [Security checks](#security-checks).
 5. If user-visible behavior changed, update "What this fork changes" in the
    [fork guide](../user/fork.md#what-this-fork-changes).
-6. In GitHub Actions, run `Release` from `main`, choose channel `stable`, and leave `publish`
+6. In GitHub Actions, run `Fork Release` from `main`, choose channel `stable`, and leave `publish`
    unchecked. Enter the matching application version if you want it shown in the Actions run title. The
    workflow builds the signed Android APK, Linux x64 CLI runtime (for Windows WSL), Windows x64 installer, macOS arm64 zip, and Nix package from the exact
    source commit, verifies their version and source metadata, and uploads one build-only artifact.
@@ -34,7 +53,7 @@ APK uses the official package ID and replaces the store app.
    signing credentials it is expected to be unsigned. The macOS app is signed with the fork's self-signed `T3 Code Fork` certificate (secrets `MACOS_SELF_SIGNED_CERTIFICATE` and `MACOS_SELF_SIGNED_CERTIFICATE_PASSWORD`) and is not notarized. Keep that certificate: installed Macs accept in-app updates only from builds signed with the same one, so a new certificate means every Mac must reinstall with the script. The Android APK is signed with the fork's
    upload certificate. Check both checksums and metadata before local installation.
 8. After local acceptance, record the build-only run ID, exact commit, and source branch from
-   `BUILD-INFO.md`. Request explicit authorization before publishing. Dispatch `Release` on
+   `BUILD-INFO.md`. Request explicit authorization before publishing. Dispatch `Fork Release` on
    `main` with channel `stable`, the same version, `publish` checked, the recorded
    `source_commit` and `source_branch`, and `artifact_run_id` set to the tested build-only run.
    The publisher verifies that run's successful Nix and installer verification jobs, downloads the
@@ -84,36 +103,34 @@ compute.
 
 ## Stable upstream sync
 
-`Upstream stable sync` (`.github/workflows/upstream-stable-sync.yml`) scans published releases
+`Upstream Stable Sync` (`.github/workflows/upstream-stable-sync.yml`) scans published releases
 daily. An empty stable list or no newer stable version succeeds without writing anything. A manual
 run is a dry run unless `dry_run` is cleared, and `target_tag` can select a published stable tag.
 Drafts, prereleases, and tags with test labels are ignored.
 
 When a newer compatible stable release exists, the workflow creates a stable-tag branch and pull request.
-The push to that exact branch runs the four fork jobs: `Fork Server`, `Fork Web`, `Fork Desktop
-Build`, and `Fork Mobile Type and Unit`. The completion handler accepts only the latest successful
+The push to that exact branch runs the five `Fork CI` jobs: `Fork Quality`, `Fork Server`,
+`Fork Web`, `Fork Desktop Build`, and `Fork Mobile Type and Unit`. The completion handler accepts only the latest successful
 push run attempt for the current PR head, verifies each named job individually, checks that the PR
 is up to date with `main`, and uses GitHub's ordinary protected merge endpoint. Failed, skipped,
 cancelled, missing, stale, or other-head checks never permit the merge. Conflicts stop before merge
 for a maintainer to repair. The automated job does not request an administrative bypass.
 
 If `main` advances while the sync checks are running, the handler leaves the PR open and unmerged.
-Update its branch and let the resulting push run all four checks again before the next merge attempt.
+Update its branch and let the resulting push run all five checks again before the next merge attempt.
 
 Fork `main` accepts only published upstream stable tags; never merge upstream `main`. A tag is
-eligible only when it contains every upstream commit already present in fork `main`. The first
-release can be cut only at the first stable tag that contains all upstream commits already merged
-into fork `main`.
+eligible only when it contains every upstream commit already present in fork `main`.
 
-After the sync PR merges, the main push runs all four Fork CI jobs on its integration merge commit.
-Only that exact successful main CI run queues the existing `Release` workflow, passing the fork
+After the sync PR merges, the main push runs all five `Fork CI` jobs on its integration merge commit.
+Only that exact successful main CI run queues the `Fork Release` workflow, passing the fork
 integration commit as `source_commit`; the upstream tag commit is recorded only as `upstream_base`.
 The integration commit tree contains the fork changes and upstream through the stable tag. The
 workflow compares commits reachable from that source after the stable base with upstream `main`;
 any upstream-main commit beyond the selected stable tag fails the release preflight and reports the
 count and first short SHAs. This read-only history check never merges upstream `main`. Its default is
-build-only: Windows, signed Android, and Nix must all build before the combined Actions artifact is
-available. Automatic publication is off by default.
+build-only: Windows, macOS arm64, Linux x64 CLI (for WSL), signed Android, and Nix must all build
+before the combined Actions artifact is available. Automatic publication is off by default.
 Setting the `FORK_AUTO_PUBLISH_STABLE_RELEASES` repository variable to `true` is the user's explicit
 standing authorization for every eligible sync to publish; unset it to revoke that authorization.
 No workflow sets this variable. With it unset, each public release needs a separate authorized
@@ -125,7 +142,7 @@ The automation fails closed until these GitHub settings are configured by a repo
 this implementation does not change repository settings:
 
 - Configure classic branch protection for `main` with strict/up-to-date required status checks for
-  the four fork CI jobs above, sourced from the GitHub Actions app (app id `15368`). Leave
+  the five `Fork CI` jobs above, sourced from the GitHub Actions app (app id `15368`). Leave
   administrator enforcement disabled so maintainers can push directly to `main`. Require no
   additional PR approval and allow merge commits. If a repository ruleset applies, its bypass
   actors may only be repository admins
@@ -136,7 +153,7 @@ this implementation does not change repository settings:
   only on `get-aix/t3code`, with exactly `actions:write`, `administration:read`, `contents:write`,
   `pull_requests:write`, and `workflows:write`. Administration read inspects branch protection and rulesets. Contents
   and pull-request write push the sync branch and open and merge its PR. Actions write lets the
-  main-CI completion job dispatch the existing `Release` workflow. Workflows write lets the
+  main-CI completion job dispatch the `Fork Release` workflow. Workflows write lets the
   publisher set the release tag and `release` branch on a source commit whose workflow files differ
   from `main`, which `GITHUB_TOKEN` refuses. The branch-creation token is scoped to
   administration, contents, and pull requests. The App must not have repository administrator access and must not be a
@@ -200,7 +217,7 @@ change:
 | Fork and upstream web clients and servers interoperate                 | A live two-way matrix against upstream `449deb635e`: pairing, thread continuation, model picker, new thread, provider refresh                                                                                                           |
 | Native agent and model pairs                                           | [Native agent compatibility report](../fork/t01-native-agent-spike.md) and `apps/server/src/aix/ModelRouting.test.ts`                                                                                                                   |
 | Profile and model switching, with no silent fallback                   | `apps/server/src/orchestration-v2/testkit/ProviderSwitch.integration.test.ts` (aix cases)                                                                                                                                               |
-| Work/Personal never touches server state                               | `packages/client-runtime/src/environment/scope.test.ts`, `apps/web/src/environmentScope.test.ts`, the Android scope tests, and a live two-environment web scenario                                                                      |
+| Work/Personal never touches server state                               | `packages/client-runtime/src/environment/scope.test.ts`, the Android scope tests, and a live two-environment web scenario                                                                                                               |
 
 The Android APK and Windows installer still need manual install and acceptance checks on the user's
 devices. A successful hosted build does not count as an install smoke test. Record those checks
@@ -216,22 +233,16 @@ here still needs evidence before release:
 - **aix profile changes without a rebuild.** This needs a credential integration path that does
   not exist yet.
 
-## First release
+## Imported tag and release branch
 
 The clone contains an imported upstream `v0.1.9` tag. It is not a fork release, and it must not
-be moved, deleted, or force-pushed. Current `main` already includes upstream commit
-`f82162f0336c226ae1f2927f781a0fb660869a51`, which is beyond `v0.1.9`, so the first release must
-wait for and sync the first upstream stable tag that contains every upstream commit already in
-`main`. Start `Release` manually from a reviewed, green `main` commit
-with `publish` unchecked to build the Windows installer, signed APK, and same-version Nix package.
-Download the resulting Actions artifact and test it locally. No tag or release is created by this
-step. After explicit authorization, dispatch the stable workflow for the reviewed exact source with
-`publish` checked and `artifact_run_id` set to the accepted build-only run. It creates
-`vX.Y.Z` titled `T3 Code vX.Y.Z` from those same tested installer bytes. This first successful
-publication also creates the `release` branch. Later publications move it only when the new release
-is a fast-forward; publishing an older release leaves it unchanged. The branch never force-moves.
-Use `github:get-aix/t3code/release` to follow the latest published Nix build, or pin a release tag
-for reproducibility. `main` includes unreleased fork changes. The notes identify the fork commit,
+be moved, deleted, or force-pushed.
+
+Publishing creates `vX.Y.Z` titled `T3 Code vX.Y.Z` from the tested installer bytes. The `release`
+branch follows the latest published build: it moves only when the new release is a fast-forward,
+publishing an older release leaves it unchanged, and it never force-moves. Use
+`github:get-aix/t3code/release` to follow the latest published Nix build, or pin a release tag for
+reproducibility. `main` includes unreleased fork changes. The release notes identify the fork commit,
 source branch, upstream base, and build-only run, and the Nix command resolves the fork repository.
 
 Publishing reserves the tag before it creates the release. If a publish run fails between the
@@ -240,5 +251,5 @@ the Releases page that `vX.Y.Z` has no release, delete only that tag with
 `gh api -X DELETE repos/get-aix/t3code/git/refs/tags/vX.Y.Z`, then rerun the publish dispatch.
 
 The `Nitestack Android APK` workflow remains available for a standalone signed build artifact. Its
-legacy `t3-android-vMAJOR.MINOR.PATCH` tag route remains compatible; use the `Release` workflow for
-the Windows, Android, and Nix build-only artifact or for an authorized canonical fork release.
+legacy `t3-android-vMAJOR.MINOR.PATCH` tag route remains compatible; use the `Fork Release` workflow for
+the Windows, macOS, Android, and Nix build-only artifact or for an authorized canonical fork release.
