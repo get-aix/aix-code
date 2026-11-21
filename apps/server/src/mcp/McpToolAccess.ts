@@ -26,6 +26,7 @@ import {
   type DispatchModeRefusal,
 } from "../orchestration-v2/DispatchModeLimit.ts";
 import * as PeerForwarding from "../peer/PeerForwarding.ts";
+import { isAixLane, laneOfInstanceOrId } from "@t3tools/shared/modelLanes";
 import {
   assertFullAccessNamingLink,
   assertNotLinked,
@@ -478,7 +479,7 @@ const routed = Effect.fn("McpToolAccess.routed")(function* <Tools extends Record
             typeof selection.instanceId === "string"
               ? selection.instanceId
               : undefined;
-          if (instanceId?.startsWith("aix-")) {
+          if (instanceId !== undefined) {
             const capabilities = yield* forwarding.value.call(
               scope,
               RemoteCapabilitiesTool,
@@ -488,7 +489,7 @@ const routed = Effect.fn("McpToolAccess.routed")(function* <Tools extends Record
             const provider = capabilities.providers.find(
               (candidate) => candidate.providerInstanceId === instanceId,
             );
-            const aix = provider?.lane?.startsWith("aix:") ?? instanceId.startsWith("aix-");
+            const aix = isAixLane(provider?.lane ?? laneOfInstanceOrId(instanceId));
             if (aix && capabilities.features.modelLanes !== true) {
               return yield* new OrchestratorMcpFailure({
                 code: "model_lane_not_allowed",

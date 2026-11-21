@@ -264,6 +264,28 @@ describe("usage limit grouping", () => {
   it("keeps non-AIX provider labels out of classification", () => {
     expect(usageLimitGroupForProvider(provider({ displayName: "Work" }))).toBe("personal");
     expect(
+      usageLimitGroupForProvider(
+        provider({ instanceId: ProviderInstanceId.make("aix-custom"), usageLimits: undefined }),
+      ),
+    ).toBe("personal");
+    expect(
+      usageLimitGroupForProvider(
+        provider({
+          instanceId: ProviderInstanceId.make("aix-codex-custom"),
+          usageLimits: undefined,
+        }),
+      ),
+    ).toBe("personal");
+    expect(
+      usageLimitGroupForProvider(
+        provider({
+          instanceId: ProviderInstanceId.make("custom-work"),
+          aixProfile: "team",
+          usageLimits: undefined,
+        }),
+      ),
+    ).toBe("work");
+    expect(
       groupLimitAccounts([account("Persönlich"), account(), account(undefined, "aix-codex-work")]),
     ).toEqual({
       personal: [account()],

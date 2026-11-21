@@ -418,7 +418,10 @@ const linkedProbeServer = McpHttpServer.toolkitRegistration(
   ),
 );
 
-const remoteLaunchServer = (forwarded: Array<string>) =>
+const remoteLaunchServer = (
+  forwarded: Array<string>,
+  options: { readonly omitProviderLane?: boolean } = {},
+) =>
   McpHttpServer.toolkitRegistration(
     LinkedProbeToolkit,
     McpToolAccess.toLayer(LinkedProbeToolkit, {
@@ -451,7 +454,7 @@ const remoteLaunchServer = (forwarded: Array<string>) =>
               providers: [
                 {
                   providerInstanceId: "aix-codex-work",
-                  lane: "aix:work",
+                  ...(options.omitProviderLane ? {} : { lane: "aix:work" }),
                   driverKind: "codex",
                   displayName: null,
                   models: [],
@@ -559,6 +562,27 @@ it.effect("rejects AIX launches to a linked peer without model lane enforcement"
     Effect.provide(remoteLaunchServer(forwarded)),
   );
 });
+
+it.effect(
+  "rejects AIX launches to an older linked peer whose provider capability omits lane",
+  () => {
+    const forwarded: Array<string> = [];
+    return call("t3_thread_launch", supervised, {
+      environmentId: box,
+      modelSelection: {
+        instanceId: ProviderInstanceId.make("aix-codex-work"),
+        model: "gpt-6.1-sol",
+      },
+    }).pipe(
+      Effect.map((outcome) => {
+        expect(outcome).toBe("model_lane_not_allowed");
+        expect(forwarded).toEqual([]);
+        return outcome;
+      }),
+      Effect.provide(remoteLaunchServer(forwarded, { omitProviderLane: true })),
+    );
+  },
+);
 
 it.effect("still routes personal launches to an older linked peer", () => {
   const forwarded: Array<string> = [];

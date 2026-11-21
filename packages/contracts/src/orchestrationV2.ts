@@ -3178,6 +3178,8 @@ export const OrchestrationV2Command = Schema.Union([
     title: TrimmedNonEmptyString,
     modelSelection: ModelSelection,
     allowedLanes: Schema.optional(Schema.Array(ModelLane)),
+    /** Server-only parent grant scope for an MCP-created child thread. */
+    laneGrantParentThreadId: Schema.optional(ThreadId),
     runtimeMode: RuntimeMode,
     interactionMode: ProviderInteractionMode,
     branch: Schema.NullOr(TrimmedNonEmptyString),

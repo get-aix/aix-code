@@ -22,6 +22,7 @@ import {
   TurnItemId,
 } from "@t3tools/contracts";
 import * as DateTime from "effect/DateTime";
+import * as Cause from "effect/Cause";
 import * as Deferred from "effect/Deferred";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -45,6 +46,7 @@ import * as DelegatedTaskQuestionReactor from "./DelegatedTaskQuestionReactor.ts
 import * as EffectOutbox from "./EffectOutbox.ts";
 import * as EventSink from "./EventSink.ts";
 import * as Orchestrator from "./Orchestrator.ts";
+import * as ModelLanePolicy from "./ModelLanePolicy.ts";
 import * as ProjectionStore from "./ProjectionStore.ts";
 import * as ProviderAdapterRegistry from "./ProviderAdapterRegistry.ts";
 import * as ProviderReplayHarness from "./testkit/ProviderReplayHarness.ts";
@@ -3217,11 +3219,12 @@ it.effect(
       const orchestrator = yield* Orchestrator.OrchestratorV2;
       const projections = yield* ProjectionStore.ProjectionStoreV2;
       const threadId = ThreadId.make("thread:model-lane-guard");
+      const projectId = ProjectId.make("project:model-lane-guard");
       yield* orchestrator.dispatch({
         type: "thread.create",
         commandId: CommandId.make("create-model-lane-guard"),
         threadId,
-        projectId: ProjectId.make("project:model-lane-guard"),
+        projectId,
         title: "Model lane guard",
         modelSelection,
         runtimeMode: "full-access",
@@ -3239,7 +3242,14 @@ it.effect(
           error._tag === "OrchestratorDispatchError" && error.cause instanceof Error
             ? error.cause.message
             : String(error);
-        assert.include(message, "model_lane_not_allowed");
+        if (error._tag === "OrchestratorDispatchError") {
+          assert.equal(
+            typeof error.cause === "object" && error.cause !== null && "code" in error.cause
+              ? error.cause.code
+              : undefined,
+            "model_lane_not_allowed",
+          );
+        }
         assert.include(message, "aix:work");
       };
       const agentSend = yield* orchestrator
@@ -3326,20 +3336,38 @@ it.effect(
       const taskGrantId = TurnItemId.make("turn-item:model-lane-task-grant");
       yield* recordLaneRequest(taskGrantId, "task", "pending");
       yield* recordLaneRequest(taskGrantId, "task", "allowed_task");
-      const childResult = yield* orchestrator.dispatch({
-        type: "delegated_task.request",
-        commandId: CommandId.make("single-use-model-lane-delegation"),
-        parentThreadId: threadId,
-        parentRunId: parentRun.id,
-        parentNodeId: parentRun.rootNodeId!,
-        task: "Use the AIX provider",
-        crossingReason: "This child needs the AIX model.",
-        modelSelection: aixModelSelection,
-        runtimeMode: "full-access",
-        interactionMode: "default",
-        createdBy: "agent",
-        creationSource: "mcp",
-      });
+      const attempts = yield* Effect.forEach(
+        ["first", "second"],
+        (suffix) =>
+          orchestrator
+            .dispatch({
+              type: "delegated_task.request",
+              commandId: CommandId.make(`single-use-model-lane-delegation-${suffix}`),
+              parentThreadId: threadId,
+              parentRunId: parentRun.id,
+              parentNodeId: parentRun.rootNodeId!,
+              task: "Use the AIX provider",
+              crossingReason: "This child needs the AIX model.",
+              modelSelection: aixModelSelection,
+              runtimeMode: "full-access",
+              interactionMode: "default",
+              createdBy: "agent",
+              creationSource: "mcp",
+            })
+            .pipe(Effect.exit),
+        { concurrency: 2 },
+      );
+      const successes = attempts.filter(Exit.isSuccess);
+      const failures = attempts.filter(Exit.isFailure);
+      assert.equal(successes.length, 1);
+      assert.equal(failures.length, 1);
+      const denied = ModelLanePolicy.modelLaneNotAllowedError(Cause.squash(failures[0]!.cause));
+      assert.isDefined(denied);
+      assert.equal(
+        denied !== undefined && "code" in denied ? denied.code : undefined,
+        "model_lane_not_allowed",
+      );
+      const childResult = successes[0]!.value;
       const task = childResult.storedEvents.find(
         (stored) =>
           stored.event.type === "subagent.updated" && stored.event.payload.origin === "app_owned",
@@ -3374,6 +3402,46 @@ it.effect(
         })
         .pipe(Effect.flip);
       assertLaneDenied(reusedTaskGrant);
+
+      const launchGrantId = TurnItemId.make("turn-item:model-lane-launch-grant");
+      yield* recordLaneRequest(launchGrantId, "task", "pending");
+      yield* recordLaneRequest(launchGrantId, "task", "allowed_task");
+      const launchAttempts = yield* Effect.forEach(
+        ["first", "second"],
+        (suffix) =>
+          orchestrator
+            .dispatch({
+              type: "thread.create",
+              commandId: CommandId.make(`single-use-model-lane-launch-${suffix}`),
+              threadId: ThreadId.make(`model-lane-launch-${suffix}`),
+              projectId,
+              title: "Lane launch",
+              modelSelection: aixModelSelection,
+              allowedLanes: ["personal", "aix:work"],
+              laneGrantParentThreadId: threadId,
+              runtimeMode: "full-access",
+              interactionMode: "default",
+              branch: null,
+              worktreePath: null,
+              createdBy: "agent",
+              creationSource: "mcp",
+            })
+            .pipe(Effect.exit),
+        { concurrency: 2 },
+      );
+      assert.equal(launchAttempts.filter(Exit.isSuccess).length, 1);
+      const deniedLaunch = launchAttempts.find(Exit.isFailure);
+      assert.isDefined(deniedLaunch);
+      if (deniedLaunch !== undefined && Exit.isFailure(deniedLaunch)) {
+        const laneError = ModelLanePolicy.modelLaneNotAllowedError(
+          Cause.squash(deniedLaunch.cause),
+        );
+        assert.isDefined(laneError);
+        assert.equal(
+          laneError !== undefined && "code" in laneError ? laneError.code : undefined,
+          "model_lane_not_allowed",
+        );
+      }
 
       const threadGrantId = TurnItemId.make("turn-item:model-lane-thread-grant");
       yield* recordLaneRequest(threadGrantId, "thread", "pending");

@@ -110,6 +110,7 @@ import {
   runOutcome,
 } from "../orchestration-v2/RestartBackgroundNote.ts";
 import * as ThreadManagementService from "../orchestration-v2/ThreadManagementService.ts";
+import * as ModelLanePolicy from "../orchestration-v2/ModelLanePolicy.ts";
 import { placeholderThreadTitle } from "../orchestration-v2/placeholderThreadTitle.ts";
 import * as ThreadLaunchService from "../orchestration-v2/ThreadLaunchService.ts";
 import * as GitVcsDriver from "../vcs/GitVcsDriver.ts";
@@ -282,14 +283,9 @@ export function threadManagementFailure(error: unknown): OrchestratorMcpFailure 
 
 function dispatchMcpFailure(error: unknown, prefix: string): OrchestratorMcpFailure {
   const message = userFacingDispatchErrorMessage(error) ?? errorMessage(error);
-  const laneMarker = "model_lane_not_allowed: ";
-  const laneDenied = message.indexOf(laneMarker);
-  return laneDenied < 0
-    ? failure("orchestration_error", `${prefix}${message}`)
-    : failure(
-        "model_lane_not_allowed",
-        `${prefix}${message.slice(laneDenied + laneMarker.length)}`,
-      );
+  return ModelLanePolicy.isModelLaneNotAllowedError(error)
+    ? failure("model_lane_not_allowed", `${prefix}${message}`)
+    : failure("orchestration_error", `${prefix}${message}`);
 }
 
 // Without a reason, a Stop reads as the user's (see RunExecutionService.USER_STOP_REASON).
@@ -3297,42 +3293,6 @@ const make = Effect.gen(function* () {
                 parentProject,
                 threadAllowedLanes(parent.thread),
               );
-              const laneAllowed = isLaneAllowed(
-                parentProject,
-                threadAllowedLanes(parent.thread),
-                targetLane,
-              );
-              const laneRequestRecords =
-                isRetryOfAcceptedCreation || laneAllowed
-                  ? []
-                  : (yield* threadManagement
-                      .getThreadRecords(parent.thread.id, ["turnItems"], {
-                        turnItemTypes: ["lane_request"],
-                        messageRoles: [],
-                      })
-                      .pipe(Effect.mapError(threadManagementFailure))).turnItems;
-              const taskLaneGrant = laneRequestRecords.find(
-                (item) =>
-                  item.type === "lane_request" &&
-                  item.lane === targetLane &&
-                  item.laneStatus === "allowed_task" &&
-                  item.grantConsumedAt === undefined,
-              );
-              if (
-                !isRetryOfAcceptedCreation &&
-                !laneAllowed &&
-                taskLaneGrant?.type !== "lane_request"
-              ) {
-                return yield* failure(
-                  "model_lane_not_allowed",
-                  `Lane ${targetLane} is not allowed for this thread. Allowed providers: ${
-                    providers
-                      .filter((provider) => inheritedLanes.includes(laneOfInstance(provider)))
-                      .map((provider) => provider.instanceId)
-                      .join(", ") || "none"
-                  }. Call request_model_lane to ask the user.`,
-                );
-              }
               const runtimeMode = yield* resolveRuntimeMode(
                 parent.thread.runtimeMode,
                 request.runtimeMode,
@@ -3373,6 +3333,9 @@ const make = Effect.gen(function* () {
                   title,
                   modelSelection: target.modelSelection,
                   allowedLanes: [...new Set([...inheritedLanes, targetLane])],
+                  ...(isRetryOfAcceptedCreation
+                    ? {}
+                    : { laneGrantParentThreadId: parent.thread.id }),
                   runtimeMode,
                   interactionMode,
                   branch: parent.thread.branch,
@@ -3466,27 +3429,6 @@ const make = Effect.gen(function* () {
                     ),
                   ),
                 );
-              if (taskLaneGrant?.type === "lane_request") {
-                yield* threadManagement
-                  .dispatch({
-                    type: "lane_request.record",
-                    commandId: CommandId.make(
-                      `model-lane-request:${taskLaneGrant.id}:consume:${threadId}`,
-                    ),
-                    threadId: parent.thread.id,
-                    runId: taskLaneGrant.runId!,
-                    nodeId: taskLaneGrant.nodeId!,
-                    turnItemId: taskLaneGrant.id,
-                    lane: taskLaneGrant.lane,
-                    providerInstanceId: taskLaneGrant.providerInstanceId,
-                    providerLabel: taskLaneGrant.providerLabel,
-                    reason: taskLaneGrant.reason,
-                    requestedFor: taskLaneGrant.requestedFor,
-                    laneStatus: "allowed_task",
-                    grantConsumedAt: yield* DateTime.now,
-                  })
-                  .pipe(Effect.mapError(threadManagementFailure));
-              }
               return {
                 threadId,
                 link: formatThreadLink(

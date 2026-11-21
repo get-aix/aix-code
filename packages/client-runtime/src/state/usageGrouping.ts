@@ -12,7 +12,15 @@ import {
   type LimitAccount,
   type LimitPresentations,
 } from "@t3tools/shared/usageLimits";
-import { aixMetadataFromInstanceId, aixProfileLabels } from "../providerPickerHierarchy.ts";
+import { aixProfileLabels } from "../providerPickerHierarchy.ts";
+import {
+  aixProfileFromLegacyInstanceId,
+  isAixLane,
+  laneOfInstance,
+  laneOfInstanceOrId,
+} from "@t3tools/shared/modelLanes";
+import { mFallback, msg } from "gt-i18n";
+import type { MFunctionType } from "gt-i18n/types";
 
 export type UsageLimitGroup = "personal" | "work";
 export type UsageScope = UsageLimitGroup;
@@ -42,7 +50,11 @@ export interface WorkUsageGroups {
 }
 
 /** Group newer Gateway reports by project while keeping older server reports flat. */
-export function groupWorkUsage(accounts: readonly LimitAccount[], now: number): WorkUsageGroups {
+export function groupWorkUsage(
+  accounts: readonly LimitAccount[],
+  now: number,
+  resolve: MFunctionType = mFallback,
+): WorkUsageGroups {
   const latestByCredential = new Map<string, LimitAccount>();
   for (const account of accounts) {
     const key = account.limits.credentialFingerprint
@@ -82,7 +94,7 @@ export function groupWorkUsage(accounts: readonly LimitAccount[], now: number): 
             account.profileLabel?.trim() ||
             account.profileName?.trim() ||
             account.displayName?.trim() ||
-            "Work key",
+            resolve(msg("Work key")),
           window,
           usedPercent,
           elapsedPercent: elapsed === null ? null : elapsed * 100,
@@ -131,7 +143,13 @@ type ReportAccount = UsageLimitsReport["accounts"][number];
 export const reportAccountLabel = (account: ReportAccount) =>
   account.displayName?.trim() || account.limits.profileName || account.label;
 
-const AIX_INSTANCE_PROFILE = /^aix-[^-]+-(.+)$/u;
+const isAixIdentity = (instanceId: string | undefined, profileName: string | undefined) =>
+  isAixLane(
+    laneOfInstanceOrId(
+      instanceId ?? "",
+      profileName === undefined ? undefined : { aixProfile: profileName },
+    ),
+  );
 
 /** The thread's Work key first, then its project siblings, named the way the usage page names them. */
 export function composerWorkUsage<A extends ReportAccount>(
@@ -141,7 +159,7 @@ export function composerWorkUsage<A extends ReportAccount>(
   const workAccounts = accounts.filter((account) => account.limits.profileName);
   // A profile reports through one of its driver instances, not necessarily the thread's.
   const threadProfile = providerInstanceId
-    ? AIX_INSTANCE_PROFILE.exec(providerInstanceId)?.[1]
+    ? aixProfileFromLegacyInstanceId(providerInstanceId)
     : undefined;
   const threadAccount =
     workAccounts.find((account) => account.instanceId === providerInstanceId) ??
@@ -183,10 +201,7 @@ export function usageAixProfileLabels(
   const entries = [];
   for (const presentation of presentations.values()) {
     for (const provider of presentation.serverConfig?.providers ?? []) {
-      const profileId =
-        provider.aixProfile ??
-        provider.usageLimits?.profileName ??
-        aixMetadataFromInstanceId(provider.instanceId, provider.driver)?.aixProfile;
+      const profileId = provider.aixProfile ?? provider.usageLimits?.profileName;
       if (!profileId) continue;
       entries.push({
         instanceId: provider.instanceId,
@@ -233,11 +248,9 @@ export function filterUsageSummaryByScope<T extends Pick<UsageSummary, "buckets"
   };
 }
 
-const isAixIdentity = (instanceId: string | undefined, profileName: string | undefined) =>
-  profileName !== undefined || instanceId?.startsWith("aix-") === true;
-
 export function usageLimitGroupForProvider(
-  provider: Pick<ServerProvider, "instanceId" | "usageLimits">,
+  provider: Pick<ServerProvider, "instanceId" | "usageLimits"> &
+    Partial<Pick<ServerProvider, "aixProfile">>,
 ): UsageLimitGroup {
   const limits = provider.usageLimits;
   const [onlyWindow, ...otherWindows] = limits?.windows ?? [];
@@ -245,9 +258,9 @@ export function usageLimitGroupForProvider(
     onlyWindow !== undefined &&
     otherWindows.length === 0 &&
     aixProfileNameFromWindowId(onlyWindow.id) !== undefined;
-  return isAixIdentity(provider.instanceId, limits?.profileName) || legacyAixBudget
-    ? "work"
-    : "personal";
+  const aixProfile = provider.aixProfile ?? limits?.profileName;
+  const lane = laneOfInstance(aixProfile === undefined ? {} : { aixProfile });
+  return isAixLane(lane) || legacyAixBudget ? "work" : "personal";
 }
 
 /** An explicit choice wins while that group has limits; otherwise the active scope, then Personal. */

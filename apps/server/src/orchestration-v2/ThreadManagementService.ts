@@ -93,6 +93,7 @@ export function withCreationProvenance(
         linkOrigin: _linkOrigin,
         delegatedFrom: _delegatedFrom,
         initialMessage: _initialMessage,
+        laneGrantParentThreadId: _laneGrantParentThreadId,
         ...rest
       } = command;
       return { ...rest, ...provenance };
@@ -112,7 +113,7 @@ function existingThreadIdsForCommand(
 ): ReadonlyArray<ThreadId> {
   switch (command.type) {
     case "thread.create":
-      return [];
+      return command.laneGrantParentThreadId === undefined ? [] : [command.laneGrantParentThreadId];
     // Read-state commands only rewrite the thread payload's visited/unread
     // watermark and open stats; they never touch messages, so they do not need the imported
     // v1 transcript hydrated first. Visits fire on every thread-activity bump

@@ -5,6 +5,18 @@ export interface ModelLaneInstance {
   readonly config?: unknown;
 }
 
+/** Uses persisted AIX identity only when the provider itself is unavailable. */
+export function laneOfInstanceOrId(
+  instanceId: string,
+  instance?: ModelLaneInstance | undefined,
+): ModelLane {
+  return instance === undefined ? laneOfInstanceId(instanceId) : laneOfInstance(instance);
+}
+
+export function isAixLane(lane: string | undefined): boolean {
+  return lane?.startsWith("aix:") === true;
+}
+
 export interface ModelLaneProject {
   readonly scope?: "personal" | "work" | undefined;
   readonly homeAixProfile?: string | null | undefined;
@@ -43,10 +55,20 @@ export function allowedLanesForProject(
   return home === null || grants.includes(home) ? grants : [home, ...grants];
 }
 
-/** aix instances are named `aix-<driver>-<profile>` by ProviderInstanceSync; driver kinds have no dash. */
+/** Legacy persisted IDs only: configured providers must be classified from their explicit metadata. */
 export function laneOfInstanceId(instanceId: string): ModelLane {
-  const match = /^aix-[^-]+-(.+)$/.exec(instanceId);
-  return match?.[1] === undefined ? "personal" : `aix:${match[1]}`;
+  const profile = aixProfileFromLegacyInstanceId(instanceId);
+  return profile === undefined ? "personal" : `aix:${profile}`;
+}
+
+export function aixProfileFromLegacyInstanceId(
+  instanceId: string,
+  driverKind?: string,
+): string | undefined {
+  const match = /^aix-([^-]+)-(.+)$/.exec(instanceId);
+  return match !== null && (driverKind === undefined || match[1] === driverKind)
+    ? match[2]
+    : undefined;
 }
 
 /** Threads from before lanes existed keep the lane of their current model. */

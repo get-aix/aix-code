@@ -15,6 +15,7 @@ import * as Orchestrator from "./Orchestrator.ts";
 
 import * as AttachmentClaims from "./AttachmentClaims.ts";
 import { isProviderSignOutPrompt } from "./CommandPolicy.ts";
+import * as ModelLanePolicy from "./ModelLanePolicy.ts";
 import * as ThreadLaunch from "./ThreadLaunchService.ts";
 import * as ThreadManagement from "./ThreadManagementService.ts";
 
@@ -22,6 +23,7 @@ import * as ThreadManagement from "./ThreadManagementService.ts";
 function dispatchWasNotAccepted(
   error: Orchestrator.OrchestratorV2Error | ThreadManagement.ThreadManagementError,
 ) {
+  if (ModelLanePolicy.isModelLaneNotAllowedError(error)) return true;
   switch (error._tag) {
     case "OrchestratorCommandRejectedError":
     case "OrchestratorThreadAlreadyExistsError":

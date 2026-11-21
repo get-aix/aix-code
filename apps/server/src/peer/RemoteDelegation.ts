@@ -47,7 +47,7 @@ import * as ServerEnvironment from "../environment/ServerEnvironment.ts";
 import * as ProjectService from "../project/ProjectService.ts";
 import * as RepositoryIdentityResolver from "../project/RepositoryIdentityResolver.ts";
 import { forkParked } from "../serverActivation.ts";
-import { projectHomeLane } from "@t3tools/shared/modelLanes";
+import { isAixLane, laneOfInstanceOrId, projectHomeLane } from "@t3tools/shared/modelLanes";
 import * as PeerForwarding from "./PeerForwarding.ts";
 import * as PeerLinks from "./PeerLinks.ts";
 
@@ -306,14 +306,12 @@ const make = Effect.gen(function* () {
       let instanceId: ProviderInstanceId;
       if (target.driverKind === undefined) {
         instanceId = target.providerInstanceId ?? inherited.instanceId;
-        if (instanceId.startsWith("aix-")) {
-          capabilities = yield* forwarding.call(
-            scope,
-            RemoteCapabilitiesTool,
-            target.environmentId,
-            {},
-          );
-        }
+        capabilities = yield* forwarding.call(
+          scope,
+          RemoteCapabilitiesTool,
+          target.environmentId,
+          {},
+        );
       } else {
         capabilities = yield* forwarding.call(
           scope,
@@ -335,9 +333,8 @@ const make = Effect.gen(function* () {
       const provider = capabilities?.providers.find(
         (candidate) => candidate.providerInstanceId === instanceId,
       );
-      const targetLane =
-        provider?.lane ?? (instanceId.startsWith("aix-") ? "aix:legacy" : "personal");
-      if (capabilities?.features.modelLanes !== true && targetLane.startsWith("aix:")) {
+      const targetLane = provider?.lane ?? laneOfInstanceOrId(instanceId);
+      if (capabilities?.features.modelLanes !== true && isAixLane(targetLane)) {
         return yield* new OrchestratorMcpFailure({
           code: "model_lane_not_allowed",
           message: `Linked environment ${target.environmentId} does not advertise model lane enforcement, so AIX provider ${instanceId} cannot be selected there.`,

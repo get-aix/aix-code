@@ -6,6 +6,11 @@ import {
   type ModelSelection,
 } from "@t3tools/contracts";
 import { resolveProjectScope } from "./environment/scope.ts";
+import {
+  aixProfileFromLegacyInstanceId,
+  isAixLane,
+  laneOfInstanceOrId,
+} from "@t3tools/shared/modelLanes";
 
 export type PickerProviderInstance = {
   readonly instanceId: ProviderInstanceId;
@@ -69,9 +74,8 @@ export function pickerInstancesFromModelGroups<
 }
 
 export function aixMetadataFromInstanceId(instanceId: string, driverKind: ProviderDriverKind) {
-  const prefix = `aix-${driverKind}-`;
-  if (!instanceId.startsWith(prefix)) return undefined;
-  const profileId = instanceId.slice(prefix.length);
+  const profileId = aixProfileFromLegacyInstanceId(instanceId, driverKind);
+  if (profileId === undefined) return undefined;
   return profileId ? { aixProfile: profileId, aixProfileLabel: profileId } : undefined;
 }
 
@@ -185,8 +189,7 @@ export function isModelSelectionInProjectScope(input: {
   const provider = input.providers.find(
     (candidate) => candidate.instanceId === input.selection?.instanceId,
   );
-  const isWork =
-    provider?.aixProfile !== undefined || input.selection.instanceId.startsWith("aix-");
+  const isWork = isAixLane(laneOfInstanceOrId(input.selection.instanceId, provider));
   return input.scope === "work" ? isWork : !isWork;
 }
 
@@ -203,16 +206,9 @@ export function resolveDraftModelSelectionForScope(input: {
   readonly providers: ReadonlyArray<DraftDefaultProvider>;
 }): ModelSelection | null {
   if (input.explicitSelection) return input.explicitSelection;
-  const providers = input.providers.map((provider) => ({
-    ...provider,
-    aixProfile:
-      provider.aixProfile ??
-      aixMetadataFromInstanceId(provider.instanceId, provider.driver)?.aixProfile,
-  }));
+  const providers = input.providers;
   const inScope = (provider: DraftDefaultProvider) =>
-    input.scope === "work"
-      ? provider.aixProfile !== undefined || provider.instanceId.startsWith("aix-")
-      : provider.aixProfile === undefined && !provider.instanceId.startsWith("aix-");
+    isAixLane(laneOfInstanceOrId(provider.instanceId, provider)) === (input.scope === "work");
   const ready = isDraftDefaultProviderReady;
   const selectable = (selection: ModelSelection | null | undefined) => {
     if (!selection) return null;

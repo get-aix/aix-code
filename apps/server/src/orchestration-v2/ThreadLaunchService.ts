@@ -2,7 +2,7 @@ import * as WorktreeSetupTracker from "../project/WorktreeSetupTracker.ts";
 import * as ProjectCloneTracker from "../project/ProjectCloneTracker.ts";
 import * as TerminalManager from "../terminal/Manager.ts";
 import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
-import { isLaneAllowed, laneOfInstance } from "@t3tools/shared/modelLanes";
+import { isLaneAllowed, laneOfInstanceOrId } from "@t3tools/shared/modelLanes";
 import {
   CommandId,
   type ChatAttachment,
@@ -99,6 +99,7 @@ export interface ThreadLaunchInput {
   readonly generateTitle?: boolean;
   readonly modelSelection: ModelSelection;
   readonly allowedLanes?: OrchestrationV2ThreadLaunchInput["allowedLanes"];
+  readonly laneGrantParentThreadId?: ThreadId;
   readonly runtimeMode: RuntimeMode;
   readonly interactionMode: ProviderInteractionMode;
   readonly workspaceStrategy: ThreadLaunchWorkspaceStrategy;
@@ -866,16 +867,11 @@ const make = Effect.gen(function* () {
             branchNameProvider.find(
               (provider) => provider.instanceId === branchNameModelSelection.instanceId,
             ) ?? branchSettings.providerInstances[branchNameModelSelection.instanceId];
-          const branchNameLane =
-            branchNameInstance === undefined
-              ? branchNameModelSelection.instanceId.startsWith("aix-")
-                ? undefined
-                : "personal"
-              : laneOfInstance(branchNameInstance);
-          if (
-            branchNameLane !== undefined &&
-            isLaneAllowed(project, input.allowedLanes, branchNameLane)
-          ) {
+          const branchNameLane = laneOfInstanceOrId(
+            branchNameModelSelection.instanceId,
+            branchNameInstance,
+          );
+          if (isLaneAllowed(project, input.allowedLanes, branchNameLane)) {
             branchRename = yield* generateBranchNameFor(worktreeCwd, initialMessage).pipe(
               Effect.flatMap(({ branch: newBranch, exactName }) =>
                 git
@@ -1409,6 +1405,9 @@ const make = Effect.gen(function* () {
                 title: input.title,
                 modelSelection: input.modelSelection,
                 ...(input.allowedLanes === undefined ? {} : { allowedLanes: input.allowedLanes }),
+                ...(input.laneGrantParentThreadId === undefined
+                  ? {}
+                  : { laneGrantParentThreadId: input.laneGrantParentThreadId }),
                 runtimeMode: input.runtimeMode,
                 interactionMode: input.interactionMode,
                 branch: initialBranch,

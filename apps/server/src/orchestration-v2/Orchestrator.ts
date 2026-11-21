@@ -211,15 +211,10 @@ import {
   ThreadForkServiceV2,
 } from "./ThreadForkService.ts";
 import { planThreadDeletion } from "./ThreadDeletion.ts";
+import * as ModelLanePolicy from "./ModelLanePolicy.ts";
 import type * as ProviderAdapter from "@t3tools/provider-core/server/ProviderAdapter";
 import * as ServerSettings from "../serverSettings.ts";
-import {
-  allowedLanesForProject,
-  isLaneAllowed,
-  laneOfInstance,
-  laneOfInstanceId,
-  threadAllowedLanes,
-} from "@t3tools/shared/modelLanes";
+import { threadAllowedLanes } from "@t3tools/shared/modelLanes";
 
 const isMessageQuestionAnswer = Schema.is(
   Schema.Union([TrimmedNonEmptyString, Schema.NonEmptyArray(TrimmedNonEmptyString)]),
@@ -1654,25 +1649,13 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
     selection: ModelSelection,
   ) {
     const settings = yield* serverSettings.getSettings;
-    const configured = settings.providerInstances[selection.instanceId];
-    const lane =
-      configured === undefined
-        ? laneOfInstanceId(selection.instanceId)
-        : laneOfInstance(configured);
     const project = yield* projects.get(thread.projectId);
-    const projectModel = Option.getOrUndefined(project);
-    // A thread whose project record is gone is unscoped, and unscoped projects live on Personal.
-    const modelProject = projectModel ?? { scope: "personal" as const };
-    const allowedLanes = allowedLanesForProject(modelProject, threadAllowedLanes(thread));
-    const allowedProviders = Object.entries(settings.providerInstances)
-      .filter(([, instance]) => allowedLanes.includes(laneOfInstance(instance)))
-      .map(([instanceId]) => instanceId);
-    return {
-      lane,
-      allowedLanes,
-      allowedProviders,
-      allowed: isLaneAllowed(modelProject, threadAllowedLanes(thread), lane),
-    };
+    return ModelLanePolicy.modelLanePolicy({
+      thread,
+      selection,
+      project: Option.getOrUndefined(project),
+      providerInstances: settings.providerInstances,
+    });
   }, Effect.orDie);
   const runtimePolicy = yield* RuntimePolicyV2;
   const threadForkService = yield* ThreadForkServiceV2;
@@ -4066,13 +4049,36 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
       deletedAt: null,
     };
     const lanePolicy = yield* modelLanePolicy(thread, command.modelSelection);
+    let consumedLaneGrant:
+      | Extract<OrchestrationV2TurnItem, { readonly type: "lane_request" }>
+      | undefined;
+    if (command.laneGrantParentThreadId !== undefined) {
+      const parent = yield* projectionStore
+        .getThreadRecords(command.laneGrantParentThreadId, ["turnItems"], {
+          turnItemTypes: ["lane_request"],
+          messageRoles: [],
+        })
+        .pipe(mapDispatchError(command));
+      const parentLanePolicy = yield* modelLanePolicy(parent.thread, command.modelSelection);
+      if (!parentLanePolicy.allowed) {
+        consumedLaneGrant = ModelLanePolicy.findUnconsumedTaskLaneGrant(
+          parent.turnItems,
+          parentLanePolicy.lane,
+        );
+        if (consumedLaneGrant === undefined) {
+          return yield* new OrchestratorDispatchError({
+            commandId: command.commandId,
+            commandType: command.type,
+            cause: ModelLanePolicy.laneNotAllowedError(parentLanePolicy),
+          });
+        }
+      }
+    }
     if (command.createdBy !== "user" && !lanePolicy.allowed) {
       return yield* new OrchestratorDispatchError({
         commandId: command.commandId,
         commandType: command.type,
-        cause: new Error(
-          `model_lane_not_allowed: Lane ${lanePolicy.lane} is not allowed for this thread. Allowed providers: ${lanePolicy.allowedProviders.join(", ") || "none"}. Call request_model_lane to ask the user.`,
-        ),
+        cause: ModelLanePolicy.laneNotAllowedError(lanePolicy),
       });
     }
     if (command.createdBy === "user" && !lanePolicy.allowed) {
@@ -4086,6 +4092,17 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
       occurredAt: now,
       payload: thread,
     });
+    if (consumedLaneGrant !== undefined) {
+      yield* emitEvent({
+        type: "turn-item.updated",
+        threadId: command.laneGrantParentThreadId!,
+        runId: consumedLaneGrant.runId ?? undefined,
+        nodeId: consumedLaneGrant.nodeId ?? undefined,
+        providerInstanceId: consumedLaneGrant.providerInstanceId,
+        occurredAt: now,
+        payload: ModelLanePolicy.consumedTaskLaneGrant(consumedLaneGrant, now),
+      });
+    }
     if (command.importedNativeThread !== undefined) {
       yield* emitEvent({
         type: "provider-thread.updated",
@@ -6006,9 +6023,7 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
       return yield* new OrchestratorDispatchError({
         commandId: command.commandId,
         commandType: command.type,
-        cause: new Error(
-          `model_lane_not_allowed: Lane ${forkLanePolicy.lane} is not allowed for this thread. Allowed providers: ${forkLanePolicy.allowedProviders.join(", ") || "none"}. Call request_model_lane to ask the user.`,
-        ),
+        cause: ModelLanePolicy.laneNotAllowedError(forkLanePolicy),
       });
     }
     if (sourceProjection.thread.deletedAt !== null) {
@@ -8325,9 +8340,7 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
       return yield* new OrchestratorDispatchError({
         commandId: command.commandId,
         commandType: command.type,
-        cause: new Error(
-          `model_lane_not_allowed: Lane ${lanePolicy.lane} is not allowed for this thread. Allowed providers: ${lanePolicy.allowedProviders.join(", ") || "none"}. Call request_model_lane to ask the user.`,
-        ),
+        cause: ModelLanePolicy.laneNotAllowedError(lanePolicy),
       });
     }
     if (userAuthored && !lanePolicy.allowed) {
@@ -9951,20 +9964,15 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
         .pipe(mapDispatchError(command));
       const taskLaneGrant = childLanePolicy.allowed
         ? undefined
-        : laneRequestRecords.turnItems.find(
-            (item): item is Extract<OrchestrationV2TurnItem, { readonly type: "lane_request" }> =>
-              item.type === "lane_request" &&
-              item.lane === childLanePolicy.lane &&
-              item.laneStatus === "allowed_task" &&
-              item.grantConsumedAt === undefined,
+        : ModelLanePolicy.findUnconsumedTaskLaneGrant(
+            laneRequestRecords.turnItems,
+            childLanePolicy.lane,
           );
       if (!childLanePolicy.allowed && taskLaneGrant === undefined) {
         return yield* new OrchestratorDispatchError({
           commandId: command.commandId,
           commandType: command.type,
-          cause: new Error(
-            `model_lane_not_allowed: Lane ${childLanePolicy.lane} is not allowed for this thread. Allowed providers: ${childLanePolicy.allowedProviders.join(", ") || "none"}. Call request_model_lane to ask the user.`,
-          ),
+          cause: ModelLanePolicy.laneNotAllowedError(childLanePolicy),
         });
       }
 
@@ -10184,7 +10192,7 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
           nodeId: taskLaneGrant.nodeId ?? undefined,
           providerInstanceId: parentRun.providerInstanceId,
           occurredAt: now,
-          payload: { ...taskLaneGrant, grantConsumedAt: now, updatedAt: now },
+          payload: ModelLanePolicy.consumedTaskLaneGrant(taskLaneGrant, now),
         });
       }
     },
@@ -11337,17 +11345,11 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
           cause: `Turn item ${command.turnItemId} is not a lane request.`,
         });
       }
-      const consumingGrant =
-        existing?.type === "lane_request" &&
-        existing.laneStatus === "allowed_task" &&
-        existing.grantConsumedAt === undefined &&
-        command.grantConsumedAt !== undefined;
-      if (
-        existing !== undefined &&
-        existing.type === "lane_request" &&
-        existing.laneStatus !== "pending" &&
-        !consumingGrant
-      ) {
+      const laneRequestDisposition = ModelLanePolicy.laneRequestRecordDisposition(
+        existing,
+        command.grantConsumedAt,
+      );
+      if (laneRequestDisposition.kind === "unchanged") {
         return;
       }
       if (
@@ -11361,36 +11363,24 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
         });
       }
       const now = yield* DateTime.now;
-      const pending = command.laneStatus === "pending";
-      const {
-        type: _type,
-        commandId: _commandId,
-        turnItemId: _turnItemId,
-        wake,
-        ...fields
-      } = command;
-      const turnItem: OrchestrationV2TurnItem =
-        consumingGrant && existing?.type === "lane_request"
-          ? { ...existing, grantConsumedAt: command.grantConsumedAt, updatedAt: now }
-          : {
-              ...fields,
-              id: command.turnItemId,
-              providerThreadId: run.providerThreadId,
-              providerTurnId: providerTurnForRun(projection, run)?.id ?? null,
-              nativeItemRef: null,
-              parentItemId: null,
+      const turnItemInput = {
+        command,
+        providerThreadId: run.providerThreadId,
+        providerTurnId: providerTurnForRun(projection, run)?.id ?? null,
+        now,
+      };
+      const turnItem =
+        laneRequestDisposition.kind === "consume"
+          ? ModelLanePolicy.laneRequestRecordTurnItem({
+              ...turnItemInput,
+              disposition: laneRequestDisposition,
+            })
+          : ModelLanePolicy.laneRequestRecordTurnItem({
+              ...turnItemInput,
+              disposition: laneRequestDisposition,
               ordinal: yield* nextTurnItemOrdinal(projection),
-              status: pending
-                ? "waiting"
-                : command.laneStatus === "allowed_task" || command.laneStatus === "allowed_thread"
-                  ? "completed"
-                  : "cancelled",
-              title: `Request ${command.lane} provider access`,
-              startedAt: now,
-              completedAt: pending ? null : now,
-              updatedAt: now,
-              type: "lane_request",
-            };
+            });
+      const consumingGrant = laneRequestDisposition.kind === "consume";
       yield* emit(
         events,
         command,
@@ -11420,7 +11410,7 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
         });
       }
       if (
-        wake === undefined ||
+        command.wake === undefined ||
         consumingGrant ||
         projection.thread.archivedAt !== null ||
         projection.thread.deletedAt !== null
@@ -11432,9 +11422,9 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
           type: "message.dispatch",
           commandId: command.commandId,
           threadId: command.threadId,
-          messageId: wake.messageId,
-          text: wake.text,
-          notification: wake.notification,
+          messageId: command.wake.messageId,
+          text: command.wake.text,
+          notification: command.wake.notification,
           attachments: [],
           dispatchMode: { type: "queue_after_active" },
           createdBy: "agent",
@@ -16064,9 +16054,7 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
             return yield* new OrchestratorDispatchError({
               commandId: command.commandId,
               commandType: command.type,
-              cause: new Error(
-                `model_lane_not_allowed: Lane ${policy.lane} is not allowed for this thread. Allowed providers: ${policy.allowedProviders.join(", ") || "none"}. Call request_model_lane to ask the user.`,
-              ),
+              cause: ModelLanePolicy.laneNotAllowedError(policy),
             });
           }
           if (userAuthored && !policy.allowed) {
@@ -16341,10 +16329,11 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
       ),
       Effect.catch((cause) =>
         Effect.gen(function* () {
-          // Refusals depend on modes the user can change; a recorded rejection would block the retry.
+          // Refusals depend on modes or lane approvals the user can change; a recorded rejection would block the retry.
           if (
             cause._tag === "OrchestratorThreadAboveModeLimitError" ||
-            cause._tag === "OrchestratorRuntimeModeAboveCeilingError"
+            cause._tag === "OrchestratorRuntimeModeAboveCeilingError" ||
+            ModelLanePolicy.isModelLaneNotAllowedError(cause)
           ) {
             return yield* cause;
           }
@@ -16556,6 +16545,13 @@ const makeOrchestrator = Effect.fn("orchestrationV2.Orchestrator.layer")(functio
       commandThreadId(command),
       dispatchWithReceiptEffect(command),
     );
+    if (
+      command.type === "thread.create" &&
+      command.laneGrantParentThreadId !== undefined &&
+      command.laneGrantParentThreadId !== command.threadId
+    ) {
+      return yield* threadDispatch.withLock(command.laneGrantParentThreadId, dispatch);
+    }
     // A fork holds its source's lock, so a source deletion and its fork never interleave. A
     // parent's lock comes before its side chats' locks. A side chat fork from a side chat or a
     // fork onto an existing thread would invert that order; dispatch rejects both, so they skip it.

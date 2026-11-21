@@ -6,7 +6,6 @@ import {
   type OrchestrationV2ThreadLaunchWorkspaceStrategy,
   ProjectId,
   type ModelLane,
-  type OrchestrationV2TurnItem,
   type Project as ProjectRecord,
   type ServerProvider,
   T3_PROJECT_FILE_NAME,
@@ -20,6 +19,7 @@ import * as Schema from "effect/Schema";
 import { OrchestratorRuntimeModeAboveCeilingError } from "../../../orchestration-v2/Orchestrator.ts";
 import * as ThreadLaunch from "../../../orchestration-v2/ThreadLaunchService.ts";
 import * as ThreadMessageIntake from "../../../orchestration-v2/ThreadMessageIntake.ts";
+import * as ModelLanePolicy from "../../../orchestration-v2/ModelLanePolicy.ts";
 import * as Claims from "../../../orchestration-v2/AttachmentClaims.ts";
 import * as Project from "../../../project/ProjectService.ts";
 import * as ProjectCloneTracker from "../../../project/ProjectCloneTracker.ts";
@@ -33,7 +33,6 @@ import * as DateTime from "effect/DateTime";
 import { resolveNewThreadModelSelection } from "@t3tools/shared/usageLimits";
 import {
   allowedLanesForProject,
-  isLaneAllowed,
   laneOfInstance,
   threadAllowedLanes,
 } from "@t3tools/shared/modelLanes";
@@ -397,9 +396,6 @@ export const layer = McpToolAccess.toLayer(ProjectToolkit, {
               "Pass modelSelection: the project has no default model. orchestrator_capabilities lists providers and models.",
           });
         let allowedLanes: ReadonlyArray<ModelLane> | undefined;
-        let taskLaneGrant:
-          | Extract<OrchestrationV2TurnItem, { readonly type: "lane_request" }>
-          | undefined;
         if (caller !== undefined && !replaying) {
           const providers = yield* (yield* ProviderRegistry.ProviderRegistry).getProviders;
           const targetProvider = providers.find(
@@ -423,35 +419,6 @@ export const layer = McpToolAccess.toLayer(ProjectToolkit, {
             ),
           );
           const inheritedLanes = allowedLanesForProject(parentProject, threadAllowedLanes(caller));
-          const laneRequests = isLaneAllowed(parentProject, threadAllowedLanes(caller), targetLane)
-            ? []
-            : (yield* context.threads
-                .getThreadRecords(caller.id, ["turnItems"], {
-                  turnItemTypes: ["lane_request"],
-                  messageRoles: [],
-                })
-                .pipe(Effect.mapError(unavailable))).turnItems;
-          taskLaneGrant = laneRequests.find(
-            (item): item is Extract<OrchestrationV2TurnItem, { readonly type: "lane_request" }> =>
-              item.type === "lane_request" &&
-              item.lane === targetLane &&
-              item.laneStatus === "allowed_task" &&
-              item.runId !== null &&
-              item.nodeId !== null &&
-              item.grantConsumedAt === undefined,
-          );
-          if (
-            !isLaneAllowed(parentProject, threadAllowedLanes(caller), targetLane) &&
-            taskLaneGrant?.type !== "lane_request"
-          ) {
-            const allowedProviders = providers
-              .filter((provider) => inheritedLanes.includes(laneOfInstance(provider)))
-              .map((provider) => provider.instanceId);
-            return yield* new OrchestratorMcpFailure({
-              code: "model_lane_not_allowed",
-              message: `Lane ${targetLane} is not allowed for this thread. Allowed providers: ${allowedProviders.join(", ") || "none"}. Call request_model_lane to ask the user.`,
-            });
-          }
           allowedLanes = [...new Set([...inheritedLanes, targetLane])];
         }
         let startedRuntimeMode =
@@ -476,6 +443,7 @@ export const layer = McpToolAccess.toLayer(ProjectToolkit, {
           title: input.title,
           modelSelection,
           ...(allowedLanes === undefined ? {} : { allowedLanes }),
+          ...(caller === undefined || replaying ? {} : { laneGrantParentThreadId: caller.id }),
           runtimeMode: startedRuntimeMode,
           interactionMode,
           workspaceStrategy: strategy ?? { type: "root" },
@@ -496,6 +464,13 @@ export const layer = McpToolAccess.toLayer(ProjectToolkit, {
           ...(input.delegatedFrom === undefined ? {} : { delegatedFrom: input.delegatedFrom }),
         }).pipe(
           Effect.mapError((error) => {
+            const laneError = ModelLanePolicy.modelLaneNotAllowedError(error);
+            if (laneError !== undefined) {
+              return new OrchestratorMcpFailure({
+                code: "model_lane_not_allowed",
+                message: laneError.message,
+              });
+            }
             if (error._tag === "AttachmentClaimError") {
               return new OrchestratorMcpFailure({
                 code: "orchestration_error",
@@ -518,32 +493,6 @@ export const layer = McpToolAccess.toLayer(ProjectToolkit, {
             return unavailable();
           }),
         );
-        if (
-          caller !== undefined &&
-          taskLaneGrant?.type === "lane_request" &&
-          taskLaneGrant.runId !== null &&
-          taskLaneGrant.nodeId !== null
-        ) {
-          yield* context.threads
-            .dispatch({
-              type: "lane_request.record",
-              commandId: CommandId.make(
-                `model-lane-request:${taskLaneGrant.id}:consume:${threadId}`,
-              ),
-              threadId: caller.id,
-              runId: taskLaneGrant.runId,
-              nodeId: taskLaneGrant.nodeId,
-              turnItemId: taskLaneGrant.id,
-              lane: taskLaneGrant.lane,
-              providerInstanceId: taskLaneGrant.providerInstanceId,
-              providerLabel: taskLaneGrant.providerLabel,
-              reason: taskLaneGrant.reason,
-              requestedFor: taskLaneGrant.requestedFor,
-              laneStatus: "allowed_task",
-              grantConsumedAt: yield* DateTime.now,
-            })
-            .pipe(Effect.mapError(unavailable));
-        }
         const thread = result.projection.thread;
         const run = result.projection.runs.find((run) => run.userMessageId === messageId);
         return {

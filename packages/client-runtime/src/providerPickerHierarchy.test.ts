@@ -124,6 +124,17 @@ describe("provider picker hierarchy", () => {
     ).toBe(true);
   });
 
+  it("does not treat a configured custom aix-prefixed instance as Work without metadata", () => {
+    for (const id of ["aix-custom", "aix-codex-custom"]) {
+      const selection = { instanceId: ProviderInstanceId.make(id), model: "gpt" };
+      const providers = [{ instanceId: selection.instanceId }];
+      expect(isModelSelectionInProjectScope({ scope: "personal", selection, providers })).toBe(
+        true,
+      );
+      expect(isModelSelectionInProjectScope({ scope: "work", selection, providers })).toBe(false);
+    }
+  });
+
   it("filters models by project scope while retaining a selected model from the other scope", () => {
     expect(
       isPickerModelVisibleForProjectScope({

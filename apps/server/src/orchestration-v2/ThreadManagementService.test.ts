@@ -59,6 +59,7 @@ it("stamps authoritative provenance on commands that create threads or messages"
     },
     runtimeMode: "full-access",
     interactionMode: "default",
+    laneGrantParentThreadId: ThreadId.make("thread:forged-parent"),
     branch: null,
     worktreePath: null,
     // A client cannot claim a linked environment's origin, or a parent there.
@@ -86,6 +87,7 @@ it("stamps authoritative provenance on commands that create threads or messages"
   });
   expect(stamped).not.toHaveProperty("linkOrigin");
   expect(stamped).not.toHaveProperty("delegatedFrom");
+  expect(stamped).not.toHaveProperty("laneGrantParentThreadId");
   expect(stamped).not.toHaveProperty("initialMessage");
 });
 

@@ -4,6 +4,7 @@ import {
   allowedLanesForProject,
   isLaneAllowed,
   laneOfInstance,
+  laneOfInstanceOrId,
   projectHomeLane,
   threadAllowedLanes,
 } from "./modelLanes.ts";
@@ -14,6 +15,13 @@ describe("model lanes", () => {
     ["aix profile", "work-1", "aix:work-1"],
   ] as const)("classifies a %s", (_, aixProfile, expected) => {
     expect(laneOfInstance(aixProfile === undefined ? {} : { aixProfile })).toBe(expected);
+  });
+
+  it("prefers configured provider metadata over legacy-looking instance ids", () => {
+    expect(laneOfInstanceOrId("aix-custom", {})).toBe("personal");
+    expect(laneOfInstanceOrId("aix-codex-custom", {})).toBe("personal");
+    expect(laneOfInstanceOrId("aix-codex-work-1", { aixProfile: "work-1" })).toBe("aix:work-1");
+    expect(laneOfInstanceOrId("aix-codex-work-1")).toBe("aix:work-1");
   });
 
   it.each([

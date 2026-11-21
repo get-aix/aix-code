@@ -30,6 +30,7 @@ import { HttpClient, HttpClientResponse } from "effect/http";
 
 import { writeFileStringAtomically } from "@t3tools/shared/atomicWrite";
 import { formatMalformedUsageWarning } from "@t3tools/shared/usageFormat";
+import { isAixLane, laneOfInstance } from "@t3tools/shared/modelLanes";
 import * as ServerConfig from "../config.ts";
 import * as ServerSettings from "../serverSettings.ts";
 import { aixGatewayModelPrices } from "../aix/ProviderInstanceSync.ts";
@@ -200,14 +201,12 @@ export const make = Effect.gen(function* () {
   const readAixClaudeSessionIds = Effect.fn("UsageService.readAixClaudeSessionIds")(function* (
     aixInstanceIds: readonly string[],
   ) {
+    if (aixInstanceIds.length === 0) return new Set<string>();
     const rows = yield* sql<{ readonly session_id: string | null }>`
       SELECT DISTINCT json_extract(payload_json, '$.nativeThreadRef.nativeId') AS session_id
       FROM orchestration_v2_projection_provider_threads
       WHERE driver = 'claudeAgent'
-        AND (
-          provider_instance_id LIKE 'aix-%'
-          OR ${aixInstanceIds.length > 0 ? sql.in("provider_instance_id", aixInstanceIds) : sql`0`}
-        )
+        AND ${sql.in("provider_instance_id", aixInstanceIds)}
         AND json_extract(payload_json, '$.nativeThreadRef.driver') = 'claudeAgent'
         AND json_extract(payload_json, '$.nativeThreadRef.nativeId') IS NOT NULL
     `.pipe(
@@ -1016,13 +1015,7 @@ export const make = Effect.gen(function* () {
     const aixClaudeInstanceIds = Object.entries(settings.providerInstances).flatMap(
       ([instanceId, instance]) => {
         if (instance.driver !== "claudeAgent") return [];
-        const instanceConfig = instance.config;
-        return instanceId.startsWith("aix-") ||
-          (typeof instanceConfig === "object" &&
-            instanceConfig !== null &&
-            "aixProfile" in instanceConfig)
-          ? [instanceId]
-          : [];
+        return isAixLane(laneOfInstance({ config: instance.config })) ? [instanceId] : [];
       },
     );
     const hasClaudeSessions = filesByDir.some(
