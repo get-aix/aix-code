@@ -148,6 +148,7 @@ test("Fork CI has a distinct workflow identity and runs all required quality gat
     "vp lint --report-unused-disable-directives",
     "vp run i18n:check",
     "vp run knip:check",
+    "node --test scripts/fork-invariants.test.mjs",
     "--filter @t3tools/contracts --filter @t3tools/shared --filter @t3tools/client-runtime --filter @t3tools/web typecheck",
     "--parallel --filter @t3tools/shared --filter @t3tools/client-runtime test",
   ]) {
