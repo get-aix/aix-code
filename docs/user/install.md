@@ -162,12 +162,35 @@ nix profile add 'github:get-aix/t3code/<release-tag>'
 Use a tag from the fork's [Releases page](https://github.com/get-aix/t3code/releases). Older
 version tags in the repository are upstream's own and do not contain this build.
 
-For NixOS, add `inputs.t3code.packages.x86_64-linux.default` to
-`environment.systemPackages`. In Home Manager, point the T3 Code module at the same package:
+For NixOS, add `inputs.t3code.packages.${pkgs.stdenv.hostPlatform.system}.default` (or apply
+`inputs.t3code.overlays.default` and use `pkgs.t3code`) to `environment.systemPackages`. In Home
+Manager, point the T3 Code module at the same package:
 
 ```nix
-programs.t3code.package = inputs.t3code.packages.x86_64-linux.default;
+programs.t3code.package = inputs.t3code.packages.${pkgs.stdenv.hostPlatform.system}.default;
 ```
+
+The default package includes `git`, `gh`, `codex`, the resource monitor sidecar, and `cloudflared`
+for T3 Connect. Additional flake outputs add opt-in runtime environments: `t3code-browser` (Linux
+shared libraries for T3's headless browser via `nix-ld`), `t3code-android` (unfree Android SDK and
+device tools), and `t3code-full` (both). You can also customize any output with `.override`:
+
+```nix
+inputs.t3code.packages.${pkgs.stdenv.hostPlatform.system}.t3code.override {
+  enableClaude = true;
+  enableOpencode = true;
+  enableGitLab = true;
+  withBrowser = true;
+  extraRuntimePackages = [ ];
+}
+```
+
+Supported `.override` toggles cover upstream nixpkgs provider and source-control CLIs
+(`enableClaude`, `enableCodex`, `enableOpencode`, `enableCursor`, `enableCursorCli`, `enableGit`,
+`enableGitHub`, `enableGitLab`, `enableJujutsu`, `enableBitbucket`, `enableAzureDevOps`,
+`enableResourceMonitor`) plus `enableCloudflared`, `enableXdgUtils`, `enablePi`, `enableKiro`,
+`enableForgejo`, `enableTailscale`, `enableSsh`, `enable1Password`, `withBrowser`, `withAndroid`,
+`extraRuntimePackages`, and `extraWrapArgs`.
 
 For the moving input, `nix flake update t3code` records the latest release branch commit in the lock
 file. For a pinned input, change the tag and update the lock file deliberately.

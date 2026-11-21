@@ -35,9 +35,9 @@ Notes per platform:
   in a browser. The script checks the download's SHA-256 and installs **T3 Code** into
   `/Applications` (or `~/Applications`). Quit T3 Code first. Set `T3CODE_VERSION=<version>` to
   install a specific release.
-- **Nix.** The flake builds from source for `x86_64-linux`. See
-  [T3 Code fork (Nix)](./install.md#t3-code-fork-nix) for flake inputs, NixOS, Home Manager, and
-  pinning a release.
+- **Nix.** The flake builds from source for Linux and macOS (`x86_64` and `aarch64`). See
+  [T3 Code fork (Nix)](./install.md#t3-code-fork-nix) for flake inputs, optional variants,
+  `.override` options, NixOS, Home Manager, and pinning a release.
 - **Android.** See [The Android app](#the-android-app).
 
 After installing, set up providers as described in [Install T3 Code](./install.md#providers).
