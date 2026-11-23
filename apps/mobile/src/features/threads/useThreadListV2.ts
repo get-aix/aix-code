@@ -1,4 +1,5 @@
-import type { OlderSettledScope } from "@t3tools/client-runtime/state/threads";
+import type { ScopedProject } from "@t3tools/client-runtime/environment";
+import { olderSettledScopesFor } from "@t3tools/client-runtime/state/threads";
 import type { EnvironmentId } from "@t3tools/contracts";
 import { useMemo, useSyncExternalStore } from "react";
 
@@ -49,6 +50,8 @@ export function useThreadListV2(input: {
   readonly pendingTasks: ReadonlyArray<PendingNewTask>;
   readonly environmentId: EnvironmentId | null;
   readonly projectRefs: LayoutInput["projectRefs"];
+  /** Projects the list shows: the environment scope applied, before the project filter. */
+  readonly projects: ReadonlyArray<ScopedProject>;
   readonly searchQuery: string;
   /** Threads that match the search by content, keyed like `threadSearchMatchKey`. */
   readonly searchMatches: ReadonlyMap<string, unknown>;
@@ -118,12 +121,19 @@ export function useThreadListV2(input: {
   // Older settled threads load in pages; the shelf lists them only as far as they are loaded.
   const scopes = useMemo(
     () =>
-      olderSettledScopes({
-        environmentId: input.environmentId,
-        projectRefs: input.projectRefs,
-        settlementEnvironmentIds: input.settlementEnvironmentIds,
+      olderSettledScopesFor({
+        projects:
+          input.environmentId === null
+            ? input.projects
+            : input.projects.filter((project) => project.environmentId === input.environmentId),
+        narrowedKeys:
+          input.projectRefs == null
+            ? null
+            : new Set(
+                input.projectRefs.map((ref) => scopedProjectKey(ref.environmentId, ref.projectId)),
+              ),
       }),
-    [input.environmentId, input.projectRefs, input.settlementEnvironmentIds],
+    [input.environmentId, input.projectRefs, input.projects],
   );
   const olderSettledShelf = useOlderSettledShelf({
     scopes,
@@ -245,21 +255,4 @@ export function useThreadListV2(input: {
     ],
   );
   return { layout, items, contentOnlyThreadKeys, olderSettledShelf };
-}
-
-/** The list's scope per environment: its projects there, or every project. */
-function olderSettledScopes(input: {
-  readonly environmentId: EnvironmentId | null;
-  readonly projectRefs: LayoutInput["projectRefs"];
-  readonly settlementEnvironmentIds: ReadonlySet<EnvironmentId>;
-}): ReadonlyArray<OlderSettledScope> {
-  const environmentIds =
-    input.environmentId === null ? [...input.settlementEnvironmentIds] : [input.environmentId];
-  return environmentIds.flatMap((environmentId): ReadonlyArray<OlderSettledScope> => {
-    if (input.projectRefs == null) return [{ environmentId, projectIds: null }];
-    const projectIds = input.projectRefs.flatMap((ref) =>
-      ref.environmentId === environmentId ? [ref.projectId] : [],
-    );
-    return projectIds.length === 0 ? [] : [{ environmentId, projectIds }];
-  });
 }

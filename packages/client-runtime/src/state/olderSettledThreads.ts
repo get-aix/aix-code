@@ -9,7 +9,6 @@ import {
   type OrchestrationV2ThreadFamily,
   type OrchestrationV2ThreadShell,
   type ProjectId,
-  type ProjectScope,
   type ThreadId,
 } from "@t3tools/contracts";
 import * as DateTime from "effect/DateTime";
@@ -18,7 +17,7 @@ import * as Option from "effect/Option";
 import { AsyncResult, Atom, type AtomRegistry } from "effect/reactivity";
 
 import type * as EnvironmentRegistry from "../connection/registry.ts";
-import { filterProjectsByScope, type ScopedProject } from "../environment/scope.ts";
+import type { ScopedProject } from "../environment/scope.ts";
 import { request } from "../rpc/client.ts";
 import { createEnvironmentQueryAtomFamily, selectEnvironmentQueryData } from "./runtime.ts";
 import type { EnvironmentShellState } from "./shell.ts";
@@ -66,18 +65,17 @@ export interface OlderSettledShelfEnvironment {
 }
 
 /**
- * The projects of one environment scope that a list shows, grouped by environment. The server
- * counts older settled threads for every project it holds, so a scope built from all environments
- * would count threads the list hides.
+ * The projects a list shows, grouped by environment. The server counts older settled threads for
+ * every project it holds, so a scope built from all projects would count threads the list hides.
  */
 export function olderSettledScopesFor(input: {
+  /** The projects the list shows, already limited to its environment scope. */
   readonly projects: ReadonlyArray<ScopedProject>;
-  readonly activeScope: ProjectScope;
-  /** `environmentId:projectId` keys the sidebar narrows to, or null for every project in the scope. */
+  /** `environmentId:projectId` keys the sidebar narrows to, or null for every project shown. */
   readonly narrowedKeys: ReadonlySet<string> | null;
 }): ReadonlyArray<OlderSettledScope> {
   const projectIdsByEnvironment = new Map<EnvironmentId, ProjectId[]>();
-  for (const project of filterProjectsByScope(input.projects, input.activeScope)) {
+  for (const project of input.projects) {
     if (
       input.narrowedKeys !== null &&
       !input.narrowedKeys.has(`${project.environmentId}:${project.id}`)

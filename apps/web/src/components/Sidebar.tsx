@@ -1218,8 +1218,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const scopedProjectRefs = scopedProjectGroups.flatMap((project) => project.memberProjectRefs);
   const scopedProjectKeys = revealWidensScope ? null : chosenScopeProjectKeys;
   const olderSettledScopes = olderSettledScopesFor({
-    projects: allProjects,
-    activeScope,
+    projects: filterProjectsByScope(allProjects, activeScope),
     narrowedKeys: scopedProjectKeys,
   });
   const threadSearch = useThreadSearch(

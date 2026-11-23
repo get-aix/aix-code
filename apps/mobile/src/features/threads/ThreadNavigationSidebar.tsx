@@ -286,6 +286,7 @@ function ThreadNavigationSidebarPane(props: ThreadNavigationSidebarProps) {
     pendingTasks,
     environmentId: options.selectedEnvironmentId,
     projectRefs: selectedProjectScope === null ? null : selectedProjectScope.projectRefs,
+    projects,
     searchQuery: props.searchQuery,
     searchMatches: threadSearchMatchByKey,
     settlementEnvironmentIds,

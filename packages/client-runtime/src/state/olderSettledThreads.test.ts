@@ -209,35 +209,26 @@ it("counts older threads the client does not hold, once", () => {
 
 describe("olderSettledScopesFor", () => {
   const envB = EnvironmentId.make("env-b");
-  const personal = ProjectId.make("personal");
   const work = ProjectId.make("work");
+  const workB = ProjectId.make("work-b");
   const projects = [
-    { environmentId, id: personal, scope: "personal" },
-    { environmentId, id: work, scope: "work" },
-    { environmentId: envB, id: ProjectId.make("work-b"), scope: "work" },
+    { environmentId, id: work },
+    { environmentId: envB, id: workB },
   ];
 
-  it("lists only the active scope's projects, grouped by environment", () => {
-    expect(olderSettledScopesFor({ projects, activeScope: "work", narrowedKeys: null })).toEqual([
+  it("groups the shown projects by environment", () => {
+    expect(olderSettledScopesFor({ projects, narrowedKeys: null })).toEqual([
       { environmentId, projectIds: [work] },
-      { environmentId: envB, projectIds: [ProjectId.make("work-b")] },
+      { environmentId: envB, projectIds: [workB] },
     ]);
   });
 
   it("narrows to the sidebar's selected projects and drops environments left empty", () => {
+    expect(olderSettledScopesFor({ projects, narrowedKeys: new Set([`${envB}:work-b`]) })).toEqual([
+      { environmentId: envB, projectIds: [workB] },
+    ]);
     expect(
-      olderSettledScopesFor({
-        projects,
-        activeScope: "work",
-        narrowedKeys: new Set([`${envB}:work-b`]),
-      }),
-    ).toEqual([{ environmentId: envB, projectIds: [ProjectId.make("work-b")] }]);
-    expect(
-      olderSettledScopesFor({
-        projects,
-        activeScope: "work",
-        narrowedKeys: new Set([`${environmentId}:personal`]),
-      }),
+      olderSettledScopesFor({ projects, narrowedKeys: new Set([`${environmentId}:personal`]) }),
     ).toEqual([]);
   });
 });

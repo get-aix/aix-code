@@ -44,6 +44,10 @@ it("reuses a large thread list across tab renders and updates when its inputs ch
     pendingTasks: [],
     environmentId: null,
     projectRefs: null,
+    projects: [
+      { environmentId, id: ProjectId.make("project-test") },
+      { environmentId: otherEnvironmentId, id: ProjectId.make("project-test") },
+    ],
     searchQuery: "",
     searchMatches: new Map(),
     settlementEnvironmentIds: environmentIds,
@@ -241,4 +245,71 @@ it("reuses a large thread list across tab renders and updates when its inputs ch
   expect(loaded.layout.items).toHaveLength(160);
   expect(loaded.olderSettledShelf.isListed(threads[150]!)).toBe(true);
   expect(loaded.items).not.toBe(loading.items);
+});
+
+it("pages older settled threads only in the projects the list shows", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  using _globals = { [Symbol.dispose]: () => vi.unstubAllGlobals() };
+  vi.mocked(olderSettledThreads.shelfAtom).mockReturnValue(Atom.make(new Map()));
+  const registry = AtomRegistry.make();
+  using _registry = { [Symbol.dispose]: () => registry.dispose() };
+  const environmentId = EnvironmentId.make("environment-1");
+  const otherEnvironmentId = EnvironmentId.make("environment-2");
+  const workProjectId = ProjectId.make("work-project");
+  const environmentIds = new Set([environmentId, otherEnvironmentId]);
+  const input: Parameters<typeof useThreadListV2>[0] = {
+    threads: [],
+    pendingTasks: [],
+    environmentId: null,
+    projectRefs: null,
+    projects: [
+      { environmentId, id: workProjectId },
+      { environmentId: otherEnvironmentId, id: ProjectId.make("other-project") },
+    ],
+    searchQuery: "",
+    searchMatches: new Map(),
+    settlementEnvironmentIds: environmentIds,
+    snoozeEnvironmentIds: environmentIds,
+    pinReorderEnvironmentIds: environmentIds,
+    activeReorderEnvironmentIds: environmentIds,
+    queuedThreadKeys: new Set(),
+    settledLimit: 10,
+    now: "2026-01-02T00:00:00.000Z",
+    pendingOrder: null,
+    shelfPreferencesLoaded: true,
+    workingShelfEnabled: true,
+    workingShelfExpanded: false,
+    snoozedShelfExpanded: false,
+    settledShelfExpanded: true,
+    selectedThreadKey: null,
+  };
+  function ListProbe(props: { input: typeof input }) {
+    useThreadListV2(props.input);
+    return null;
+  }
+  const root = createRoot(document.createElement("div"));
+  using _root = { [Symbol.dispose]: () => act(() => root.unmount()) };
+  const render = (probeInput: typeof input) =>
+    act(async () =>
+      root.render(
+        <RegistryContext value={registry}>
+          <ListProbe input={probeInput} />
+        </RegistryContext>,
+      ),
+    );
+  await render(input);
+  expect(vi.mocked(olderSettledThreads.shelfAtom)).toHaveBeenLastCalledWith([
+    { scope: { environmentId, projectIds: [workProjectId] }, pages: 0 },
+    {
+      scope: { environmentId: otherEnvironmentId, projectIds: [ProjectId.make("other-project")] },
+      pages: 0,
+    },
+  ]);
+  await render({ ...input, environmentId: otherEnvironmentId });
+  expect(vi.mocked(olderSettledThreads.shelfAtom)).toHaveBeenLastCalledWith([
+    {
+      scope: { environmentId: otherEnvironmentId, projectIds: [ProjectId.make("other-project")] },
+      pages: 0,
+    },
+  ]);
 });
