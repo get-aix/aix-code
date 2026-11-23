@@ -828,6 +828,7 @@
   "44de9731d5b8eb38": "L’historique de travail a changé. Réessayez de le charger.",
   "c0ea8898cd494336": "Impossible de vérifier l’accès de cette connexion aux diagnostics et à l’utilisation.",
   "953b6473de4b9ad6": "Cette connexion n’a pas accès aux diagnostics et à l’utilisation.",
+  "e9a78b0c3ced93c5": "Clé Travail",
   "8c68febc86a3f651": "Mise à jour de {provider}…",
   "c15885a14f85831e": "Mise à jour de {count} fournisseurs…",
   "496040a0c27ca113": "Mise à jour…",
@@ -1224,6 +1225,7 @@
   "bb34eaf6ddc55a72": "Ce compte n’a pas de limites d’abonnement.",
   "42a2622893a6bced": "Impossible de lire les limites.",
   "4897e228d3185c96": "Aucune limite signalée.",
+  "e27d2cb964df5dd5": "{source} : aucun compte signalé.",
   "1b503134018285f4": "{days} j {hours} h",
   "164c674cf062933a": "{label} · {count} restants · expire dans {expires}",
   "9c82c39589c23938": "{label} · {count} restants",
@@ -4094,6 +4096,12 @@
       "v": "v"
     }
   ],
+  "8ab2d65ab970d78e": "Coût du fil",
+  "18de1a488037dfac": "Masquer le coût du fil",
+  "3f694ee282dc0e4b": "Le coût n'est pas disponible pour ce fil.",
+  "4560e2a9a32ebf27": "Calcul du coût…",
+  "00d82ca2e8d691ec": "Total",
+  "7c459dbdad843528": "Fil principal",
   "e58a1d884fa1d8f2": "Détails du fil",
   "43c5fbd02c6f330a": "Afficher moins",
   "de45b075b016cb14": [
@@ -4105,8 +4113,6 @@
     },
     " de plus"
   ],
-  "8ab2d65ab970d78e": "Coût du fil",
-  "7c459dbdad843528": "Fil principal",
   "78fd6b4fbfd33603": "Sous-agents",
   "02d9667ff2c8e0b8": "Ticket {key} : {title}",
   "4276743ee60a3c62": "{count, plural, one {{count} commentaire} other {{count} commentaires}}",
@@ -4728,6 +4734,7 @@
   "5ba22a660758e453": "La limite de pièces jointes est atteinte.",
   "181933312b23cb0c": "Le brouillon a refusé cette pièce jointe (doublon ou limite de pièces jointes atteinte).",
   "df02c1d51d158d32": "Changer le modèle de réponse de ce fil",
+  "1d9158be45596304": "Afficher le détail des coûts de ce fil",
   "929781439a221aae": "Poser une question annexe dans une nouvelle discussion annexe",
   "378c3404c430fc05": "Identique à /side",
   "8ce7ee2a95c49bdb": "Démarrer une nouvelle session ; les messages précédents restent visibles",
@@ -8972,7 +8979,6 @@
   "51651ce45d481a20": "Choisir un fichier d’icône de projet",
   "b1af8e3b0f57f314": "Dans {scope}. Détermine si ce projet apparaît dans Personnel ou Travail.",
   "8470539009f4dc5f": "Déplacer vers {scope}",
-  "e9a78b0c3ced93c5": "Clé Travail",
   "bc8cc4ee8f3030df": "Le profil aix dont les modèles sont utilisés par défaut par les fils de ce projet.",
   "a10ff8b39e16d7f8": "Épingler",
   "c65b6d4b82c9eb43": "Les projets épinglés apparaissent en premier dans les sélecteurs de projet.",
@@ -12271,6 +12277,5 @@
   "27d76249d09eb69f": "Guide de revue prêt",
   "faa3bb26abb39c93": "Échec du guide de revue",
   "b7df38b7d8792d78": "Ouvrir le guide",
-  "9e91e9a77b664e4e": "Impossible de démarrer un guide de revue",
-  "e27d2cb964df5dd5": "{source} : aucun compte signalé."
+  "9e91e9a77b664e4e": "Impossible de démarrer un guide de revue"
 }

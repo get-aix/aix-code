@@ -50,6 +50,10 @@ panel with a **Thread cost** section:
 If any turn in the thread has usage that cannot be priced, T3 Code falls back to the regular limits
 view instead of showing an incomplete total.
 
+Send `/cost` on its own, or pick it from the composer's slash menu, to open the same breakdown
+above the composer on web and Android. It stays open and updates until you dismiss it; on a thread
+whose usage cannot be priced, it says the cost is not available.
+
 ## Check budgets from a thread
 
 Run `/usage-limits` from the composer's slash menu to check your budgets without leaving the

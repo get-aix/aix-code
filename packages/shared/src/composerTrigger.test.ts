@@ -4,6 +4,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 import {
   detectComposerTrigger,
+  isThreadCostComposerCommand,
   parseSideChatCommand,
   serializeComposerFileLink,
 } from "./composerTrigger.ts";
@@ -178,5 +179,15 @@ describe("parseSideChatCommand", () => {
     expect(parseSideChatCommand("/sidebar")).toBeNull();
     expect(parseSideChatCommand("/btwx")).toBeNull();
     expect(parseSideChatCommand("ask /side later")).toBeNull();
+  });
+});
+
+describe("isThreadCostComposerCommand", () => {
+  it("matches /cost only as the whole message", () => {
+    expect(isThreadCostComposerCommand("/cost")).toBe(true);
+    expect(isThreadCostComposerCommand("  /COST  ")).toBe(true);
+    expect(isThreadCostComposerCommand("/costs")).toBe(false);
+    expect(isThreadCostComposerCommand("/cost why is this high")).toBe(false);
+    expect(isThreadCostComposerCommand("what does /cost show")).toBe(false);
   });
 });

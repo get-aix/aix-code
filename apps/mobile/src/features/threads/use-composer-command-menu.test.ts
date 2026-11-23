@@ -112,6 +112,23 @@ describe("mobile slash commands", () => {
     expect(build(false)).toEqual(["pcmd:clear"]);
     expect(build(true, false)).toEqual([]);
   });
+
+  it("offers T3's /cost in place of the provider's where the thread can price it", () => {
+    const claude = {
+      driver: ProviderDriverKind.make("claudeAgent"),
+      slashCommands: [{ name: "cost", description: "Show session cost" }],
+    };
+    const build = (offersThreadCost: boolean) =>
+      buildComposerSlashCommandItems({
+        query: "co",
+        atMessageStart: true,
+        hasThread: true,
+        offersThreadCost,
+        selectedProviderStatus: claude,
+      }).map((item) => item.id);
+    expect(build(true)).toEqual(["cmd:cost"]);
+    expect(build(false)).toEqual(["pcmd:cost"]);
+  });
 });
 
 describe("mobile model mentions", () => {

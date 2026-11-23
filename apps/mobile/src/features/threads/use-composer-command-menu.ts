@@ -115,6 +115,8 @@ export function buildComposerSlashCommandItems(
     readonly hasThread: boolean;
     readonly hasCompactableConversation?: boolean;
     readonly offersUsageLimits?: boolean;
+    /** T3's `/cost` replaces the provider's, which would price the provider's own session. */
+    readonly offersThreadCost?: boolean;
     /** T3's `/clear` replaces the provider's, which would clear a session T3 still treats as live. */
     readonly offersFreshSession?: boolean;
     readonly offersSideChat?: boolean;
@@ -123,17 +125,30 @@ export function buildComposerSlashCommandItems(
   resolve: MessageResolver = m,
 ): ComposerCommandItem[] {
   const query = input.query.toLowerCase();
-  const items: ComposerCommandItem[] = "model".includes(query)
-    ? [
-        {
-          id: "cmd:model",
-          type: "slash-command",
-          command: "model",
-          label: "/model",
-          description: resolve(msg("Switch model")),
-        },
-      ]
-    : [];
+  const items: ComposerCommandItem[] = [
+    ...("model".includes(query)
+      ? [
+          {
+            id: "cmd:model",
+            type: "slash-command" as const,
+            command: "model",
+            label: "/model",
+            description: resolve(msg("Switch model")),
+          },
+        ]
+      : []),
+    ...(input.offersThreadCost && "cost".includes(query)
+      ? [
+          {
+            id: "cmd:cost",
+            type: "slash-command" as const,
+            command: "cost",
+            label: "/cost",
+            description: resolve(msg("Show this thread's cost breakdown")),
+          },
+        ]
+      : []),
+  ];
 
   // Providers expand commands only at the start of a message. T3 commands
   // change local state and do not have this restriction, except `/clear`.
@@ -165,6 +180,7 @@ export function buildComposerSlashCommandItems(
   for (const command of input.selectedProviderStatus?.slashCommands ?? []) {
     if (!command.name.toLowerCase().includes(query)) continue;
     if (command.name === "clear" && input.offersFreshSession) continue;
+    if (command.name === "cost" && input.offersThreadCost) continue;
     if (command.name === "compact" && !input.hasCompactableConversation) continue;
     if (command.name === USAGE_LIMITS_COMMAND.name && input.offersUsageLimits && !input.hasThread) {
       continue;
@@ -267,9 +283,11 @@ export function useComposerCommandMenu({
   hasThread,
   hasCompactableConversation,
   offersUsageLimits = false,
+  offersThreadCost = false,
   enabled = true,
   onChangeDraftMessage,
   onUsageLimits,
+  onThreadCost,
   onOpenModelPicker,
   modelOptions,
   modelProviders,
@@ -292,9 +310,11 @@ export function useComposerCommandMenu({
   readonly hasThread: boolean;
   readonly hasCompactableConversation: boolean;
   readonly offersUsageLimits?: boolean;
+  readonly offersThreadCost?: boolean;
   readonly enabled?: boolean;
   readonly onChangeDraftMessage: (value: string) => void;
   readonly onUsageLimits?: () => void;
+  readonly onThreadCost?: () => void;
   /** `/model` opens this picker instead of inserting text. */
   readonly onOpenModelPicker: () => void;
   readonly modelOptions?: ReadonlyArray<ModelOption>;
@@ -438,6 +458,7 @@ export function useComposerCommandMenu({
           hasThread,
           hasCompactableConversation,
           offersUsageLimits,
+          offersThreadCost,
           offersFreshSession: onFreshSession !== undefined,
           offersSideChat,
           selectedProviderStatus: selectedProviderStatus
@@ -718,6 +739,10 @@ export function useComposerCommandMenu({
       onUsageLimits
     ) {
       clearTriggerThen(onUsageLimits);
+      return;
+    }
+    if (item.type === "slash-command" && item.command === "cost" && onThreadCost) {
+      clearTriggerThen(onThreadCost);
       return;
     }
 

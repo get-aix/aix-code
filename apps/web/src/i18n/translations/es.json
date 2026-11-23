@@ -828,6 +828,7 @@
   "44de9731d5b8eb38": "El historial de trabajo cambió. Vuelve a cargarlo.",
   "c0ea8898cd494336": "No se pudo comprobar el acceso de esta conexión al diagnóstico y al uso.",
   "953b6473de4b9ad6": "Esta conexión no tiene acceso al diagnóstico ni al uso.",
+  "e9a78b0c3ced93c5": "Clave de trabajo",
   "8c68febc86a3f651": "Actualizando {provider}…",
   "c15885a14f85831e": "Actualizando {count} proveedores…",
   "496040a0c27ca113": "Actualizando…",
@@ -1224,6 +1225,7 @@
   "bb34eaf6ddc55a72": "Esta cuenta no tiene límites de suscripción.",
   "42a2622893a6bced": "No se pudieron leer los límites.",
   "4897e228d3185c96": "No se informaron límites.",
+  "e27d2cb964df5dd5": "{source}: no se informaron cuentas.",
   "1b503134018285f4": "{days} d {hours} h",
   "164c674cf062933a": "{label} · quedan {count} · caduca en {expires}",
   "9c82c39589c23938": "{label} · quedan {count}",
@@ -4093,6 +4095,12 @@
       "v": "v"
     }
   ],
+  "8ab2d65ab970d78e": "Coste del hilo",
+  "18de1a488037dfac": "Ocultar coste del hilo",
+  "3f694ee282dc0e4b": "El coste no está disponible para este hilo.",
+  "4560e2a9a32ebf27": "Calculando el coste…",
+  "00d82ca2e8d691ec": "Total",
+  "7c459dbdad843528": "Hilo principal",
   "e58a1d884fa1d8f2": "Detalles del hilo",
   "43c5fbd02c6f330a": "Mostrar menos",
   "de45b075b016cb14": [
@@ -4104,8 +4112,6 @@
     },
     " más"
   ],
-  "8ab2d65ab970d78e": "Coste del hilo",
-  "7c459dbdad843528": "Hilo principal",
   "78fd6b4fbfd33603": "Subagentes",
   "02d9667ff2c8e0b8": "Issue {key}: {title}",
   "4276743ee60a3c62": "{count, plural, one {{count} comentario} other {{count} comentarios}}",
@@ -4727,6 +4733,7 @@
   "5ba22a660758e453": "Se alcanzó el límite de adjuntos.",
   "181933312b23cb0c": "El borrador rechazó este adjunto (duplicado o límite de adjuntos alcanzado).",
   "df02c1d51d158d32": "Cambiar el modelo de respuesta de este hilo",
+  "1d9158be45596304": "Mostrar el desglose de coste de este hilo",
   "929781439a221aae": "Hacer una pregunta aparte en un chat lateral nuevo",
   "378c3404c430fc05": "Igual que /side",
   "8ce7ee2a95c49bdb": "Iniciar una sesión nueva; los mensajes anteriores siguen visibles",
@@ -8970,7 +8977,6 @@
   "51651ce45d481a20": "Elige un archivo de icono para el proyecto",
   "b1af8e3b0f57f314": "En {scope}. Controla si este proyecto aparece en Personal o en Trabajo.",
   "8470539009f4dc5f": "Mover a {scope}",
-  "e9a78b0c3ced93c5": "Clave de trabajo",
   "bc8cc4ee8f3030df": "El perfil de aix cuyos modelos usan los hilos de este proyecto de forma predeterminada.",
   "a10ff8b39e16d7f8": "Fijar",
   "c65b6d4b82c9eb43": "Los proyectos fijados aparecen primero en los selectores de proyectos.",
@@ -12266,6 +12272,5 @@
   "27d76249d09eb69f": "Guía de revisión lista",
   "faa3bb26abb39c93": "Falló la guía de revisión",
   "b7df38b7d8792d78": "Abrir guía",
-  "9e91e9a77b664e4e": "No se pudo iniciar una guía de revisión",
-  "e27d2cb964df5dd5": "{source}: no se informaron cuentas."
+  "9e91e9a77b664e4e": "No se pudo iniciar una guía de revisión"
 }

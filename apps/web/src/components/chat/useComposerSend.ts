@@ -1,7 +1,11 @@
 import { msg } from "gt-react";
 import { thrownErrorMessage } from "@t3tools/client-runtime/errors";
 import { m } from "~/i18n/messages";
-import { isClearComposerCommand, parseSideChatCommand } from "@t3tools/shared/composerTrigger";
+import {
+  isClearComposerCommand,
+  isThreadCostComposerCommand,
+  parseSideChatCommand,
+} from "@t3tools/shared/composerTrigger";
 import { armFreshSession, disarmFreshSession, readFreshSessionArm } from "./freshSessionArms";
 import {
   mergeDirectPreviewAnnotation,
@@ -247,6 +251,8 @@ interface ComposerSendInput {
   readonly usageLimitsOffered: boolean;
   readonly openUsageLimits: UsageLimitsPanel["open"];
   readonly clearUsageLimitsFor: UsageLimitsPanel["clearFor"];
+  readonly threadCostAvailable: boolean;
+  readonly openThreadCost: () => void;
   readonly needsLoadBalancing: boolean;
   readonly loadBalancing: DraftEnvironmentRouting["loadBalancing"];
   readonly refreshBeforeSend: DraftEnvironmentRouting["refreshBeforeSend"];
@@ -344,6 +350,8 @@ export function useComposerSend(input: ComposerSendInput) {
     usageLimitsOffered,
     openUsageLimits,
     clearUsageLimitsFor,
+    threadCostAvailable,
+    openThreadCost,
     needsLoadBalancing,
     loadBalancing,
     refreshBeforeSend,
@@ -434,6 +442,18 @@ export function useComposerSend(input: ComposerSendInput) {
         setComposerDraftPrompt(composerDraftTarget, "");
         composerRef.current?.resetCursorState();
       }
+      return;
+    }
+    if (
+      threadCostAvailable &&
+      !directAnnotation &&
+      !draftHasNonPromptContent(composerDraftTarget) &&
+      isThreadCostComposerCommand(promptRef.current)
+    ) {
+      openThreadCost();
+      promptRef.current = "";
+      setComposerDraftPrompt(composerDraftTarget, "");
+      composerRef.current?.resetCursorState();
       return;
     }
 

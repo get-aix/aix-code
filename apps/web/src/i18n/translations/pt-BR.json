@@ -828,6 +828,7 @@
   "44de9731d5b8eb38": "O histórico de trabalho mudou. Tente carregá-lo novamente.",
   "c0ea8898cd494336": "Não foi possível verificar o acesso desta conexão ao diagnóstico e ao uso.",
   "953b6473de4b9ad6": "Esta conexão não tem acesso ao diagnóstico e ao uso.",
+  "e9a78b0c3ced93c5": "Chave de trabalho",
   "8c68febc86a3f651": "Atualizando {provider}…",
   "c15885a14f85831e": "Atualizando {count} provedores…",
   "496040a0c27ca113": "Atualizando…",
@@ -1224,6 +1225,7 @@
   "bb34eaf6ddc55a72": "Esta conta não tem limites de assinatura.",
   "42a2622893a6bced": "Não foi possível ler os limites.",
   "4897e228d3185c96": "Nenhum limite informado.",
+  "e27d2cb964df5dd5": "{source}: nenhuma conta informada.",
   "1b503134018285f4": "{days}d {hours}h",
   "164c674cf062933a": "{label} · {count} restantes · expira em {expires}",
   "9c82c39589c23938": "{label} · {count} restantes",
@@ -4094,6 +4096,12 @@
       "v": "v"
     }
   ],
+  "8ab2d65ab970d78e": "Custo da thread",
+  "18de1a488037dfac": "Dispensar custo da thread",
+  "3f694ee282dc0e4b": "O custo não está disponível para esta thread.",
+  "4560e2a9a32ebf27": "Calculando custo…",
+  "00d82ca2e8d691ec": "Total",
+  "7c459dbdad843528": "Thread principal",
   "e58a1d884fa1d8f2": "Detalhes da thread",
   "43c5fbd02c6f330a": "Mostrar menos",
   "de45b075b016cb14": [
@@ -4104,8 +4112,6 @@
       "v": "v"
     }
   ],
-  "8ab2d65ab970d78e": "Custo da thread",
-  "7c459dbdad843528": "Thread principal",
   "78fd6b4fbfd33603": "Subagentes",
   "02d9667ff2c8e0b8": "Issue {key}: {title}",
   "4276743ee60a3c62": "{count, plural, one {{count} comentário} other {{count} comentários}}",
@@ -4727,6 +4733,7 @@
   "5ba22a660758e453": "O limite de anexos foi atingido.",
   "181933312b23cb0c": "O rascunho rejeitou este anexo (duplicado ou limite de anexos atingido).",
   "df02c1d51d158d32": "Trocar o modelo de resposta desta thread",
+  "1d9158be45596304": "Mostrar o detalhamento de custo desta thread",
   "929781439a221aae": "Fazer uma pergunta paralela em um novo chat paralelo",
   "378c3404c430fc05": "Igual a /side",
   "8ce7ee2a95c49bdb": "Iniciar uma nova sessão; as mensagens anteriores continuam visíveis",
@@ -8971,7 +8978,6 @@
   "51651ce45d481a20": "Escolha um arquivo de ícone para o projeto",
   "b1af8e3b0f57f314": "Em {scope}. Controla se este projeto aparece em Pessoal ou em Trabalho.",
   "8470539009f4dc5f": "Mover para {scope}",
-  "e9a78b0c3ced93c5": "Chave de trabalho",
   "bc8cc4ee8f3030df": "O perfil do aix cujos modelos as threads deste projeto usam por padrão.",
   "a10ff8b39e16d7f8": "Fixar",
   "c65b6d4b82c9eb43": "Os projetos fixados aparecem primeiro nos seletores de projeto.",
@@ -12270,6 +12276,5 @@
   "27d76249d09eb69f": "Guia de revisão pronto",
   "faa3bb26abb39c93": "O guia de revisão falhou",
   "b7df38b7d8792d78": "Abrir guia",
-  "9e91e9a77b664e4e": "Não foi possível iniciar um guia de revisão",
-  "e27d2cb964df5dd5": "{source}: nenhuma conta informada."
+  "9e91e9a77b664e4e": "Não foi possível iniciar um guia de revisão"
 }

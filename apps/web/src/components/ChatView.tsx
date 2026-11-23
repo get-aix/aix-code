@@ -65,6 +65,7 @@ import type { UsageLimitSourceSnapshots } from "@t3tools/contracts";
 import { feedbackBannerItem } from "./chat/ComposerFeedback";
 import { freshSessionBannerItem } from "./chat/ComposerFreshSession";
 import { armFreshSession, disarmFreshSession, useFreshSessionArmed } from "./chat/freshSessionArms";
+import { threadCostBannerItem } from "./chat/ThreadCostBanner";
 import { useUsageLimitsPanel } from "./chat/useUsageLimitsPanel";
 import { useWorktreeSetup } from "./chat/useWorktreeSetup";
 import { useChatShortcuts } from "./chat/useChatShortcuts";
@@ -1539,6 +1540,21 @@ export default function ChatView(props: ChatViewProps) {
     providers: providerStatuses,
     sources: serverConfig?.usageLimitSources ?? EMPTY_USAGE_LIMIT_SOURCES,
   });
+  // `/cost` applies to AIX threads only, the ones whose cost the server can price.
+  const threadCostOffered = serverThread !== null && activeProviderStatus?.aixProfile !== undefined;
+  const [threadCostOpenKey, setThreadCostOpenKey] = useState<string | null>(null);
+  const openThreadCost = useStableCallback(() => setThreadCostOpenKey(routeThreadKey));
+  const threadCostBanner =
+    threadCostOffered && threadCostOpenKey === routeThreadKey && serverThread !== null
+      ? threadCostBannerItem(
+          {
+            environmentId,
+            threadId: serverThread.id,
+            onDismiss: () => setThreadCostOpenKey(null),
+          },
+          messages,
+        )
+      : null;
   const {
     beginLocalDispatch,
     resetLocalDispatch,
@@ -2777,6 +2793,7 @@ export default function ChatView(props: ChatViewProps) {
     );
     const extensionStatusItems = extensionStatusBanner === null ? [] : [extensionStatusBanner];
     const usageLimitsItems = usageLimitsBanner === null ? [] : [usageLimitsBanner];
+    const threadCostItems = threadCostBanner === null ? [] : [threadCostBanner];
     const projectCloneItems = projectCloneBannerItem === null ? [] : [projectCloneBannerItem];
     // An approval's feedback goes to that approval; the armed session waits for the next message.
     const freshSessionItems =
@@ -2790,6 +2807,7 @@ export default function ChatView(props: ChatViewProps) {
         ...limitRecoveryItems,
         ...extensionStatusItems,
         ...usageLimitsItems,
+        ...threadCostItems,
         ...projectCloneItems,
         ...freshSessionItems,
         ...systemComposerBannerItems,
@@ -2801,6 +2819,7 @@ export default function ChatView(props: ChatViewProps) {
       ...limitRecoveryItems,
       ...extensionStatusItems,
       ...usageLimitsItems,
+      ...threadCostItems,
       ...projectCloneItems,
       ...freshSessionItems,
       ...systemComposerBannerItems,
@@ -3104,6 +3123,8 @@ export default function ChatView(props: ChatViewProps) {
     usageLimitsOffered,
     openUsageLimits,
     clearUsageLimitsFor,
+    threadCostAvailable: threadCostOffered,
+    openThreadCost,
     needsLoadBalancing,
     loadBalancing,
     refreshBeforeSend,
@@ -3846,6 +3867,11 @@ export default function ChatView(props: ChatViewProps) {
                                   usageLimitsKey !== null &&
                                   !composerHasNonPromptContent
                                     ? openUsageLimits
+                                    : undefined
+                                }
+                                onThreadCostCommand={
+                                  threadCostOffered && !composerHasNonPromptContent
+                                    ? openThreadCost
                                     : undefined
                                 }
                                 environmentUnavailable={activeEnvironmentUnavailableState}

@@ -828,6 +828,7 @@
   "44de9731d5b8eb38": "Arbetshistoriken ändrades. Försök läsa in den igen.",
   "c0ea8898cd494336": "Kunde inte kontrollera den här anslutningens åtkomst till diagnostik och användning.",
   "953b6473de4b9ad6": "Den här anslutningen har inte åtkomst till diagnostik och användning.",
+  "e9a78b0c3ced93c5": "Arbetsnyckel",
   "8c68febc86a3f651": "Uppdaterar {provider}…",
   "c15885a14f85831e": "Uppdaterar {count} leverantörer…",
   "496040a0c27ca113": "Uppdaterar…",
@@ -1224,6 +1225,7 @@
   "bb34eaf6ddc55a72": "Det här kontot har inga prenumerationsgränser.",
   "42a2622893a6bced": "Kunde inte läsa gränser.",
   "4897e228d3185c96": "Inga gränser rapporterades.",
+  "e27d2cb964df5dd5": "{source}: inga konton rapporterades.",
   "1b503134018285f4": "{days} d {hours} h",
   "164c674cf062933a": "{label} · {count} kvar · går ut om {expires}",
   "9c82c39589c23938": "{label} · {count} kvar",
@@ -4094,6 +4096,12 @@
       "v": "v"
     }
   ],
+  "8ab2d65ab970d78e": "Trådkostnad",
+  "18de1a488037dfac": "Stäng trådkostnaden",
+  "3f694ee282dc0e4b": "Kostnaden är inte tillgänglig för den här tråden.",
+  "4560e2a9a32ebf27": "Beräknar kostnaden…",
+  "00d82ca2e8d691ec": "Totalt",
+  "7c459dbdad843528": "Huvudtråd",
   "e58a1d884fa1d8f2": "Tråddetaljer",
   "43c5fbd02c6f330a": "Visa mindre",
   "de45b075b016cb14": [
@@ -4105,8 +4113,6 @@
     },
     " till"
   ],
-  "8ab2d65ab970d78e": "Trådkostnad",
-  "7c459dbdad843528": "Huvudtråd",
   "78fd6b4fbfd33603": "Underagenter",
   "02d9667ff2c8e0b8": "Ärende {key}: {title}",
   "4276743ee60a3c62": "{count, plural, one {{count} kommentar} other {{count} kommentarer}}",
@@ -4728,6 +4734,7 @@
   "5ba22a660758e453": "Gränsen för bilagor har nåtts.",
   "181933312b23cb0c": "Utkastet avvisade den här bilagan (dubblett eller gränsen för bilagor nådd).",
   "df02c1d51d158d32": "Byt svarsmodell för den här tråden",
+  "1d9158be45596304": "Visa kostnadsfördelningen för den här tråden",
   "929781439a221aae": "Ställ en sidofråga i en ny sidochatt",
   "378c3404c430fc05": "Samma som /side",
   "8ce7ee2a95c49bdb": "Starta en ny session; tidigare meddelanden förblir synliga",
@@ -8978,7 +8985,6 @@
   "51651ce45d481a20": "Välj en fil för projektikonen",
   "b1af8e3b0f57f314": "I {scope}. Styr om projektet visas under Personlig eller Arbete.",
   "8470539009f4dc5f": "Flytta till {scope}",
-  "e9a78b0c3ced93c5": "Arbetsnyckel",
   "bc8cc4ee8f3030df": "Den aix-profil vars modeller projektets trådar använder som standard.",
   "a10ff8b39e16d7f8": "Fäst",
   "c65b6d4b82c9eb43": "Fästa projekt visas först i projektväljare.",
@@ -12278,6 +12284,5 @@
   "27d76249d09eb69f": "Granskningsguiden är klar",
   "faa3bb26abb39c93": "Granskningsguiden misslyckades",
   "b7df38b7d8792d78": "Öppna guiden",
-  "9e91e9a77b664e4e": "Kunde inte starta en granskningsguide",
-  "e27d2cb964df5dd5": "{source}: inga konton rapporterades."
+  "9e91e9a77b664e4e": "Kunde inte starta en granskningsguide"
 }

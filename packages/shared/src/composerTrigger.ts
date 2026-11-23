@@ -142,6 +142,11 @@ export function isClearComposerCommand(text: string): boolean {
   return /^\/clear\s*$/i.test(text.trim());
 }
 
+/** `/cost` as the whole message opens the thread's cost breakdown instead of sending. */
+export function isThreadCostComposerCommand(text: string): boolean {
+  return /^\/cost\s*$/i.test(text.trim());
+}
+
 /** `/side [prompt]`, or its alias `/btw [prompt]`, as the whole message. */
 export function parseSideChatCommand(text: string): { prompt: string } | null {
   const match = /^\/(?:side|btw)(?:\s+([\s\S]*))?$/i.exec(text.trim());

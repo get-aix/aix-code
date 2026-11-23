@@ -185,6 +185,7 @@ import { ComposerErrorNotice } from "./ComposerErrorNotice";
 import { ManagedRuntimeModeNotice } from "./ManagedRuntimeModeNotice";
 import { FreshSessionNotice } from "./FreshSessionNotice";
 import { ComposerFeedback } from "./ComposerFeedback";
+import { ComposerThreadCost } from "./ComposerThreadCost";
 import { ComposerUsageLimits } from "./ComposerUsageLimits";
 import { PendingUserInputCard } from "./PendingUserInputCard";
 import { ProviderSubagentBar } from "./ProviderSubagentBar";
@@ -1023,7 +1024,10 @@ function ThreadDetailBody(
           usageLimitsPanel.now,
         )
       : null;
-  const showUsageLimits = (report: UsageLimitsReport | null) =>
+  // `/cost` and the usage limits share the space above the composer, so one replaces the other.
+  const [threadCostOpenKey, setThreadCostOpenKey] = useState<string | null>(null);
+  const showUsageLimits = (report: UsageLimitsReport | null) => {
+    if (report !== null) setThreadCostOpenKey(null);
     setUsageLimitsPanel(
       report === null
         ? null
@@ -1033,7 +1037,12 @@ function ThreadDetailBody(
             now: Date.parse(report.createdAt),
           },
     );
+  };
   const dismissUsageLimits = () => setUsageLimitsPanel(null);
+  const showThreadCost = () => {
+    dismissUsageLimits();
+    setThreadCostOpenKey(selectedThreadKey);
+  };
   // Late sends clear only their originating thread's limits panel.
   const clearUsageLimitsFor = (threadKey: string) =>
     setUsageLimitsPanel((current) =>
@@ -1774,6 +1783,20 @@ function ThreadDetailBody(
                         />
                       </Animated.View>
                     ) : null}
+                    {threadCostOpenKey === selectedThreadKey ? (
+                      <Animated.View
+                        className="shrink-0 px-4"
+                        style={{ paddingBottom: USAGE_LIMITS_PANEL_GAP }}
+                        entering={FadeInDown.duration(220)}
+                        exiting={FadeOut.duration(140)}
+                      >
+                        <ComposerThreadCost
+                          environmentId={props.environmentId}
+                          threadId={props.selectedThread.id}
+                          onClose={() => setThreadCostOpenKey(null)}
+                        />
+                      </Animated.View>
+                    ) : null}
                     {usageLimitsReport && activeUserInputRequestId === null ? (
                       <Animated.View
                         className="shrink-0 px-4"
@@ -1985,6 +2008,7 @@ function ThreadDetailBody(
                         onResumeQueue={props.onResumeQueue}
                         onSendMessage={handleSendMessage}
                         onShowUsageLimits={showUsageLimits}
+                        onShowThreadCost={showThreadCost}
                         canSwitchProvider={props.canSwitchThreadProvider}
                         onHeightChange={handleComposerHeightChange}
                         onEditorFocusChange={handleOwnedInputFocusChange}

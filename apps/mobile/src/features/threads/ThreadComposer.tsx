@@ -23,6 +23,7 @@ import {
   type ServerConfig as T3ServerConfig,
   type UsageLimitsReport,
 } from "@t3tools/contracts";
+import { isThreadCostComposerCommand } from "@t3tools/shared/composerTrigger";
 import {
   collectProviderUsageLimits,
   hasProviderUsageLimits,
@@ -202,6 +203,7 @@ export interface ThreadComposerProps {
     stillSendable?: () => boolean,
   ) => Promise<MessageId | null>;
   readonly onShowUsageLimits: (report: UsageLimitsReport | null) => void;
+  readonly onShowThreadCost: () => void;
   readonly canSwitchProvider: boolean;
   readonly onHeightChange?: (height: number) => void;
   readonly onEditorFocusChange?: (focused: boolean) => void;
@@ -391,12 +393,15 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
       props.serverConfig?.usageLimitSources ?? [],
       selectedProviderStatus.aixProfile,
     );
+  // A cost breakdown needs a saved AIX thread; the server prices nothing else.
+  const threadCostOffered = !props.isDraft && selectedProviderStatus?.aixProfile !== undefined;
   const draftRunsLocally = composerRunsDraftLocally({
     text: draftMessage,
     holdsOnlyText: draftAttachments.length === 0,
     // A redirect's text answers its approval, so `/side` there is that text.
     sideChat: !props.redirectsApproval,
     usageLimits: usageLimitsOffered,
+    threadCost: threadCostOffered,
     codexFeedback: selectedProviderStatus?.driver === "codex",
     freshSession: props.onFreshSession !== undefined && draftContext === undefined,
   });
@@ -429,6 +434,7 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
     }
     return report !== null;
   };
+  const openThreadCost = () => props.onShowThreadCost();
 
   const mentionableEnvironments = useMentionableEnvironments();
   // Mentions name any model for the agent, so they aren't limited to models this thread can switch to.
@@ -459,6 +465,8 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
     offersUsageLimits: usageLimitsOffered,
     onUsageLimits:
       usageLimitsOffered && draftAttachments.length === 0 ? openUsageLimits : undefined,
+    offersThreadCost: threadCostOffered,
+    onThreadCost: threadCostOffered && draftAttachments.length === 0 ? openThreadCost : undefined,
     onOpenModelPicker: settingsSheetPresentation.open,
     modelOptions: mentionModelOptions,
     modelProviders: props.serverConfig?.providers,
@@ -652,6 +660,15 @@ export const ThreadComposer = function ThreadComposer(props: ThreadComposerProps
     if (pendingPastedTextAttachmentCountRef.current > 0) return;
     if (usageLimitsOffered && isUsageLimitsCommand(draftMessage) && draftAttachments.length === 0) {
       if (openUsageLimits()) onChangeDraftMessage("");
+      return;
+    }
+    if (
+      threadCostOffered &&
+      isThreadCostComposerCommand(draftMessage) &&
+      draftAttachments.length === 0
+    ) {
+      openThreadCost();
+      onChangeDraftMessage("");
       return;
     }
     if (

@@ -59,7 +59,7 @@ export function ThreadDetailsCost({
   );
 }
 
-function CostRow({
+export function CostRow({
   label,
   costUsd,
   className,
