@@ -1,0 +1,100 @@
+name: Nix Flake Update
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nix-flake-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    if: ${{ github.repository == 'get-aix/t3code' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Mint fork sync App token
+        id: app_token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
+        with:
+          app-id: ${{ secrets.FORK_SYNC_APP_ID }}
+          private-key: ${{ secrets.FORK_SYNC_APP_PRIVATE_KEY }}
+          owner: get-aix
+          repositories: t3code
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Check out main
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: main
+          token: ${{ steps.app_token.outputs.token }}
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31
+        with:
+          github_access_token: ${{ github.token }}
+
+      - name: Update the nixpkgs input
+        run: nix flake update nixpkgs
+
+      - name: Refresh the pnpmDeps hash
+        run: node scripts/update-flake-pnpm-hash.mjs
+
+      - id: changes
+        name: Detect changes
+        run: |
+          if git diff --quiet -- flake.nix flake.lock; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build the package
+        if: steps.changes.outputs.changed == 'true'
+        run: nix build --no-link --print-build-logs .#t3code
+
+      - name: Check the runtime CLIs resolve and run
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          NIXPKGS_ALLOW_UNFREE: "1"
+        run: |
+          # Same locked nixpkgs as the flake, so these are the versions the package wraps.
+          # The inner sh expands $cli, so the single quotes are intentional.
+          # shellcheck disable=SC2016
+          nix shell --impure --inputs-from . \
+            nixpkgs#git nixpkgs#gh nixpkgs#codex nixpkgs#claude-code \
+            nixpkgs#antigravity-cli nixpkgs#cloudflared \
+            --command sh -c '
+              set -eu
+              for cli in git gh codex claude agy cloudflared; do
+                printf "%s: " "$cli"
+                "$cli" --version | head -n 1
+              done
+            '
+
+      - name: Open the update pull request
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app_token.outputs.token }}
+        run: |
+          branch="chore/nix-flake-update"
+          git config user.name "get-aix-fork-sync[bot]"
+          git config user.email "get-aix-fork-sync[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add flake.nix flake.lock
+          git commit -m "chore(nix): update nixpkgs and pnpmDeps hash"
+          git push --force origin "$branch"
+          if gh pr view "$branch" --json state --jq .state 2>/dev/null | grep -q OPEN; then
+            echo "Pull request already open for $branch; the push updated it."
+          else
+            gh pr create --base main --head "$branch" \
+              --title "chore(nix): update nixpkgs and pnpmDeps hash" \
+              --body "Automated weekly update. The package builds and the runtime CLIs run before this merges."
+          fi
+          gh pr merge "$branch" --auto --squash

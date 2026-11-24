@@ -18,6 +18,7 @@ const forkOwnedWorkflows = [
   "fork-ci.yml",
   "fork-release.yml",
   "fork-release-desktop.yml",
+  "fork-nix-flake-update.yml",
   "mobile-android-fork.yml",
   "upstream-stable-sync.yml",
 ];

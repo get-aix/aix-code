@@ -1,7 +1,7 @@
 {
   description = "Pinned Nix package for T3 Code";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/d4f25a3e562008648d45bcf2d70bcc7422cad84e";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
   outputs =
     { self, nixpkgs }:
@@ -211,7 +211,7 @@
               # Upstream pkgs.t3code runtime/provider options (defaults match nixpkgs).
               enableAzureDevOps ? false,
               enableBitbucket ? false,
-              enableClaude ? false,
+              enableClaude ? true,
               enableCodex ? true,
               enableCursor ? false,
               enableCursorCli ? false,
@@ -229,6 +229,8 @@
               # Additional T3 Code runtime integrations available in nixpkgs.
               enablePi ? false,
               enableKiro ? false,
+              # Required by T3 Code's Antigravity provider (`agy acp`). Unfree.
+              enableAntigravity ? true,
               enableForgejo ? false,
               enableTailscale ? false,
               enableSsh ? false,
@@ -256,6 +258,7 @@
                 lib.optionals (enableXdgUtils && isLinux) [ pkgs.xdg-utils ]
                 ++ lib.optionals enablePi [ pkgs.pi-coding-agent ]
                 ++ lib.optionals enableKiro [ pkgsUnfree.kiro-cli ]
+                ++ lib.optionals enableAntigravity [ pkgsUnfree.antigravity-cli ]
                 ++ lib.optionals enableForgejo [
                   pkgs.tea
                   pkgs.forgejo-cli

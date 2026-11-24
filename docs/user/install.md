@@ -170,10 +170,10 @@ Manager, point the T3 Code module at the same package:
 programs.t3code.package = inputs.t3code.packages.${pkgs.stdenv.hostPlatform.system}.default;
 ```
 
-The default package includes `git`, `gh`, `codex`, the resource monitor sidecar, and `cloudflared`
-for T3 Connect. Additional flake outputs add opt-in runtime environments: `t3code-browser` (Linux
-shared libraries for T3's headless browser via `nix-ld`), `t3code-android` (unfree Android SDK and
-device tools), and `t3code-full` (both). You can also customize any output with `.override`:
+The default package includes `git`, `gh`, `codex`, `claude` (Claude Code, unfree), `agy`
+(Antigravity CLI, unfree), the resource monitor sidecar, and `cloudflared` for T3 Connect. Additional flake outputs add opt-in runtime
+environments: `t3code-browser` (Linux shared libraries for T3's headless browser via `nix-ld`),
+`t3code-android` (unfree Android SDK and device tools), and `t3code-full` (both). You can also customize any output with `.override`:
 
 ```nix
 inputs.t3code.packages.${pkgs.stdenv.hostPlatform.system}.t3code.override {
@@ -189,7 +189,7 @@ Supported `.override` toggles cover upstream nixpkgs provider and source-control
 (`enableClaude`, `enableCodex`, `enableOpencode`, `enableCursor`, `enableCursorCli`, `enableGit`,
 `enableGitHub`, `enableGitLab`, `enableJujutsu`, `enableBitbucket`, `enableAzureDevOps`,
 `enableResourceMonitor`) plus `enableCloudflared`, `enableXdgUtils`, `enablePi`, `enableKiro`,
-`enableForgejo`, `enableTailscale`, `enableSsh`, `enable1Password`, `withBrowser`, `withAndroid`,
+`enableAntigravity`, `enableForgejo`, `enableTailscale`, `enableSsh`, `enable1Password`, `withBrowser`, `withAndroid`,
 `androidPlatformVersions`, `androidSystemImageTypes`, `androidAbiVersions`,
 `extraRuntimePackages`, and `extraWrapArgs`.
 

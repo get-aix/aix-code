@@ -52,12 +52,16 @@ export async function updateFlakePnpmHash({ root = process.cwd(), runNix } = {})
     const run =
       runNix ??
       (() =>
-        NodeChildProcess.execFileSync("nix", ["build", "--no-link", ".#t3code"], {
-          cwd: root,
-          encoding: "utf8",
-          maxBuffer: 32 * 1024 * 1024,
-          stdio: ["ignore", "pipe", "pipe"],
-        }));
+        NodeChildProcess.execFileSync(
+          "nix",
+          ["build", "--no-link", ".#t3code.unwrapped.pnpmDeps"],
+          {
+            cwd: root,
+            encoding: "utf8",
+            maxBuffer: 32 * 1024 * 1024,
+            stdio: ["ignore", "pipe", "pipe"],
+          },
+        ));
     let output = "";
     try {
       output = await run(root);
