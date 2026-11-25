@@ -1464,6 +1464,26 @@ NodeTest.test(
   },
 );
 
+NodeTest.test(
+  "buildSyncReviewChecklist always asks for a per-commit review and flags build infrastructure",
+  () => {
+    const quiet = buildSyncReviewChecklist({
+      changedFiles: ["apps/web/src/App.tsx"],
+      range: "a..b",
+    });
+    NodeAssert.match(quiet, /Read every upstream commit.*git log --no-merges --stat a\.\.b/);
+    NodeAssert.doesNotMatch(quiet, /build or release infrastructure changed/);
+
+    const infra = buildSyncReviewChecklist({
+      changedFiles: [".github/workflows/release.yml", "native/apple-speech/AppleSpeech.swift"],
+    });
+    NodeAssert.match(
+      infra,
+      /build or release infrastructure changed.*release\.yml.*apple-speech.*fork-release\.yml/,
+    );
+  },
+);
+
 NodeTest.test("stops on unexpected changes in an existing update branch", async () => {
   const fixture = await createSyncFixture();
   try {

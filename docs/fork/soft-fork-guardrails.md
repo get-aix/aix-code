@@ -111,6 +111,33 @@ Each rule names the reason it exists; if a reason stops holding, change the rule
   [`upstream-stable-sync.mjs`](../../scripts/upstream-stable-sync.mjs) expects that shape. A second
   hash line, or a hash on another line, breaks both.
 
+### Reviewing an upstream sync
+
+A green sync PR proves only what `Fork CI` builds: Linux, plus server, web, and mobile tests. It
+does not build the macOS app, the Windows installer, the signed Android APK, or the Nix package.
+Those break first in the post-merge build-only `Fork Release`, after the merge is already on `main`.
+The v0.1.12 sync is an example: upstream's Apple Speech helper (`native/apple-speech`) needed Xcode
+26, and upstream had moved its macOS release runner to macOS 26. CI stayed green, and the fork's
+`macos-15` release build could not compile the helper.
+
+So review the sync commit by commit, not by diffstat:
+
+- Read every upstream commit in the range (`git log --no-merges --stat <previous tag>..<new tag>`).
+  For each one, decide whether the fork must follow: a mirror workflow, a fork seam, a fork doc, or
+  nothing. Write down the ones that need a follow-up in the PR before merging, and fix them in the
+  sync branch.
+- Treat infrastructure as code. Commits that touch `.github/workflows/**`, `scripts/build-*` and
+  release scripts, `apps/desktop/scripts/**`, `native/**`, mobile build config, toolchain pins, or
+  `package.json` `engines` often have no visible feature but change what the fork's own pipelines
+  need.
+- Diff upstream's `release.yml`, `release-desktop.yml`, `ci.yml`, and mobile build workflows against
+  their fork mirrors (`fork-release.yml`, `fork-release-desktop.yml`, `fork-ci.yml`,
+  `mobile-android-fork.yml`, `flake.nix`). Compare runner images, Xcode, Node, Rust, and Java
+  versions, new build steps, new secrets, and new artifacts. A fork mirror that falls behind upstream
+  fails silently until the release.
+- New native modules and new platform requirements (minimum macOS, Xcode, or Android SDK) need an
+  explicit decision for every fork build target, not only the one the reviewer tested.
+
 ## 6. UI, i18n, and the local toolchain
 
 - Wrap every user-facing fork string in the project's i18n helpers (`<T>`, `gt()`, `m(msg())`).

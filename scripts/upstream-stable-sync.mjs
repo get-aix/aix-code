@@ -969,8 +969,31 @@ const FORK_HOT_FILES = [
  * Builds a concise maintainer review checklist from the files added or changed
  * between the previous integrated upstream base and the target stable tag.
  */
-export function buildSyncReviewChecklist({ addedWorkflows = [], changedFiles = [] } = {}) {
-  const items = [];
+export function buildSyncReviewChecklist({ addedWorkflows = [], changedFiles = [], range } = {}) {
+  const items = [
+    `- [ ] **Read every upstream commit**${range ? ` (\`git log --no-merges --stat ${range}\`)` : ""}, including CI, release, packaging, toolchain, and \`native/\` changes, not only the diffstat. Record each commit that needs a fork follow-up in this PR before merging (see \`docs/fork/soft-fork-guardrails.md\` § Reviewing an upstream sync).`,
+  ];
+
+  const buildInfraChanges = changedFiles.filter(
+    (file) =>
+      /^\.github\/workflows\/.+\.ya?ml$/.test(file) ||
+      file.startsWith("native/") ||
+      file.startsWith("apps/desktop/scripts/") ||
+      file.startsWith("apps/mobile/android/") ||
+      /^apps\/mobile\/(app\.config\.ts|eas\.json)$/.test(file) ||
+      /^scripts\/(build-|release|merge-release)/.test(file) ||
+      /^(\.node-version|\.nvmrc|rust-toolchain(\.toml)?|\.tool-versions)$/.test(file),
+  );
+  if (buildInfraChanges.length > 0) {
+    items.push(
+      `- [ ] **Upstream build or release infrastructure changed** (${buildInfraChanges
+        .slice(0, 8)
+        .map((file) => `\`${file}\``)
+        .join(
+          ", ",
+        )}${buildInfraChanges.length > 8 ? `, +${buildInfraChanges.length - 8} more` : ""}): compare runner images, Xcode/Node/Rust/Java versions, secrets, and build steps with the fork mirrors (\`fork-release.yml\`, \`fork-release-desktop.yml\`, \`fork-ci.yml\`, \`mobile-android-fork.yml\`, \`flake.nix\`). \`Fork CI\` builds only the Linux desktop bundle, so macOS, Windows, signed Android, and Nix regressions first surface in the post-merge build-only \`Fork Release\`.`,
+    );
+  }
 
   if (addedWorkflows.length > 0) {
     items.push(
@@ -1031,7 +1054,8 @@ function collectUpstreamDiffSignals(baseCommit, targetCommit) {
   const raw = git(["diff", "--name-status", `${baseCommit}..${targetCommit}`], {
     allowFailure: true,
   });
-  if (!raw) return { addedWorkflows: [], changedFiles: [] };
+  const range = `${baseCommit}..${targetCommit}`;
+  if (!raw) return { addedWorkflows: [], changedFiles: [], range };
   const addedWorkflows = [];
   const changedFiles = [];
   for (const line of raw.split("\n")) {
@@ -1045,7 +1069,7 @@ function collectUpstreamDiffSignals(baseCommit, targetCommit) {
       addedWorkflows.push(file);
     }
   }
-  return { addedWorkflows, changedFiles };
+  return { addedWorkflows, changedFiles, range };
 }
 
 async function queueReleaseFromMainCi() {

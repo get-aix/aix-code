@@ -111,14 +111,16 @@ run is a dry run unless `dry_run` is cleared, and `target_tag` can select a publ
 Drafts, prereleases, and tags with test labels are ignored.
 
 When a newer compatible stable release exists, the workflow creates a stable-tag branch and opens a
-pull request containing a maintainer review checklist (flagging any new upstream workflows,
-migrations, Nix/native-sensitive changes, fork hot files, or `README.md` edits). The push to that
+pull request containing a maintainer review checklist (a per-commit review of the upstream range,
+plus flags for new upstream workflows, build or release infrastructure changes, migrations,
+Nix/native-sensitive changes, fork hot files, and `README.md` edits). The push to that
 exact branch runs all five `Fork CI` jobs: `Fork Quality`, `Fork Server`, `Fork Web`,
 `Fork Desktop Build`, and `Fork Mobile Type and Unit`.
 
-Automatic merging is disabled: a maintainer reviews the checklist and merges the PR manually with a
-merge commit once all five checks pass. Conflicts stop before opening a PR so a maintainer can
-resolve them by hand.
+Automatic merging is disabled: a maintainer reviews every upstream commit as described in
+[Reviewing an upstream sync](../fork/soft-fork-guardrails.md#reviewing-an-upstream-sync), works
+through the checklist, and merges the PR manually with a merge commit once all five checks pass.
+Conflicts stop before opening a PR so a maintainer can resolve them by hand.
 
 Fork `main` accepts only published upstream stable tags; never merge upstream `main`. A tag is
 eligible only when it contains every upstream commit already present in fork `main`.

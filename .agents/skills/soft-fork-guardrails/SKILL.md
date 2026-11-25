@@ -47,6 +47,20 @@ making a change that matches one of the triggers in the description.
   `flake.nix`, or fork CI/release workflows), activate `fork-docs` and update the mapped fork docs
   in the same PR.
 
+## Reviewing an upstream sync
+
+A green sync PR only proves the Linux build and the test suites. Follow
+[Reviewing an upstream sync](../../../docs/fork/soft-fork-guardrails.md#reviewing-an-upstream-sync):
+
+- Read every upstream commit in the range (`git log --no-merges --stat <previous tag>..<new tag>`),
+  not only the diffstat or the commit titles, and decide for each whether the fork must follow.
+- Give infrastructure commits (workflows, build and release scripts, `native/`, mobile build config,
+  toolchain pins) the same attention as feature code.
+- Diff upstream `release.yml`, `release-desktop.yml`, `ci.yml`, and mobile build workflows against
+  `fork-release.yml`, `fork-release-desktop.yml`, `fork-ci.yml`, `mobile-android-fork.yml`, and
+  `flake.nix`: runner images, Xcode/Node/Rust/Java versions, steps, secrets, artifacts.
+- List the commits that need a fork follow-up in the sync PR and fix them before merging.
+
 ## Before pushing or syncing
 
 - Run `vp run check:changed` as [AGENTS.md](../../../AGENTS.md#verifying) describes. Use
