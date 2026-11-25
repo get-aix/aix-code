@@ -1,6 +1,6 @@
 # aix Code
 
-**aix Code** ([get-aix/t3code](https://github.com/get-aix/t3code)) is a community soft fork of
+**aix Code** ([get-aix/t3code](https://github.com/get-aix/t3code)) is an unofficial soft fork of
 [T3 Code](https://github.com/pingdotgg/t3code) by T3 Tools Inc. (MIT licensed). It is not affiliated
 with or endorsed by the T3 Code maintainers; report fork problems in
 [get-aix/t3code issues](https://github.com/get-aix/t3code/issues). It keeps everything you love about
@@ -164,7 +164,7 @@ providers—works just as described in the [T3 Code guides](../README.md#using-t
 
 ## Run from source
 
-Install [vp](../operations/development.md#first-checkout), then:
+Install [vp](../operations/00_development.md#first-checkout), then:
 
 ```sh
 git clone https://github.com/get-aix/t3code.git

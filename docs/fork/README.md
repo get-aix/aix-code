@@ -1,6 +1,6 @@
 # aix Code fork
 
-aix Code is a community fork of T3 Code with its own name and logo. It keeps T3's provider, thread, and client behavior aligned with upstream. It keeps the
+aix Code is an unofficial fork of T3 Code with its own name and logo. It keeps T3's provider, thread, and client behavior aligned with upstream. It keeps the
 upstream application version and uses the same `vX.Y.Z` tag and `aix Code vX.Y.Z` release title for
 reviewed fork releases.
 

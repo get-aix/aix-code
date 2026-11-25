@@ -6,7 +6,7 @@ import type { MarkdownStyle } from "react-native-enriched-markdown";
 import { Menu } from "../components/ui/Menu";
 import { useMarkdownCodeHighlight } from "../features/threads/markdownCodeHighlightState";
 import { copyTextWithHaptic } from "../lib/copyTextWithHaptic";
-import { type HighlightScheme, mapHighlightedTokens } from "../lib/highlights";
+import { type HighlightScheme, withTokenStarts } from "../lib/highlights";
 import { CodeBlockFrame, CodeBlockHeaderButton } from "./CodeBlockFrame";
 import { fencedCodeMarkdown } from "./codeBlockMarkdown";
 import type { NativeMarkdownTextStyle } from "./SelectableMarkdownText.types";
@@ -71,13 +71,19 @@ export function HighlightedCodeBlock(props: {
         lineHeight: codeStyle.lineHeight,
       }}
     >
-      {lines
-        ? mapHighlightedTokens(lines, (token, start) => (
-            <Text key={start} style={token.color ? { color: token.color } : undefined}>
-              {token.content}
-            </Text>
-          ))
-        : code}
+      {(lines ? withTokenStarts(lines) : undefined)?.flatMap((line, lineIndex) => {
+        const separator = lineIndex > 0 ? "\n" : "";
+        return [
+          separator,
+          ...line.map(({ token, start }) => {
+            return (
+              <Text key={start} style={token.color ? { color: token.color } : undefined}>
+                {token.content}
+              </Text>
+            );
+          }),
+        ];
+      }) ?? code}
     </Text>
   );
   // Inside the scroller: on iOS an ancestor JS responder disables a ScrollView's panning.

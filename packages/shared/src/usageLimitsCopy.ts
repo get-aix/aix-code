@@ -17,6 +17,7 @@ import {
   providersWithLimits,
   type ResetCreditChoice,
   resetCountdown,
+  unshownFailedHubAccounts,
 } from "./usageLimits.ts";
 
 const MINUTE = 60_000;
@@ -88,13 +89,22 @@ export function collectLimitNotices(
   const label = (environmentLabel: string, subject: string) =>
     presentations.size > 1 ? `${environmentLabel} · ${subject}` : subject;
   const notices = new Set<string>();
+  // A failed hub read needs no notice when another report already shows the account's row.
+  const failedAccounts = unshownFailedHubAccounts(presentations);
   for (const [environmentId, presentation] of presentations) {
     const environmentLabel = presentation.entry.target.label;
     for (const provider of providersWithLimits(presentation.serverConfig?.providers ?? [])) {
-      const profileName = aixProfileName(provider.usageLimits);
+      const limits = provider.usageLimits;
+      const profileName = aixProfileName(limits);
       if (!isLatestAixProfileUsageReport(presentations, environmentId, provider)) continue;
-      if (provider.usageLimits?.unavailable?.reason === "unsupported") continue;
-      const notice = provider.usageLimits ? limitsNotice(provider.usageLimits, resolve) : null;
+      // A bare unsupported means the account has no limits; an external usage link shows its message.
+      if (
+        limits?.unavailable?.reason === "unsupported" &&
+        (profileName || !limits.unavailable.message || limits.externalUsage)
+      ) {
+        continue;
+      }
+      const notice = limits ? limitsNotice(limits, resolve) : null;
       const name = profileName
         ? provider.aixProfileLabel?.trim() || profileName
         : provider.displayName?.trim() || String(provider.driver);
@@ -103,7 +113,10 @@ export function collectLimitNotices(
     for (const source of presentation.serverConfig?.usageLimitSources ?? []) {
       if (source.error) {
         notices.add(`${label(environmentLabel, source.label)}: ${source.error}`);
-      } else if (source.accounts.length === 0) {
+      } else if (
+        (source.kind === "http" ? (source.quotaAccounts?.length ?? 0) : source.accounts.length) ===
+        0
+      ) {
         notices.add(
           resolve(
             msg("{source}: No accounts reported.", {
@@ -111,6 +124,12 @@ export function collectLimitNotices(
             }),
           ),
         );
+      }
+      for (const account of source.accounts) {
+        const name = failedAccounts.get(account);
+        if (name === undefined) continue;
+        const notice = limitsNotice(account.usageLimits, resolve);
+        notices.add(`${label(environmentLabel, source.label)} · ${name}: ${notice}`);
       }
     }
   }
