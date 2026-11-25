@@ -73,6 +73,7 @@ vi.mock(import("~/assets/longLivedAssetUrls"), () => ({
   }),
 }));
 
+import { APP_BASE_NAME } from "~/branding";
 import { McpAppFrame } from "./McpAppFrame";
 
 const nextInitializedFrom = () =>
@@ -179,7 +180,7 @@ describe("McpAppFrame", () => {
     await expect
       .element(
         screen.getByText(
-          "The Demo app needs a newer T3 Code server on this environment. Update the server to use it.",
+          `The Demo app needs a newer ${APP_BASE_NAME} server on this environment. Update the server to use it.`,
         ),
       )
       .toBeInTheDocument();

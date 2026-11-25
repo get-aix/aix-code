@@ -76,6 +76,8 @@ export const layerTaskFoldersWithGit = (
   );
   const project = () => ({
     projectId: taskFoldersTestProjectId,
+    scope: "personal" as const,
+    homeAixProfile: null,
     title: "Shop",
     hasCustomTitle: false,
     defaultModelSelection: null,

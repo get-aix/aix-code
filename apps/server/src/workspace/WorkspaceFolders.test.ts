@@ -25,6 +25,8 @@ const layerFor = (project?: {
             ? Effect.succeedNone
             : Effect.succeedSome({
                 projectId,
+                scope: "personal",
+                homeAixProfile: null,
                 title: "Project",
                 hasCustomTitle: false,
                 defaultModelSelection: null,

@@ -475,7 +475,7 @@ it("returns focus to search after closing model details so keyboard selection st
   await userEvent.keyboard("{Enter}");
   await expect.element(page.getByText("Context window")).toBeVisible();
   await userEvent.keyboard("{Escape}");
-  const search = page.getByRole("combobox", { name: "Search models..." });
+  const search = page.getByPlaceholder("Search models...");
   await expect.element(search).toHaveFocus();
   await userEvent.keyboard("{ArrowDown}{Enter}");
   await expect
