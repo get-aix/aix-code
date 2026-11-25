@@ -3,7 +3,7 @@ set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 
-repo=get-aix/t3code
+repo=get-aix/aix-code
 dry_run=false
 if [[ "${1:-}" == "--dry-run" ]]; then
   dry_run=true

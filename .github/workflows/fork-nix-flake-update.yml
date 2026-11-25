@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   update:
-    if: ${{ github.repository == 'get-aix/t3code' }}
+    if: ${{ github.repository == 'get-aix/aix-code' }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:

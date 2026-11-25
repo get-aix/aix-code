@@ -1,6 +1,6 @@
 ---
 name: soft-fork-guardrails
-description: Soft-fork maintainability rules for the get-aix/t3code fork. You MUST activate this skill whenever editing fork features, adding or changing SQLite migrations, caches, usage budgets, workflows, or user-facing UI copy, or syncing from upstream pingdotgg/t3code in this fork. Keeps fork code out of upstream-owned files so upstream stable syncs merge cleanly.
+description: Soft-fork maintainability rules for the get-aix/aix-code fork. You MUST activate this skill whenever editing fork features, adding or changing SQLite migrations, caches, usage budgets, workflows, or user-facing UI copy, or syncing from upstream pingdotgg/t3code in this fork. Keeps fork code out of upstream-owned files so upstream stable syncs merge cleanly.
 ---
 
 # Soft-fork guardrails

@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { createReadStream } = require("node:fs");
 
-const RELEASE_REPOSITORY = "get-aix/t3code";
+const RELEASE_REPOSITORY = "get-aix/aix-code";
 // The fork ships under its own name; bundle, package, and data IDs stay upstream's for compatibility.
 const PRODUCT_NAME = "aix Code";
 const ARTIFACT_PREFIX = "aix-Code";
@@ -267,13 +267,13 @@ function buildForkBuildInfo({
     "Build the matching Nix package from this source with:",
     "",
     "```sh",
-    `nix build 'github:get-aix/t3code/${sha}'`,
+    `nix build 'github:get-aix/aix-code/${sha}'`,
     "```",
     "",
     "After an authorized release publishes its matching tag, install it with:",
     "",
     "```sh",
-    `nix profile add 'github:get-aix/t3code/v${version}'`,
+    `nix profile add 'github:get-aix/aix-code/v${version}'`,
     "```",
     "",
   ].join("\n");
@@ -396,21 +396,31 @@ function formatUpstreamReleaseNotes({ upstreamNotes, upstreamTag, maxLength }) {
   }
 
   // Reserve room for the notice plus closing tags for any <details> left open by slicing.
-  let limit = Math.max(0, maxLength - notice.length);
-  for (let pass = 0; pass < 4; pass += 1) {
+  // Binary-search the longest prefix that fits: a fixed number of shrink passes can give up
+  // and drop every upstream note when the budget is tight.
+  const candidateFor = (limit) => {
     let prefix = normalized.slice(0, limit);
     const lastNewline = prefix.lastIndexOf("\n");
     if (lastNewline > Math.floor(prefix.length * 0.5)) {
       prefix = prefix.slice(0, lastNewline);
     }
     prefix = prefix.trimEnd();
-    const candidate = `${prefix}${notice}${closeDetailsSuffix(prefix)}`;
+    return `${prefix}${notice}${closeDetailsSuffix(prefix)}`;
+  };
+  let low = 0;
+  let high = Math.min(normalized.length, Math.max(0, maxLength - notice.length));
+  let best = null;
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    const candidate = candidateFor(mid);
     if (candidate.length <= maxLength) {
-      return candidate;
+      best = candidate;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
     }
-    limit = Math.max(0, limit - (candidate.length - maxLength));
   }
-  return fallback;
+  return best ?? fallback;
 }
 
 function formatForkCommitLine(commit) {
@@ -504,19 +514,19 @@ function buildForkReleaseNotes({
     "On Windows, run this in a normal PowerShell window. It needs no admin rights and avoids the SmartScreen block on the unsigned installer:",
     "",
     "```powershell",
-    "irm https://github.com/get-aix/t3code/releases/latest/download/install-windows.ps1 | iex",
+    "irm https://github.com/get-aix/aix-code/releases/latest/download/install-windows.ps1 | iex",
     "```",
     "",
     "On macOS (Apple Silicon), install only with this command. The app is not notarized, so a zip downloaded in a browser is blocked by Gatekeeper:",
     "",
     "```sh",
-    "curl -fsSL https://github.com/get-aix/t3code/releases/latest/download/install-macos.sh | bash",
+    "curl -fsSL https://github.com/get-aix/aix-code/releases/latest/download/install-macos.sh | bash",
     "```",
     "",
     "Install the matching Nix build from this release tag:",
     "",
     "```sh",
-    `nix profile add 'github:get-aix/t3code/${releaseTag}'`,
+    `nix profile add 'github:get-aix/aix-code/${releaseTag}'`,
     "```",
     "",
     "## Build metadata",
@@ -805,7 +815,7 @@ async function verifyForkBuildArtifactAssets({
     (sourceBranch !== "" && !buildInfo.includes(`Source branch: ${markdownCode(sourceBranch)}`)) ||
     (buildRunId !== "" && !buildInfo.includes(`Actions build run: ${markdownCode(buildRunId)}`)) ||
     (buildRunAttempt !== "" && !buildInfo.includes(`attempt: ${markdownCode(buildRunAttempt)}`)) ||
-    !buildInfo.includes(`nix build 'github:get-aix/t3code/${sha}'`)
+    !buildInfo.includes(`nix build 'github:get-aix/aix-code/${sha}'`)
   ) {
     throw new Error("Build information does not match its source identity.");
   }

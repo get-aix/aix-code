@@ -33,7 +33,7 @@ const sha = "466b0b0968b7b7ae2016d742a52f3407c629564a";
 const upstreamBase = "24e77473ecf41bc1f7142529c7911c1c1aae1d76";
 const manifestVersions = { server: "0.1.9", desktop: "0.1.9", web: "0.1.9", contracts: "0.1.9" };
 const dispatch = {
-  repository: "get-aix/t3code",
+  repository: "get-aix/aix-code",
   eventName: "workflow_dispatch",
   ref: "refs/heads/main",
   channel: "stable",
@@ -147,7 +147,7 @@ test("release notes and summaries preserve backticks and dollar signs", () => {
     /Upstream stable base: `v0\.1\.9` = `24e77473ecf41bc1f7142529c7911c1c1aae1d76`/,
   );
   assert.match(releaseNotes, /include fork changes plus upstream through v0\.1\.9/);
-  assert.match(releaseNotes, /nix profile add 'github:get-aix\/t3code\/v0\.1\.9'/);
+  assert.match(releaseNotes, /nix profile add 'github:get-aix\/aix-code\/v0\.1\.9'/);
   assert.doesNotThrow(() =>
     assertExistingForkReleaseMetadata({
       release,
@@ -290,7 +290,7 @@ test("BUILD-INFO generation preserves literal backticks and dollar signs", () =>
   );
   assert.match(
     buildInfo,
-    /nix build 'github:get-aix\/t3code\/466b0b0968b7b7ae2016d742a52f3407c629564a'/,
+    /nix build 'github:get-aix\/aix-code\/466b0b0968b7b7ae2016d742a52f3407c629564a'/,
   );
   assert.match(
     buildForkBuildInfo({
@@ -383,8 +383,8 @@ test("publication accepts only a successful matching build-only run and artifact
     conclusion: "success",
     run_attempt: 1,
     head_branch: "main",
-    repository: { full_name: "get-aix/t3code" },
-    head_repository: { full_name: "get-aix/t3code" },
+    repository: { full_name: "get-aix/aix-code" },
+    head_repository: { full_name: "get-aix/aix-code" },
     display_title: `Fork build-only stable 0.1.9 source ${sha}`,
   };
   const jobs = [
@@ -960,11 +960,11 @@ test("merge release notes include upstream T3 Code notes followed by fork change
   assert.match(notes, /Fixed reconnect handling/);
   assert.match(
     notes,
-    /- feat\(web\): show AIX thread cost breakdown \(\[`aaaaaaaa`\]\(https:\/\/github\.com\/get-aix\/t3code\/commit\/a{40}\)\)/,
+    /- feat\(web\): show AIX thread cost breakdown \(\[`aaaaaaaa`\]\(https:\/\/github\.com\/get-aix\/aix-code\/commit\/a{40}\)\)/,
   );
   assert.match(
     notes,
-    /https:\/\/github\.com\/get-aix\/t3code\/compare\/v0\.1\.11-aix\.1\.\.\.v0\.1\.11/,
+    /https:\/\/github\.com\/get-aix\/aix-code\/compare\/v0\.1\.11-aix\.1\.\.\.v0\.1\.11/,
   );
 
   assert.doesNotThrow(() =>
@@ -1007,7 +1007,7 @@ test("fork-only aix release notes omit upstream notes and lead with fork changes
   assert.match(notes, /chore\(release\): trim fork release targets/);
   assert.match(
     notes,
-    /https:\/\/github\.com\/get-aix\/t3code\/compare\/v0\.1\.11\.\.\.v0\.1\.12-aix\.1/,
+    /https:\/\/github\.com\/get-aix\/aix-code\/compare\/v0\.1\.11\.\.\.v0\.1\.12-aix\.1/,
   );
 
   assert.doesNotThrow(() =>
@@ -1049,7 +1049,7 @@ test("merge release notes degrade cleanly when upstream notes are unavailable or
   );
   assert.match(
     notes,
-    /No additional fork changes since \[`v0\.1\.10`\]\(https:\/\/github\.com\/get-aix\/t3code\/releases\/tag\/v0\.1\.10\)\./,
+    /No additional fork changes since \[`v0\.1\.10`\]\(https:\/\/github\.com\/get-aix\/aix-code\/releases\/tag\/v0\.1\.10\)\./,
   );
 });
 
@@ -1130,7 +1130,7 @@ test("oversized fork commit lists keep the newest commits and link to the full c
   assert.doesNotMatch(notes, /change number 0 /);
   assert.match(
     notes,
-    /https:\/\/github\.com\/get-aix\/t3code\/compare\/v0\.1\.11\.\.\.v0\.1\.12-aix\.1/,
+    /https:\/\/github\.com\/get-aix\/aix-code\/compare\/v0\.1\.11\.\.\.v0\.1\.12-aix\.1/,
   );
 });
 

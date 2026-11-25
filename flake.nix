@@ -67,8 +67,8 @@
             inherit version src;
             meta = old.meta // {
               description = "aix Code, an unofficial fork of T3 Code with aix gateway profiles";
-              homepage = "https://github.com/get-aix/t3code";
-              changelog = "https://github.com/get-aix/t3code/commit/${self.rev or revision}";
+              homepage = "https://github.com/get-aix/aix-code";
+              changelog = "https://github.com/get-aix/aix-code/commit/${self.rev or revision}";
             };
             # T3 Connect's public identifiers are compiled into the client and CLI.
             postPatch = (old.postPatch or "") + ''

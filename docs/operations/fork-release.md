@@ -1,7 +1,7 @@
 # Fork release runbook
 
 This runbook covers stable upstream syncs and version-matched Windows (with WSL runtime), macOS arm64, Android, and Nix builds for
-`get-aix/t3code`. The fork has no store builds or iOS build. Users can install it from a signed
+`get-aix/aix-code`. The fork has no store builds or iOS build. Users can install it from a signed
 Android APK, a Windows installer, the macOS install script, source, or the latest-release or pinned Nix flake ref, as the
 [fork guide](../user/fork.md) explains.
 
@@ -153,7 +153,7 @@ this implementation does not change repository settings:
   (`actor_type: "OrganizationAdmin"`). Do not add an integration, team, user, or other bypass
   actor. A ruleset alone does not satisfy the workflow's required-check preflight.
 - Add Actions secrets `FORK_SYNC_APP_ID` and `FORK_SYNC_APP_PRIVATE_KEY` for a GitHub App installed
-  only on `get-aix/t3code`, with exactly `actions:write`, `administration:read`, `contents:write`,
+  only on `get-aix/aix-code`, with exactly `actions:write`, `administration:read`, `contents:write`,
   `pull_requests:write`, and `workflows:write`. Administration read inspects branch protection and rulesets. Contents
   and pull-request write push the sync branch and open its PR. Actions write lets the
   main-CI completion job dispatch the `Fork Release` workflow. Workflows write lets the
@@ -244,14 +244,14 @@ be moved, deleted, or force-pushed.
 Publishing creates `vX.Y.Z` titled `aix Code vX.Y.Z` from the tested installer bytes. The `release`
 branch follows the latest published build: it moves only when the new release is a fast-forward,
 publishing an older release leaves it unchanged, and it never force-moves. Use
-`github:get-aix/t3code/release` to follow the latest published Nix build, or pin a release tag for
+`github:get-aix/aix-code/release` to follow the latest published Nix build, or pin a release tag for
 reproducibility. `main` includes unreleased fork changes. The release notes identify the fork commit,
 source branch, upstream base, and build-only run, and the Nix command resolves the fork repository.
 
 Publishing reserves the tag before it creates the release. If a publish run fails between the
 two, the tag remains without a release and blocks that version for every source commit. Confirm on
 the Releases page that `vX.Y.Z` has no release, delete only that tag with
-`gh api -X DELETE repos/get-aix/t3code/git/refs/tags/vX.Y.Z`, then rerun the publish dispatch.
+`gh api -X DELETE repos/get-aix/aix-code/git/refs/tags/vX.Y.Z`, then rerun the publish dispatch.
 
 The `Nitestack Android APK` workflow remains available for a standalone signed build artifact. Its
 legacy `t3-android-vMAJOR.MINOR.PATCH` tag route remains compatible; use the `Fork Release` workflow for

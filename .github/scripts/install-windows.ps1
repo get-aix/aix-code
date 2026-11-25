@@ -1,4 +1,4 @@
-# Installs or updates aix Code on Windows x64 from the get-aix/t3code releases.
+# Installs or updates aix Code on Windows x64 from the get-aix/aix-code releases.
 # The installer is unsigned. PowerShell downloads carry no Mark of the Web, so
 # SmartScreen never checks the file, and the per-user install needs no admin.
 # Usage: irm <release>/install-windows.ps1 | iex   ($env:T3CODE_VERSION = "1.2.3" pins a version)
@@ -8,7 +8,7 @@
   $ProgressPreference = "SilentlyContinue"
   [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 
-  $repo = "get-aix/t3code"
+  $repo = "get-aix/aix-code"
 
   try {
     if ($env:OS -ne "Windows_NT") { throw "this installer is for Windows." }

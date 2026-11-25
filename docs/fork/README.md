@@ -11,9 +11,9 @@ signing key, so it cannot be installed alongside or over the Play Store app; uni
 
 ## Repositories
 
-GitHub identifies `get-aix/t3code` as a public fork of `pingdotgg/t3code`, with `main` as its
+GitHub identifies `get-aix/aix-code` as a public fork of `pingdotgg/t3code`, with `main` as its
 default branch. The checkout's `origin` points to the fork and `upstream` points to the original
-repository. `gh` uses `get-aix/t3code` as its local default.
+repository. `gh` uses `get-aix/aix-code` as its local default.
 
 ## Bootstrap from an upstream clone
 
@@ -91,7 +91,7 @@ authorization, a stable dispatch can publish the upstream-matched `vX.Y.Z` tag a
 release. The tag points to the fork integration merge commit on `main`: its tree includes fork changes
 and upstream through the matching stable tag. The upstream tag's peeled commit is recorded only as
 the stable base. Notes and artifact metadata show both full SHAs, and the Nix command pins to the fork
-release tag with `nix profile add 'github:get-aix/t3code/<tag>'`.
+release tag with `nix profile add 'github:get-aix/aix-code/<tag>'`.
 The old imported tag in this clone is not a fork release: the workflow refuses to move it or replace
 an existing release.
 
@@ -152,7 +152,7 @@ follow the [fork release runbook](../operations/fork-release.md). Local mobile d
 use an existing development client and Metro as described in [the mobile guide](../../apps/mobile/README.md).
 
 Fork baseline jobs and `Fork Release` use standard GitHub runners and guard themselves with
-`github.repository == 'get-aix/t3code'`. The release workflow passes only the Android signing
+`github.repository == 'get-aix/aix-code'`. The release workflow passes only the Android signing
 secrets (plus optional `ANDROID_GOOGLE_SERVICES_JSON`) to the reusable APK build and the self-signed
 macOS signing secrets (`MACOS_SELF_SIGNED_CERTIFICATE`, `MACOS_SELF_SIGNED_CERTIFICATE_PASSWORD`) to
 the macOS build; Windows and Nix builds receive no upstream signing, publishing, or deployment

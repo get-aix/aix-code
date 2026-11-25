@@ -5,7 +5,7 @@
 <p align="center">Run Claude Code, Codex, and OpenCode on your team's AI gateway—right alongside your personal subscriptions—in one fast app.</p>
 
 <p align="center">
-  <a href="https://github.com/get-aix/t3code/releases/latest"><img src="https://img.shields.io/github/v/release/get-aix/t3code?label=release" alt="Latest release"></a>
+  <a href="https://github.com/get-aix/aix-code/releases/latest"><img src="https://img.shields.io/github/v/release/get-aix/aix-code?label=release" alt="Latest release"></a>
   <a href="https://github.com/pingdotgg/t3code"><img src="https://img.shields.io/badge/based%20on-T3%20Code-blue" alt="Based on T3 Code"></a>
   <a href="https://github.com/get-aix/aix"><img src="https://img.shields.io/badge/profiles-aix-8a63d2" alt="Profiles from aix"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License: MIT"></a>
@@ -14,7 +14,7 @@
 > [!NOTE]
 > **aix Code is an unofficial fork based on the [T3 Code](https://github.com/pingdotgg/t3code) source
 > code.** It is not affiliated with, endorsed by, or maintained by T3 Tools, Inc., so please report
-> problems [here](https://github.com/get-aix/t3code/issues), not upstream. It tracks
+> problems [here](https://github.com/get-aix/aix-code/issues), not upstream. It tracks
 > upstream stable releases under its own name and logo, but keeps T3 Code's app IDs, `t3` command,
 > and `~/.t3` data directory for compatibility—install it **instead of** T3 Code, not next to it.
 > You can return to upstream cleanly at any time with `t3 fork-eject`.
@@ -103,15 +103,15 @@ Claude and ChatGPT sign-ins instead.
 
 ## Installation
 
-Grab the [latest release](https://github.com/get-aix/t3code/releases/latest), or run the command for
+Grab the [latest release](https://github.com/get-aix/aix-code/releases/latest), or run the command for
 your platform:
 
-| Platform              | Command or file                                                                                  |
-| --------------------- | ------------------------------------------------------------------------------------------------ |
-| Windows x64           | `irm https://github.com/get-aix/t3code/releases/latest/download/install-windows.ps1 \| iex`      |
-| macOS (Apple Silicon) | `curl -fsSL https://github.com/get-aix/t3code/releases/latest/download/install-macos.sh \| bash` |
-| Nix / NixOS           | `nix profile add 'github:get-aix/t3code/release'`                                                |
-| Android               | Install `aix-Code-<version>.apk` (uninstall the Play Store app first)                            |
+| Platform              | Command or file                                                                                    |
+| --------------------- | -------------------------------------------------------------------------------------------------- |
+| Windows x64           | `irm https://github.com/get-aix/aix-code/releases/latest/download/install-windows.ps1 \| iex`      |
+| macOS (Apple Silicon) | `curl -fsSL https://github.com/get-aix/aix-code/releases/latest/download/install-macos.sh \| bash` |
+| Nix / NixOS           | `nix profile add 'github:get-aix/aix-code/release'`                                                |
+| Android               | Install `aix-Code-<version>.apk` (uninstall the Play Store app first)                              |
 
 - **macOS:** use the script. The app is self-signed rather than notarized, so Gatekeeper blocks a zip
   downloaded in a browser. The script verifies the SHA-256 checksum and installs **aix Code** into

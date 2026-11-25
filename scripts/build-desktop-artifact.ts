@@ -2967,7 +2967,7 @@ export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
       icon: "icons",
       category: "Development",
       synopsis: "Desktop GUI for coding agents",
-      maintainer: "get-aix <https://github.com/get-aix/t3code>",
+      maintainer: "get-aix <https://github.com/get-aix/aix-code>",
       protocols: [
         {
           name: "aix Code",
@@ -3981,7 +3981,7 @@ const buildDesktopArtifactUnlocked = Effect.fn("buildDesktopArtifactUnlocked")(f
     description:
       "aix Code is an unofficial fork of T3 Code, an open-source desktop app for coding agents. Work with your existing agent subscriptions, review code changes, and run commands in your projects. Connect from desktop, web, or mobile to continue working remotely.",
     license: "MIT",
-    homepage: "https://github.com/get-aix/t3code",
+    homepage: "https://github.com/get-aix/aix-code",
     author: "get-aix",
     main: "apps/desktop/dist-electron/boot.cjs",
     build: yield* createBuildConfig(

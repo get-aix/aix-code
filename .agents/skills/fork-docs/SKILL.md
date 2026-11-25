@@ -1,6 +1,6 @@
 ---
 name: fork-docs
-description: Fork documentation maintenance and screenshot refresh rules for get-aix/t3code. You MUST activate this skill whenever adding, changing, or removing any fork feature, CLI command, environment variable, Nix flake option, release target, or fork UI flow so README.md and fork docs stay updated in the same PR.
+description: Fork documentation maintenance and screenshot refresh rules for get-aix/aix-code. You MUST activate this skill whenever adding, changing, or removing any fork feature, CLI command, environment variable, Nix flake option, release target, or fork UI flow so README.md and fork docs stay updated in the same PR.
 ---
 
 # Fork documentation maintenance

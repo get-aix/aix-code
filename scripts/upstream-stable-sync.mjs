@@ -4,7 +4,7 @@ import * as NodeURL from "node:url";
 import ForkCiChecks from "../.github/scripts/fork-ci-checks.cjs";
 import { releasePackageFiles } from "./lib/tagged-source-version.ts";
 
-const FORK_REPOSITORY = "get-aix/t3code";
+const FORK_REPOSITORY = "get-aix/aix-code";
 const UPSTREAM_REPOSITORY = "pingdotgg/t3code";
 const UPSTREAM_URL = "https://github.com/pingdotgg/t3code.git";
 const MARKER_PATH = ".github/upstream-stable.json";
@@ -1149,7 +1149,7 @@ function requireFork() {
     );
   }
   const origin = git(["remote", "get-url", "origin"]);
-  if (!/github\.com[:/]get-aix\/t3code(?:\.git)?$/i.test(origin)) {
+  if (!/github\.com[:/]get-aix\/aix-code(?:\.git)?$/i.test(origin)) {
     throw new Error(`The origin remote must point to ${FORK_REPOSITORY}; refusing to push.`);
   }
 }

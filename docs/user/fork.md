@@ -1,9 +1,9 @@
 # aix Code
 
-**aix Code** ([get-aix/t3code](https://github.com/get-aix/t3code)) is an unofficial soft fork of
+**aix Code** ([get-aix/aix-code](https://github.com/get-aix/aix-code)) is an unofficial soft fork of
 [T3 Code](https://github.com/pingdotgg/t3code) by T3 Tools Inc. (MIT licensed). It is not affiliated
 with or endorsed by the T3 Code maintainers; report fork problems in
-[get-aix/t3code issues](https://github.com/get-aix/t3code/issues). It keeps everything you love about
+[get-aix/aix-code issues](https://github.com/get-aix/aix-code/issues). It keeps everything you love about
 T3 Code and adds first-class support
 for company AI gateways through [aix](https://github.com/get-aix/aix):
 
@@ -25,14 +25,14 @@ it **instead of** upstream T3 Code, not alongside it. Releases up to `0.1.12-aix
 
 ## Install
 
-Download from the fork's [latest release](https://github.com/get-aix/t3code/releases/latest):
+Download from the fork's [latest release](https://github.com/get-aix/aix-code/releases/latest):
 
-| Platform              | File or command                                                                                  |
-| --------------------- | ------------------------------------------------------------------------------------------------ |
-| Windows x64           | `irm https://github.com/get-aix/t3code/releases/latest/download/install-windows.ps1 \| iex`      |
-| macOS (Apple Silicon) | `curl -fsSL https://github.com/get-aix/t3code/releases/latest/download/install-macos.sh \| bash` |
-| Nix / NixOS           | `nix profile add 'github:get-aix/t3code/release'`                                                |
-| Android               | `aix-Code-<version>.apk`                                                                         |
+| Platform              | File or command                                                                                    |
+| --------------------- | -------------------------------------------------------------------------------------------------- |
+| Windows x64           | `irm https://github.com/get-aix/aix-code/releases/latest/download/install-windows.ps1 \| iex`      |
+| macOS (Apple Silicon) | `curl -fsSL https://github.com/get-aix/aix-code/releases/latest/download/install-macos.sh \| bash` |
+| Nix / NixOS           | `nix profile add 'github:get-aix/aix-code/release'`                                                |
+| Android               | `aix-Code-<version>.apk`                                                                           |
 
 Platform notes:
 
@@ -167,7 +167,7 @@ providers—works just as described in the [T3 Code guides](../README.md#using-t
 Install [vp](../operations/00_development.md#first-checkout), then:
 
 ```sh
-git clone https://github.com/get-aix/t3code.git
+git clone https://github.com/get-aix/aix-code.git
 cd t3code
 vp i
 vp run dev

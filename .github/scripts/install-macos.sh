@@ -1,11 +1,11 @@
 #!/bin/bash
-# Installs or updates aix Code on Apple Silicon from the get-aix/t3code releases.
+# Installs or updates aix Code on Apple Silicon from the get-aix/aix-code releases.
 # The app is not notarized. curl, unlike a browser, sets no quarantine flag, so
 # Gatekeeper never checks the download and the app opens without a prompt.
 # Usage: curl -fsSL <release>/install-macos.sh | bash   (T3CODE_VERSION=1.2.3 pins a version)
 set -euo pipefail
 
-repo="get-aix/t3code"
+repo="get-aix/aix-code"
 
 fail() {
   echo "error: $*" >&2

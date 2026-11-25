@@ -54,7 +54,7 @@ permissions:
 
 jobs:
   test:
-    if: github.repository == 'get-aix/t3code'
+    if: github.repository == 'get-aix/aix-code'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -96,7 +96,7 @@ jobs:
         run: node --test scripts/fork-invariants.test.mjs scripts/check-fork-docs.test.mjs scripts/upstream-stable-sync.test.mjs scripts/update-flake-pnpm-hash.test.mjs .github/scripts/fork-ci-checks.test.cjs .github/scripts/fork-release.test.cjs
 
   sync:
-    if: ${{ github.repository == 'get-aix/t3code' && github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+    if: ${{ github.repository == 'get-aix/aix-code' && github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -205,7 +205,7 @@ jobs:
 
   release_after_main_ci:
     if: >-
-      github.repository == 'get-aix/t3code' &&
+      github.repository == 'get-aix/aix-code' &&
       github.event_name == 'workflow_run' &&
       github.event.workflow_run.event == 'push' &&
       github.event.workflow_run.conclusion == 'success' &&

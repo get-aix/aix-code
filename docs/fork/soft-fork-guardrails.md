@@ -182,7 +182,7 @@ upstream's, so data, updates, T3 Connect, and `t3 fork-eject` keep working. Do n
   components. Icon Composer only runs on macOS, so regenerate the tracked exports with
   `vp run icons:export:fork` and then `vp run icons:export:android`. When a sync
   conflicts on an icon, keep the fork's `text.svg`, take upstream's other layers, and rerun both.
-- Fork bug reports go to `get-aix/t3code`: boot-error and triage links, the startup recovery
+- Fork bug reports go to `get-aix/aix-code`: boot-error and triage links, the startup recovery
   releases link, and the download URL point there. The macOS signing identity stays
   `T3 Code Fork`, because changing the certificate breaks in-app updates on installed Macs.
 

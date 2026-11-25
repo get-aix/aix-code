@@ -122,8 +122,8 @@ async function createSyncFixture({
   git(checkout, ["config", "user.name", "T17 fixture"]);
   git(checkout, ["config", "user.email", "t17-fixture@example.invalid"]);
   git(checkout, ["config", "commit.gpgsign", "false"]);
-  git(checkout, ["remote", "set-url", "origin", "https://github.com/get-aix/t3code.git"]);
-  git(checkout, ["config", `url.${fork}.insteadOf`, "https://github.com/get-aix/t3code.git"]);
+  git(checkout, ["remote", "set-url", "origin", "https://github.com/get-aix/aix-code.git"]);
+  git(checkout, ["config", `url.${fork}.insteadOf`, "https://github.com/get-aix/aix-code.git"]);
   git(checkout, ["config", `url.${upstream}.insteadOf`, "https://github.com/pingdotgg/t3code.git"]);
 
   await NodeFSP.mkdir(bin);
@@ -132,7 +132,7 @@ async function createSyncFixture({
 import * as childProcess from "node:child_process";
 const args = process.argv.slice(2);
 if (args[0] === "remote" && args[1] === "get-url" && args[2] === "origin") {
-  process.stdout.write("https://github.com/get-aix/t3code.git\\n");
+  process.stdout.write("https://github.com/get-aix/aix-code.git\\n");
 } else {
   childProcess.execFileSync(${JSON.stringify(realGit)}, args, { stdio: "inherit" });
 }
@@ -189,17 +189,17 @@ if (args[0] === "api" && args.some((arg) => arg.includes("/releases?"))) {
   } else {
     output(state.releasePages);
   }
-} else if (args[0] === "api" && args[1] === "repos/get-aix/t3code/branches/main/protection") {
+} else if (args[0] === "api" && args[1] === "repos/get-aix/aix-code/branches/main/protection") {
   requireProtectionAppToken(args[1]);
   output(state.branchProtection);
 } else if (args[0] === "api" && args.some((arg) => arg.includes("/rulesets?"))) {
   requireProtectionAppToken(args.find((arg) => arg.includes("/rulesets?")));
   const rulesets = state.rulesets ?? [];
   process.stdout.write(rulesets.map((ruleset) => JSON.stringify(ruleset)).join("\\n") + (rulesets.length ? "\\n" : ""));
-} else if (args[0] === "api" && args[1] === "repos/get-aix/t3code") {
+} else if (args[0] === "api" && args[1] === "repos/get-aix/aix-code") {
   requireProtectionAppToken(args[1]);
   output(state.repositorySettings);
-} else if (args[0] === "api" && args[1] === "repos/get-aix/t3code/actions/runs/" + state.ciRunId) {
+} else if (args[0] === "api" && args[1] === "repos/get-aix/aix-code/actions/runs/" + state.ciRunId) {
   output(state.workflowRun);
 } else if (args[0] === "api" && args.some((arg) => arg.includes("/actions/runs/" + state.ciRunId + "/attempts/"))) {
   const pages = state.workflowJobPages ?? [state.workflowJobs ?? []];
@@ -246,9 +246,9 @@ if (args[0] === "api" && args.some((arg) => arg.includes("/releases?"))) {
 } else if (args[0] === "pr" && args[1] === "create") {
   if (state.prCreateError) fail(state.prCreateError);
   const head = args[args.indexOf("--head") + 1].split(":").at(-1);
-  state.pullRequests.push({ headRefName: head, headRepository: { nameWithOwner: "get-aix/t3code" }, title: "upstream sync", url: "https://github.com/get-aix/t3code/pull/17" });
+  state.pullRequests.push({ headRefName: head, headRepository: { nameWithOwner: "get-aix/aix-code" }, title: "upstream sync", url: "https://github.com/get-aix/aix-code/pull/17" });
   fs.writeFileSync(statePath, JSON.stringify(state));
-  process.stdout.write("https://github.com/get-aix/t3code/pull/17\\n");
+  process.stdout.write("https://github.com/get-aix/aix-code/pull/17\\n");
 } else if (args[0] === "run" && args[1] === "list") {
   const branch = args[args.indexOf("--branch") + 1];
   const workflow = args[args.indexOf("--workflow") + 1];
@@ -312,7 +312,7 @@ if (args[0] === "api" && args.some((arg) => arg.includes("/releases?"))) {
           env: {
             ...process.env,
             PATH: `${bin}:${NodePath.dirname(process.execPath)}:${process.env.PATH}`,
-            GITHUB_REPOSITORY: "get-aix/t3code",
+            GITHUB_REPOSITORY: "get-aix/aix-code",
             DRY_RUN: runDryRun ? "true" : "false",
             GH_TOKEN: "fixture-github-token",
             PROTECTION_GH_TOKEN: "fixture-sync-app-token",
@@ -352,7 +352,7 @@ async function prepareSuccessfulCiEvent(fixture) {
   Object.assign(pullRequest, {
     number: 17,
     headRefOid: headSha,
-    headRepository: { nameWithOwner: "get-aix/t3code" },
+    headRepository: { nameWithOwner: "get-aix/aix-code" },
     baseRefName: "main",
     baseRefOid: baseSha,
     isDraft: false,
@@ -377,7 +377,7 @@ async function prepareSuccessfulCiEvent(fixture) {
     status: "completed",
     conclusion: "success",
     run_attempt: 1,
-    head_repository: { full_name: "get-aix/t3code" },
+    head_repository: { full_name: "get-aix/aix-code" },
     head_branch: branch,
     head_sha: headSha,
   };
@@ -727,7 +727,7 @@ NodeTest.test(
         openSyncPullRequests: [
           {
             headRefName: "automation/upstream-stable-v4.2.0",
-            headRepository: { nameWithOwner: "get-aix/t3code" },
+            headRepository: { nameWithOwner: "get-aix/aix-code" },
           },
         ],
       }),
@@ -1247,9 +1247,9 @@ NodeTest.test(
       const result = fixture.runSync();
       NodeAssert.equal(result.status, 0, result.output);
       NodeAssert.deepEqual((await fixture.readState()).protectionApiCalls, [
-        "repos/get-aix/t3code/branches/main/protection",
-        "repos/get-aix/t3code",
-        "repos/get-aix/t3code/rulesets?includes_parents=true&per_page=100",
+        "repos/get-aix/aix-code/branches/main/protection",
+        "repos/get-aix/aix-code",
+        "repos/get-aix/aix-code/rulesets?includes_parents=true&per_page=100",
       ]);
     } finally {
       await NodeFSP.rm(fixture.root, { recursive: true, force: true });
@@ -1393,7 +1393,7 @@ NodeTest.test(
         status: "completed",
         conclusion: "success",
         run_attempt: 1,
-        head_repository: { full_name: "get-aix/t3code" },
+        head_repository: { full_name: "get-aix/aix-code" },
         head_branch: "main",
         head_sha: integrationSha,
       };

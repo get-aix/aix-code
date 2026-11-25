@@ -2,7 +2,7 @@
 
 ## Using T3 Code
 
-- [The get-aix/t3code fork: install, updates, and what it changes](./user/fork.md)
+- [The get-aix/aix-code fork: install, updates, and what it changes](./user/fork.md)
 - [aix profiles](./user/aix-profiles.md)
 - [Personal and Work](./user/work-personal.md)
 - [Gateway budgets and thread costs](./user/aix-budgets.md)

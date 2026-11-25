@@ -1,5 +1,5 @@
 name: Fork Release
-run-name: ${{ github.repository == 'get-aix/t3code' && inputs.channel == 'stable' && (inputs.publish && 'Fork publish stable' || 'Fork build-only stable') || 'Fork Release' }} ${{ inputs.version || github.ref_name }} source ${{ inputs.source_commit || github.sha }}
+run-name: ${{ github.repository == 'get-aix/aix-code' && inputs.channel == 'stable' && (inputs.publish && 'Fork publish stable' || 'Fork build-only stable') || 'Fork Release' }} ${{ inputs.version || github.ref_name }} source ${{ inputs.source_commit || github.sha }}
 
 on:
   workflow_dispatch:
@@ -50,7 +50,7 @@ jobs:
   fork_preflight:
     name: Fork release preflight
     if: >-
-      github.repository == 'get-aix/t3code' &&
+      github.repository == 'get-aix/aix-code' &&
       github.event_name == 'workflow_dispatch' && inputs.channel == 'stable'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -810,7 +810,7 @@ jobs:
     name: Verify tested build-only artifact
     needs: [fork_preflight]
     if: >-
-      github.repository == 'get-aix/t3code' &&
+      github.repository == 'get-aix/aix-code' &&
       github.event_name == 'workflow_dispatch' && inputs.channel == 'stable' && inputs.publish == true &&
       inputs.artifact_run_id != '' &&
       !failure() && !cancelled() &&
@@ -890,7 +890,7 @@ jobs:
     name: Publish authorized fork release
     needs: [fork_preflight, fork_build_artifacts, fork_nix, fork_verify_tested_artifact]
     if: >-
-      github.repository == 'get-aix/t3code' &&
+      github.repository == 'get-aix/aix-code' &&
       github.event_name == 'workflow_dispatch' && inputs.channel == 'stable' && inputs.publish == true &&
       !failure() && !cancelled() &&
       needs.fork_preflight.result == 'success' &&
@@ -1152,7 +1152,7 @@ jobs:
     name: Advance the latest-release branch
     needs: [fork_preflight, fork_publish]
     if: >-
-      github.repository == 'get-aix/t3code' &&
+      github.repository == 'get-aix/aix-code' &&
       github.event_name == 'workflow_dispatch' && inputs.channel == 'stable' && inputs.publish == true &&
       !cancelled() &&
       needs.fork_preflight.result == 'success' &&

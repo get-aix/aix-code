@@ -23,7 +23,7 @@ const forkOwnedWorkflows = [
   "upstream-stable-sync.yml",
 ];
 const forkWorkflowReferences = [
-  "get-aix/t3code",
+  "get-aix/aix-code",
   "fork-release.cjs",
   "fork-ci-checks.cjs",
   "Fork Quality",
