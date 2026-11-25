@@ -644,7 +644,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          apk="incoming/android/T3-Code-${EXPECTED_VERSION}.apk"
+          apk="incoming/android/aix-Code-${EXPECTED_VERSION}.apk"
           windows_meta="incoming/windows/windows-metadata.json"
           android_meta="incoming/android/metadata.json"
           installers=(incoming/windows/*.exe)
@@ -674,7 +674,7 @@ jobs:
           NODE
 
           mkdir -p release-assets
-          windows_name="T3-Code-${EXPECTED_VERSION}-x64.exe"
+          windows_name="aix-Code-${EXPECTED_VERSION}-x64.exe"
           cp "${installers[0]}" "release-assets/$windows_name"
           (cd release-assets && sha256sum "$windows_name" > "$windows_name.sha256")
           cp "$apk" release-assets/
@@ -687,7 +687,7 @@ jobs:
           # Windows feed per arch for upstream's merge; the fork ships x64 only.
           cp "incoming/windows/$windows_name.blockmap" release-assets/
           cp incoming/windows/latest-win-x64.yml release-assets/latest.yml
-          mac_base="T3-Code-${EXPECTED_VERSION}-arm64"
+          mac_base="aix-Code-${EXPECTED_VERSION}-arm64"
           for file in "$mac_base.zip" "$mac_base.zip.blockmap" latest-mac.yml; do
             cp "incoming/mac/$file" release-assets/
           done

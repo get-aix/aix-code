@@ -201,7 +201,7 @@ jobs:
 
           output_dir="../android-fork-artifacts"
           mkdir -p "$output_dir"
-          apk_name="T3-Code-${version_name}.apk"
+          apk_name="aix-Code-${version_name}.apk"
           cp "$apk" "$output_dir/$apk_name"
           (cd "$output_dir" && sha256sum "$apk_name" > "$apk_name.sha256")
           node -e 'const fs = require("node:fs"); const [file, appId, versionCode, versionName, ref, sha, shaName] = process.argv.slice(1); fs.writeFileSync(file, JSON.stringify({ applicationId: appId, versionCode: Number(versionCode), versionName, sha256: fs.readFileSync(shaName, "utf8").split(" ")[0], gitRef: ref, gitSha: sha }, null, 2) + "\n");' \
@@ -245,7 +245,7 @@ jobs:
             gh release upload "$RELEASE_TAG" release-assets/* --clobber --repo "$GH_REPO"
           else
             gh release create "$RELEASE_TAG" release-assets/* --verify-tag \
-              --title "T3 Code Android ${RELEASE_TAG#t3-android-v}" \
-              --notes "Signed T3 Code Android APK with SHA-256 and version metadata." \
+              --title "aix Code Android ${RELEASE_TAG#t3-android-v}" \
+              --notes "Signed aix Code Android APK with SHA-256 and version metadata." \
               --repo "$GH_REPO"
           fi

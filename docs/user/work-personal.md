@@ -79,10 +79,10 @@ key**.
 Agents and threads can still use other keys or personal providers when you explicitly allow it:
 
 - **Sending on another key:** if you send a message using a model outside the project's Work key,
-  T3 Code asks you to confirm first. Confirming sends the message and adds that key to the thread's
+  aix Code asks you to confirm first. Confirming sends the message and adds that key to the thread's
   allowed keys; cancelling leaves your draft untouched.
 - **An agent requesting another key:** when an agent or subagent asks to run work on a different
-  key, T3 Code pauses and shows a decision card in the thread:
+  key, aix Code pauses and shows a decision card in the thread:
   - **Deny** refuses the request.
   - **Allow this task** grants a single-use approval for that one delegated run.
   - **Allow for this thread** allows that key for the rest of the thread (you can revoke it right
@@ -114,7 +114,7 @@ switch between Personal and Work. It keeps your daily workflow tidy, not your da
 isolated.
 
 If you need hard separation, run two T3 servers with separate `T3CODE_HOME` directories (the
-[Nix install guide](./install.md#t3-code-fork-nix) shows how). One T3 client can connect to both
+[Nix install guide](./install.md#aix-code-nix) shows how). One T3 client can connect to both
 servers at once.
 
 ## Clients

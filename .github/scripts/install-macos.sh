@@ -1,5 +1,5 @@
 #!/bin/bash
-# Installs or updates T3 Code on Apple Silicon from the get-aix/t3code releases.
+# Installs or updates aix Code on Apple Silicon from the get-aix/t3code releases.
 # The app is not notarized. curl, unlike a browser, sets no quarantine flag, so
 # Gatekeeper never checks the download and the app opens without a prompt.
 # Usage: curl -fsSL <release>/install-macos.sh | bash   (T3CODE_VERSION=1.2.3 pins a version)
@@ -24,10 +24,10 @@ fi
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
-zip="T3-Code-$version-arm64.zip"
+zip="aix-Code-$version-arm64.zip"
 base="https://github.com/$repo/releases/download/v$version"
 
-echo "Downloading T3 Code $version..."
+echo "Downloading aix Code $version..."
 curl -fL --progress-bar -o "$tmp/$zip" "$base/$zip"
 curl -fsSL -o "$tmp/$zip.sha256" "$base/$zip.sha256"
 (cd "$tmp" && shasum -a 256 -c "$zip.sha256" >/dev/null) || fail "checksum mismatch for $zip."
@@ -47,12 +47,27 @@ mkdir -p "$dest_dir"
 dest="$dest_dir/$(basename "$src")"
 
 executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$src/Contents/Info.plist")"
-# Replacing the app under a running T3 Code would stop its agents mid-turn.
-pgrep -qx "$executable" && fail "T3 Code is running; quit it and run this again."
+bundle_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$src/Contents/Info.plist")"
+# Releases before the rename installed the same app (same bundle ID) as "T3 Code (Beta).app".
+legacy="$dest_dir/T3 Code (Beta).app"
+if [[ -d "$legacy" && "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$legacy/Contents/Info.plist" 2>/dev/null)" == "$bundle_id" ]]; then
+  legacy_executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$legacy/Contents/Info.plist")"
+else
+  legacy=""
+  legacy_executable=""
+fi
+# Replacing the app under a running instance would stop its agents mid-turn.
+for running in "$executable" ${legacy_executable:+"$legacy_executable"}; do
+  pgrep -qx "$running" && fail "aix Code is running; quit it and run this again."
+done
 
+if [[ -n "$legacy" ]]; then
+  rm -rf "$legacy"
+  echo "Removed $legacy; aix Code replaces it."
+fi
 rm -rf "$dest"
 ditto "$src" "$dest"
 xattr -dr com.apple.quarantine "$dest" 2>/dev/null || true
 
-echo "Installed T3 Code $version to $dest"
+echo "Installed aix Code $version to $dest"
 open "$dest"

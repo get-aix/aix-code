@@ -49,7 +49,7 @@ workflows in GitHub repository settings using `scripts/configure-fork-github.sh`
    `.github/upstream-stable.json` marker, provide `upstream_base` as the full peeled commit SHA for
    the matching upstream `v<version>` tag. An invalid or mismatched marker always blocks the run.
 7. Download `t3-code-installers-<version>-<12-char-source-sha>` from that Actions run.
-   It contains `T3-Code-<version>-x64.exe`, `T3-Code-<version>.apk`, `T3-Code-<version>-arm64.zip`, their `.sha256` files, blockmaps, the `latest.yml` and `latest-mac.yml` update feeds, `install-macos.sh`, `install-windows.ps1`, platform metadata, `nix-build.json`,
+   It contains `aix-Code-<version>-x64.exe`, `aix-Code-<version>.apk`, `aix-Code-<version>-arm64.zip`, their `.sha256` files, blockmaps, the `latest.yml` and `latest-mac.yml` update feeds, `install-macos.sh`, `install-windows.ps1`, platform metadata, `nix-build.json`,
    and `BUILD-INFO.md`. All metadata names the fork integration commit as the built source and
    records the upstream stable tag and peeled base commit separately. The Windows runner records its Authenticode status; without fork Windows
    signing credentials it is expected to be unsigned. The macOS app is signed with the fork's self-signed `T3 Code Fork` certificate (secrets `MACOS_SELF_SIGNED_CERTIFICATE` and `MACOS_SELF_SIGNED_CERTIFICATE_PASSWORD`) and is not notarized. Keep that certificate: installed Macs accept in-app updates only from builds signed with the same one, so a new certificate means every Mac must reinstall with the script. The Android APK is signed with the fork's
@@ -60,7 +60,7 @@ workflows in GitHub repository settings using `scripts/configure-fork-github.sh`
    `source_commit` and `source_branch`, and `artifact_run_id` set to the tested build-only run.
    The publisher verifies that run's successful Nix and installer verification jobs, downloads the
    exact artifact, and rechecks every file and source field before creating the upstream-matched
-   `vX.Y.Z` tag and `T3 Code vX.Y.Z` release. It does not rebuild the tested installers. A manual
+   `vX.Y.Z` tag and `aix Code vX.Y.Z` release. It does not rebuild the tested installers. A manual
    publish without a tested artifact run is rejected unless ongoing automatic publication is
    explicitly enabled. To publish manually, first run a build-only release, then dispatch again
    with `publish=true` and that run's `artifact_run_id`. `FORK_AUTO_PUBLISH_STABLE_RELEASES=true`
@@ -239,7 +239,7 @@ here still needs evidence before release:
 The clone contains an imported upstream `v0.1.9` tag. It is not a fork release, and it must not
 be moved, deleted, or force-pushed.
 
-Publishing creates `vX.Y.Z` titled `T3 Code vX.Y.Z` from the tested installer bytes. The `release`
+Publishing creates `vX.Y.Z` titled `aix Code vX.Y.Z` from the tested installer bytes. The `release`
 branch follows the latest published build: it moves only when the new release is a fast-forward,
 publishing an older release leaves it unchanged, and it never force-moves. Use
 `github:get-aix/t3code/release` to follow the latest published Nix build, or pin a release tag for

@@ -4,7 +4,7 @@
 > **Historical spike record.** This document captures the initial protocol compatibility audit from
 > early fork development. For current mobile support and Android APK installation, see
 > [The Android app](../user/fork.md#the-android-app) and
-> [T3 Code Android APK](../operations/android-fork-apk.md).
+> [aix Code Android APK](../operations/android-fork-apk.md).
 
 Status: source and fixture evidence complete; official-binary smoke tests remain blocked.
 Evidence is from fork base `368ec8a21a8a18cba83495a86173696804b95bc2` (T00 integrated).

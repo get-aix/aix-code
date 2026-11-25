@@ -1016,7 +1016,7 @@ export function buildSyncReviewChecklist({ addedWorkflows = [], changedFiles = [
 
   if (changedFiles.includes("README.md")) {
     items.push(
-      "- [ ] **Upstream `README.md` changed:** check whether the embedded upstream README section in `README.md` needs a refresh.",
+      "- [ ] **Upstream `README.md` changed:** the fork `README.md` no longer embeds it; check whether an install or feature change needs a matching fork README note.",
     );
   }
 

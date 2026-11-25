@@ -2,7 +2,7 @@
 
 [aix](https://github.com/get-aix/aix) keeps your AI gateway profiles in one place: each profile
 pairs a gateway URL with an API key from your password manager or environment. This fork turns every
-API-key profile in aix into ready-to-use agents in T3 Code. For example, an `acme` profile labeled
+API-key profile in aix into ready-to-use agents in aix Code. For example, an `acme` profile labeled
 **Acme** becomes three providers:
 
 - **Acme · Claude Code** for Claude models
@@ -27,7 +27,7 @@ read directly from aix.
    aix status acme
    ```
 
-3. Restart T3 Code if you installed aix while T3 was already running, so the server picks up `aix`
+3. Restart aix Code if you installed aix while it was already running, so the server picks up `aix`
    on its `PATH`.
 
 aix integration is enabled by default. To turn it off without uninstalling the fork, set

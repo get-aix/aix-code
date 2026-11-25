@@ -4,6 +4,9 @@ const path = require("node:path");
 const { createReadStream } = require("node:fs");
 
 const RELEASE_REPOSITORY = "get-aix/t3code";
+// The fork ships under its own name; bundle, package, and data IDs stay upstream's for compatibility.
+const PRODUCT_NAME = "aix Code";
+const ARTIFACT_PREFIX = "aix-Code";
 const STABLE_VERSION = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 const COMMIT_SHA = /^[0-9a-f]{40}$/i;
 // A fork fix on upstream X.Y.Z is X.Y.(Z+1)-aix.N: newer than its base, older than upstream's next.
@@ -56,14 +59,18 @@ function resolveForkReleaseVersion({ baseVersion, sha, baseReleaseSha = "", fork
 }
 
 function checksummedReleaseAssets(version) {
-  return [`T3-Code-${version}-x64.exe`, `T3-Code-${version}.apk`, `T3-Code-${version}-arm64.zip`];
+  return [
+    `${ARTIFACT_PREFIX}-${version}-x64.exe`,
+    `${ARTIFACT_PREFIX}-${version}.apk`,
+    `${ARTIFACT_PREFIX}-${version}-arm64.zip`,
+  ];
 }
 
 // electron-updater feeds: each manifest must list the installer its platform updates from.
 function updateManifests(version) {
   return {
-    "latest.yml": `T3-Code-${version}-x64.exe`,
-    "latest-mac.yml": `T3-Code-${version}-arm64.zip`,
+    "latest.yml": `${ARTIFACT_PREFIX}-${version}-x64.exe`,
+    "latest-mac.yml": `${ARTIFACT_PREFIX}-${version}-arm64.zip`,
   };
 }
 
@@ -238,7 +245,7 @@ function buildForkBuildInfo({
   publicationMode = "build-only",
 }) {
   return [
-    "T3 Code build artifacts",
+    `${PRODUCT_NAME} build artifacts`,
     "",
     `Version: ${version}`,
     `Fork commit (built source): ${markdownCode(sha)}`,
@@ -651,7 +658,7 @@ function assertExistingForkReleaseMetadata({
   sourceBranch = "",
 }) {
   const expectedTag = `v${version}`;
-  const expectedName = `T3 Code ${expectedTag}`;
+  const expectedName = `${PRODUCT_NAME} ${expectedTag}`;
   const expectedAssets = requiredReleaseAssets(version).toSorted();
   const actualAssets = release?.assets?.map((asset) => asset.name).toSorted();
   const buildRun = /^Tested build artifact run: `([1-9]\d*)` \(attempt: `([1-9]\d*)`\)$/m.exec(
@@ -762,7 +769,7 @@ async function verifyForkBuildArtifactAssets({
     androidMetadata.versionCode !== expectedAndroidVersionCode ||
     androidMetadata.gitSha?.toLowerCase() !== sha.toLowerCase() ||
     androidMetadata.sha256 !== androidHash ||
-    windowsMetadata.application !== "T3 Code" ||
+    windowsMetadata.application !== PRODUCT_NAME ||
     windowsMetadata.platform !== "windows" ||
     windowsMetadata.architecture !== "x64" ||
     windowsMetadata.version !== version ||
@@ -884,7 +891,7 @@ function resolveForkRelease({
     );
   }
   const tag = `v${version}`;
-  const releaseName = `T3 Code ${tag}`;
+  const releaseName = `${PRODUCT_NAME} ${tag}`;
   const expectedAssets = requiredReleaseAssets(version).toSorted();
   const existingAssetNames = existingRelease?.assets?.map((asset) => asset.name).toSorted();
   if (!COMMIT_SHA.test(upstreamBase)) {
@@ -950,7 +957,7 @@ function resolveForkRelease({
     return { version, tag, sha, releaseName, runner: "ubuntu-latest", alreadyPublished: true };
   }
 
-  return { version, tag, sha, releaseName: `T3 Code ${tag}`, runner: "ubuntu-latest" };
+  return { version, tag, sha, releaseName: `${PRODUCT_NAME} ${tag}`, runner: "ubuntu-latest" };
 }
 
 module.exports = {

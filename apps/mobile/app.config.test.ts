@@ -62,7 +62,7 @@ it.each([
   vi.stubEnv("T3CODE_MOBILE_VERSION", version);
   const config = await loadConfig("android-fork");
 
-  expect(config.name).toBe("T3 Code");
+  expect(config.name).toBe("aix Code");
   expect(config.scheme).toBe("t3code-aix");
   expect(config.android?.package).toBe("com.t3tools.t3code");
   expect(config.ios?.bundleIdentifier).toBe("com.t3tools.t3code");

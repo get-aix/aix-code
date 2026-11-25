@@ -1,7 +1,10 @@
-# The get-aix/t3code fork
+# aix Code
 
-**get-aix/t3code** is a soft fork of [T3 Code](https://github.com/pingdotgg/t3code) (created by
-pingdotgg, MIT licensed). It keeps everything you love about T3 Code and adds first-class support
+**aix Code** ([get-aix/t3code](https://github.com/get-aix/t3code)) is a community soft fork of
+[T3 Code](https://github.com/pingdotgg/t3code) by T3 Tools Inc. (MIT licensed). It is not affiliated
+with or endorsed by the T3 Code maintainers; report fork problems in
+[get-aix/t3code issues](https://github.com/get-aix/t3code/issues). It keeps everything you love about
+T3 Code and adds first-class support
 for company AI gateways through [aix](https://github.com/get-aix/aix):
 
 - **[aix profiles](./aix-profiles.md):** every API-key profile in aix becomes ready-to-use Claude
@@ -15,9 +18,10 @@ for company AI gateways through [aix](https://github.com/get-aix/aix):
 - **Fork builds:** self-updating desktop apps for Windows (with WSL support) and Apple Silicon
   macOS, a feature-rich Nix flake, and a sideloadable Android APK.
 
-Because the fork uses the same app name (`T3 Code`), `t3` / `t3code-desktop` commands, and data
-directory (`~/.t3`) as upstream T3 Code, install it **instead of** upstream T3 Code, not alongside
-it.
+aix Code has its own name and logo, but keeps upstream's app and package IDs, `t3` /
+`t3code-desktop` commands, and data directory (`~/.t3`) so it stays compatible with T3 Code. Install
+it **instead of** upstream T3 Code, not alongside it. Releases up to `0.1.12-aix.1` were named
+**T3 Code**; they update to aix Code in place and keep all data.
 
 ## Install
 
@@ -28,25 +32,26 @@ Download from the fork's [latest release](https://github.com/get-aix/t3code/rele
 | Windows x64           | `irm https://github.com/get-aix/t3code/releases/latest/download/install-windows.ps1 \| iex`      |
 | macOS (Apple Silicon) | `curl -fsSL https://github.com/get-aix/t3code/releases/latest/download/install-macos.sh \| bash` |
 | Nix / NixOS           | `nix profile add 'github:get-aix/t3code/release'`                                                |
-| Android               | `T3-Code-<version>.apk`                                                                          |
+| Android               | `aix-Code-<version>.apk`                                                                         |
 
 Platform notes:
 
 - **Windows:** run the command in a normal PowerShell window (not as administrator). It verifies the
-  SHA-256 checksum and installs **T3 Code** for your user without admin rights or SmartScreen
-  warnings. Quit T3 Code first. Set `$env:T3CODE_VERSION = "<version>"` for a specific release. You
-  can also run `T3-Code-<version>-x64.exe` directly, though Windows SmartScreen will prompt **More
+  SHA-256 checksum and installs **aix Code** for your user without admin rights or SmartScreen
+  warnings. Quit the app first. Set `$env:T3CODE_VERSION = "<version>"` for a specific release. You
+  can also run `aix-Code-<version>-x64.exe` directly, though Windows SmartScreen will prompt **More
   info → Run anyway** because it is unsigned.
 - **macOS:** use the install script—the app is self-signed rather than notarized, so Gatekeeper
-  blocks a browser-downloaded zip. The script verifies the SHA-256 checksum and installs **T3 Code**
-  into `/Applications` (or `~/Applications`). Quit T3 Code first. Set `T3CODE_VERSION=<version>` for
+  blocks a browser-downloaded zip. The script verifies the SHA-256 checksum and installs **aix Code**
+  into `/Applications` (or `~/Applications`), replacing an existing **T3 Code (Beta)** app. Quit the
+  app first. Set `T3CODE_VERSION=<version>` for
   a specific release.
 - **Nix / NixOS:** builds from source for Linux and macOS (`x86_64` and `aarch64`), with optional
   `t3code-browser`, `t3code-android`, and `t3code-full` outputs and `.override` toggles. See
-  [T3 Code fork (Nix)](./install.md#t3-code-fork-nix).
+  [aix Code (Nix)](./install.md#aix-code-nix).
 - **Android:** see [The Android app](#the-android-app).
 
-After installing, set up your providers in [Install T3 Code](./install.md#providers) and
+After installing, set up your providers in [Install](./install.md#providers) and
 [aix profiles](./aix-profiles.md#set-up-aix).
 
 ### Switch from upstream T3 Code (and go back anytime)
@@ -54,7 +59,7 @@ After installing, set up your providers in [Install T3 Code](./install.md#provid
 Your threads, projects, and settings carry straight over because the fork shares the same data
 directory:
 
-1. Quit T3 Code.
+1. Quit upstream T3 Code.
 2. Back up your T3 data directory (`~/.t3` by default) before upgrading.
 3. Uninstall upstream T3 Code (or remove its Nix package).
 4. Install the fork and start it.
@@ -75,7 +80,7 @@ t3 fork-eject --dry-run
 t3 fork-eject
 ```
 
-Then quit T3 Code, uninstall the fork, and install upstream T3 Code. Your personal provider sign-ins,
+Then quit aix Code, uninstall it, and install upstream T3 Code. Your personal provider sign-ins,
 projects, and threads keep working.
 
 If you just want to pause aix temporarily without switching builds, set `T3CODE_AIX=0` on the server
@@ -105,13 +110,13 @@ The fork tracks upstream **stable releases only**—never upstream prereleases o
 ## The Android app
 
 The fork's Android APK includes the Personal/Work switch, scope-aware model picker, Work key
-selection, lane approval cards, and model details, with the launcher label **T3 Code**.
+selection, lane approval cards, and model details, with the launcher label **aix Code**.
 
 It uses the official package ID (`com.t3tools.t3code`) so T3 Connect sign-in works, which means it
 replaces the Play Store app:
 
 1. Uninstall T3 Code from the Play Store.
-2. Download `T3-Code-<version>.apk` from the fork's Releases page and open it (allow installing from
+2. Download `aix-Code-<version>.apk` from the fork's Releases page and open it (allow installing from
    your browser if Android prompts).
 3. Update only from fork releases—Google Play cannot update this APK.
 

@@ -131,7 +131,7 @@ test("release notes and summaries preserve backticks and dollar signs", () => {
   });
   const release = {
     tag_name: "v0.1.9",
-    name: "T3 Code v0.1.9",
+    name: "aix Code v0.1.9",
     body: releaseNotes,
     draft: false,
     prerelease: false,
@@ -164,14 +164,14 @@ test("release notes and summaries preserve backticks and dollar signs", () => {
   );
 });
 
-test("release assets keep the upstream T3 Code installer names", () => {
+test("release assets use the aix Code installer names", () => {
   assert.deepEqual(requiredReleaseAssets("0.1.9").slice(0, 6), [
-    "T3-Code-0.1.9-x64.exe",
-    "T3-Code-0.1.9-x64.exe.sha256",
-    "T3-Code-0.1.9-x64.exe.blockmap",
+    "aix-Code-0.1.9-x64.exe",
+    "aix-Code-0.1.9-x64.exe.sha256",
+    "aix-Code-0.1.9-x64.exe.blockmap",
     "windows-metadata.json",
-    "T3-Code-0.1.9.apk",
-    "T3-Code-0.1.9.apk.sha256",
+    "aix-Code-0.1.9.apk",
+    "aix-Code-0.1.9.apk.sha256",
   ]);
 });
 
@@ -180,7 +180,7 @@ test("manual fork releases use the application version and upstream release iden
     version: "0.1.9",
     tag: "v0.1.9",
     sha,
-    releaseName: "T3 Code v0.1.9",
+    releaseName: "aix Code v0.1.9",
     runner: "ubuntu-latest",
   });
 });
@@ -236,7 +236,7 @@ test("sources past a published release become ordered fork fixes of the next pat
     version: "0.1.10-aix.1",
     tag: "v0.1.10-aix.1",
     sha,
-    releaseName: "T3 Code v0.1.10-aix.1",
+    releaseName: "aix Code v0.1.10-aix.1",
     runner: "ubuntu-latest",
   });
   assert.throws(
@@ -518,7 +518,7 @@ test("an existing release is idempotent only with its exact source and complete 
   const assets = requiredReleaseAssets("0.1.9").map((name) => ({ name }));
   const existingRelease = {
     tag_name: "v0.1.9",
-    name: "T3 Code v0.1.9",
+    name: "aix Code v0.1.9",
     body: buildForkReleaseNotes({
       upstreamBase,
       sha,
@@ -544,7 +544,7 @@ test("an existing release is idempotent only with its exact source and complete 
       version: "0.1.9",
       tag: "v0.1.9",
       sha,
-      releaseName: "T3 Code v0.1.9",
+      releaseName: "aix Code v0.1.9",
       runner: "ubuntu-latest",
       alreadyPublished: true,
     },
@@ -581,13 +581,13 @@ test("existing release assets must have matching source metadata and file checks
     { cwd: __dirname, encoding: "utf8" },
   ).trim();
   const directory = fs.mkdtempSync(path.join(gitCommonDir, "fork-release-assets-"));
-  const windows = "T3-Code-0.1.9-x64.exe";
-  const android = "T3-Code-0.1.9.apk";
-  const macZip = "T3-Code-0.1.9-arm64.zip";
+  const windows = "aix-Code-0.1.9-x64.exe";
+  const android = "aix-Code-0.1.9.apk";
+  const macZip = "aix-Code-0.1.9-arm64.zip";
   const digest = (contents) => crypto.createHash("sha256").update(contents).digest("hex");
   const baseMetadata = {
     tag_name: "v0.1.9",
-    name: "T3 Code v0.1.9",
+    name: "aix Code v0.1.9",
     body: buildForkReleaseNotes({
       upstreamBase,
       sha,
@@ -665,7 +665,7 @@ test("existing release assets must have matching source metadata and file checks
     fs.writeFileSync(
       path.join(directory, "windows-metadata.json"),
       JSON.stringify({
-        application: "T3 Code",
+        application: "aix Code",
         platform: "windows",
         architecture: "x64",
         version: "0.1.9",
@@ -772,7 +772,7 @@ test("existing release assets must have matching source metadata and file checks
         upstreamBase,
         upstreamTag: "v0.1.9",
       }),
-      /latest-mac\.yml lists T3-Code-0\.1\.9-arm64\.zip/,
+      /latest-mac\.yml lists aix-Code-0\.1\.9-arm64\.zip/,
     );
     fs.writeFileSync(path.join(directory, macZip), macZip);
     fs.writeFileSync(path.join(directory, `${macZip}.sha256`), `${digest(macZip)}  ${macZip}\n`);
@@ -781,10 +781,10 @@ test("existing release assets must have matching source metadata and file checks
       [
         "version: 0.1.9",
         "files:",
-        "  - url: T3-Code-0.1.9-arm64.dmg",
+        "  - url: aix-Code-0.1.9-arm64.dmg",
         `    sha512: ${sha512(macZip)}`,
         "    size: 1",
-        "path: T3-Code-0.1.9-arm64.dmg",
+        "path: aix-Code-0.1.9-arm64.dmg",
         `sha512: ${sha512(macZip)}`,
         "releaseDate: '2026-11-18T00:00:00.000Z'",
         "",
@@ -798,7 +798,7 @@ test("existing release assets must have matching source metadata and file checks
         upstreamBase,
         upstreamTag: "v0.1.9",
       }),
-      /latest-mac\.yml does not offer T3-Code-0\.1\.9-arm64\.zip/,
+      /latest-mac\.yml does not offer aix-Code-0\.1\.9-arm64\.zip/,
     );
     writeManifest("latest-mac.yml", [macZip]);
     fs.appendFileSync(path.join(directory, windows), "tampered");
@@ -971,7 +971,7 @@ test("merge release notes include upstream T3 Code notes followed by fork change
     assertExistingForkReleaseMetadata({
       release: {
         tag_name: "v0.1.11",
-        name: "T3 Code v0.1.11",
+        name: "aix Code v0.1.11",
         body: notes,
         draft: false,
         prerelease: false,
@@ -1014,7 +1014,7 @@ test("fork-only aix release notes omit upstream notes and lead with fork changes
     assertExistingForkReleaseMetadata({
       release: {
         tag_name: "v0.1.12-aix.1",
-        name: "T3 Code v0.1.12-aix.1",
+        name: "aix Code v0.1.12-aix.1",
         body: notes,
         draft: false,
         prerelease: false,
@@ -1091,7 +1091,7 @@ test("oversized upstream notes with unclosed details are truncated safely while 
     assertExistingForkReleaseMetadata({
       release: {
         tag_name: "v0.1.10",
-        name: "T3 Code v0.1.10",
+        name: "aix Code v0.1.10",
         body: notes,
         draft: false,
         prerelease: false,

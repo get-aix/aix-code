@@ -138,6 +138,27 @@ Each rule names the reason it exists; if a reason stops holding, change the rule
   On pull requests, `scripts/check-fork-docs.mjs` also posts a step-summary reminder whenever mapped
   fork code changes without a matching doc edit.
 
+## 8. Branding
+
+The fork ships as **aix Code** with the aix mark, at T3 Code's request that forks not use its name
+or logo. Only the outward identity changes. Bundle and package IDs (`com.t3tools.t3code`), URL
+schemes, the `t3` CLI, the `T3CODE_*` variables, `~/.t3`, and Electron userData directories stay
+upstream's, so data, updates, T3 Connect, and `t3 fork-eject` keep working. Do not rename them.
+
+- The name lives in a few one-line seams that `fork-invariants.test.mjs` checks: web
+  `branding.ts`, `vite.config.ts`, `index.html`, `manifest.webmanifest`, desktop
+  `DesktopEnvironment.ts` and `package.json` `productName`, `build-desktop-artifact.ts` (product,
+  artifact, author, and macOS usage strings), the `android-fork` variant in `app.config.ts`,
+  `flake.nix`, and `PRODUCT_NAME` in `fork-release.cjs`. Leave in-app sentences that mention
+  T3 Code alone: rewriting hundreds of upstream strings and catalogs would conflict on every sync.
+- The mark is `text.svg` in each `assets/*/app-icon.icon` project plus the `T3Wordmark`
+  components. Icon Composer only runs on macOS, so regenerate the tracked exports with
+  `vp run icons:export:fork` and then `vp run icons:export:android`. When a sync
+  conflicts on an icon, keep the fork's `text.svg`, take upstream's other layers, and rerun both.
+- Fork bug reports go to `get-aix/t3code`: boot-error and triage links, the startup recovery
+  releases link, and the download URL point there. The macOS signing identity stays
+  `T3 Code Fork`, because changing the certificate breaks in-app updates on installed Macs.
+
 ## Automated enforcement
 
 These checks run without a human remembering the rule. Extend the existing test when a rule gains a
@@ -154,6 +175,7 @@ new case.
 | Sync branch shape and merge gating                                                                                                       | [`upstream-stable-sync.test.mjs`](../../scripts/upstream-stable-sync.test.mjs)                                                                      |
 | Single flake hash on lockfile updates                                                                                                    | [`update-flake-pnpm-hash.test.mjs`](../../scripts/update-flake-pnpm-hash.test.mjs)                                                                  |
 | Context budget matches upstream plus allowance                                                                                           | [`AgentContextBudget.test.ts`](../../apps/server/src/provider/AgentContextBudget.test.ts)                                                           |
+| aix Code name and mark in the branding seams                                                                                             | [`fork-invariants.test.mjs`](../../scripts/fork-invariants.test.mjs)                                                                                |
 | Fork-only schema is ejectable                                                                                                            | [`ForkEject.test.ts`](../../apps/server/src/persistence/ForkEject.test.ts)                                                                          |
 
 These cannot be fully checked statically, so review must still catch them: English text copied into

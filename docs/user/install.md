@@ -129,10 +129,10 @@ Home Manager, update your configuration's nixpkgs input or channel and rebuild.
 Nix manages both the desktop app and the bundled
 `t3` command; use Nix to update them instead of the in-app updater or `t3 update`.
 
-### T3 Code fork (Nix)
+### aix Code (Nix)
 
-This build uses the same T3 Code app name, `t3` and `t3code-desktop` commands, and default state
-directory as upstream, so install it instead of upstream T3 Code, not next to it. The fork's Android app likewise replaces the Play Store app. A stable release
+This build is named aix Code but keeps upstream's `t3` and `t3code-desktop` commands and default
+state directory, so install it instead of upstream T3 Code, not next to it. The fork's Android app likewise replaces the Play Store app. A stable release
 tag points to the fork integration commit on `main`, with fork changes and upstream through the
 matching stable tag; metadata records that upstream tag's peeled commit as the stable base. The
 flake reads the application version from the source and pins nixpkgs in `flake.lock`.
@@ -196,10 +196,10 @@ Supported `.override` toggles cover upstream nixpkgs provider and source-control
 For the moving input, `nix flake update t3code` records the latest release branch commit in the lock
 file. For a pinned input, change the tag and update the lock file deliberately.
 
-### T3 Code fork (desktop and Android)
+### aix Code (desktop and Android)
 
-Published fork releases include `T3-Code-<version>-x64.exe` for Windows (with WSL support),
-`T3-Code-<version>-arm64.zip` for Apple Silicon macOS, and `T3-Code-<version>.apk` for Android.
+Published fork releases include `aix-Code-<version>-x64.exe` for Windows (with WSL support),
+`aix-Code-<version>-arm64.zip` for Apple Silicon macOS, and `aix-Code-<version>.apk` for Android.
 The desktop apps update themselves from later fork releases.
 
 On an Apple Silicon Mac, install with the script; it is the only supported way, because the app is
@@ -209,8 +209,8 @@ not notarized and Gatekeeper blocks a zip downloaded in a browser:
 curl -fsSL https://github.com/get-aix/t3code/releases/latest/download/install-macos.sh | bash
 ```
 
-The script checks the download's SHA-256, installs **T3 Code** in `/Applications` (or
-`~/Applications`), and opens it. Quit T3 Code first. Set `T3CODE_VERSION=<version>` to install a
+The script checks the download's SHA-256, installs **aix Code** in `/Applications` (or
+`~/Applications`), replacing an existing **T3 Code (Beta)** app, and opens it. Quit the app first. Set `T3CODE_VERSION=<version>` to install a
 specific release. Later updates arrive in the app.
 
 On Windows, run this in a normal PowerShell window, not as administrator:
@@ -219,8 +219,8 @@ On Windows, run this in a normal PowerShell window, not as administrator:
 irm https://github.com/get-aix/t3code/releases/latest/download/install-windows.ps1 | iex
 ```
 
-It checks the download's SHA-256 and installs **T3 Code** for your user, without the admin or
-SmartScreen prompts the unsigned `.exe` gets when downloaded in a browser. Quit T3 Code first. Set
+It checks the download's SHA-256 and installs **aix Code** for your user, without the admin or
+SmartScreen prompts the unsigned `.exe` gets when downloaded in a browser. Quit the app first. Set
 `$env:T3CODE_VERSION = "<version>"` to install a specific release.
 
 Before a public fork release is authorized, collaborators can get installable test builds from the

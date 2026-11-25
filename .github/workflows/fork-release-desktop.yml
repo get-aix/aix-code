@@ -1003,7 +1003,7 @@ jobs:
           WINDOWS_INSTALLER="$(basename "$installer")" node - <<'NODE'
           const fs = require("node:fs");
           const metadata = {
-            application: "T3 Code",
+            application: "aix Code",
             version: process.env.VERSION,
             platform: "windows",
             architecture: "x64",

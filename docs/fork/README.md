@@ -1,11 +1,11 @@
-# T3 Code fork
+# aix Code fork
 
-This fork keeps T3's provider, thread, and client behavior aligned with upstream. It keeps the
-upstream application version and uses the same `vX.Y.Z` tag and `T3 Code vX.Y.Z` release title for
+aix Code is a community fork of T3 Code with its own name and logo. It keeps T3's provider, thread, and client behavior aligned with upstream. It keeps the
+upstream application version and uses the same `vX.Y.Z` tag and `aix Code vX.Y.Z` release title for
 reviewed fork releases.
 
 The released Nix package is named `t3code-<version>` and keeps the upstream `t3` and
-`t3code-desktop` commands, T3 Code app name, and default state directory. Install it instead of
+`t3code-desktop` commands and default state directory; only the visible name and logo change. Install it instead of
 upstream T3 Code. The Android APK uses the official package ID `com.t3tools.t3code` with the fork's
 signing key, so it cannot be installed alongside or over the Play Store app; uninstall that first.
 
@@ -87,7 +87,7 @@ The fork keeps the upstream application version values. The `Fork Release` workf
 `main` checks all five `Fork CI` jobs on the exact source commit, confirms the application manifests
 agree, and builds a Windows x64 installer, macOS arm64 zip, signed Android APK, and matching Nix package. Its default
 build-only mode uploads an Actions artifact without creating a tag or release. After explicit
-authorization, a stable dispatch can publish the upstream-matched `vX.Y.Z` tag and `T3 Code vX.Y.Z`
+authorization, a stable dispatch can publish the upstream-matched `vX.Y.Z` tag and `aix Code vX.Y.Z`
 release. The tag points to the fork integration merge commit on `main`: its tree includes fork changes
 and upstream through the matching stable tag. The upstream tag's peeled commit is recorded only as
 the stable base. Notes and artifact metadata show both full SHAs, and the Nix command pins to the fork

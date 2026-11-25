@@ -1,9 +1,9 @@
 # Gateway budgets and thread costs
 
-When your AI gateway assigns a dollar budget to an [aix profile](./aix-profiles.md)'s key, T3 Code
+When your AI gateway assigns a dollar budget to an [aix profile](./aix-profiles.md)'s key, aix Code
 reads it through `aix spend` and shows what you've spent, how much is left, and when the budget
 resets—right alongside your team's shared gateway project budget. For threads running on an aix
-profile, T3 Code also shows a live dollar breakdown of the thread and its subagents.
+profile, aix Code also shows a live dollar breakdown of the thread and its subagents.
 
 <p align="center">
   <img src="../../.github/readme/fork/usage-budgets.png" width="100%" alt="Usage, Limits, in the Work scope showing monthly spend, gateway project budget, and per-key budget bars">
@@ -33,7 +33,7 @@ If the gateway doesn't report a project name, the group is named after the key t
 ## When budgets reset
 
 Each key displays the reset timestamp reported by the gateway. If a gateway only reports when the
-budget period began, T3 Code assumes a monthly reset. The summary card at the top shows the earliest
+budget period began, aix Code assumes a monthly reset. The summary card at the top shows the earliest
 reset date across all of your Work keys.
 
 ## See what a thread cost
@@ -47,7 +47,7 @@ panel with a **Thread cost** section:
   model (your custom model prices still take precedence).
 - The total refreshes automatically whenever a turn settles.
 
-If any turn in the thread has usage that cannot be priced, T3 Code falls back to the regular limits
+If any turn in the thread has usage that cannot be priced, aix Code falls back to the regular limits
 view instead of showing an incomplete total.
 
 Send `/cost` on its own, or pick it from the composer's slash menu, to open the same breakdown
@@ -80,5 +80,5 @@ appears when both scopes have usage.
 A gateway key without a configured budget (or a direct Anthropic API profile) shows no budget card
 under **Limits**, though its tokens and costs still appear under **Cost** and **Tokens**.
 
-If a budget looks stale, press **Refresh** on **Usage → Limits**. On its own, T3 Code re-reads
+If a budget looks stale, press **Refresh** on **Usage → Limits**. On its own, aix Code re-reads
 budgets at most every five minutes (backed by aix's own cache).

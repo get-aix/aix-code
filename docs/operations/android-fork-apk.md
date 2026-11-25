@@ -1,19 +1,19 @@
-# T3 Code Android APK
+# aix Code Android APK
 
 The `Nitestack Android APK` workflow builds a signed, sideloadable Android APK on GitHub-hosted
-`ubuntu-latest`, with the launcher label **T3 Code**. It uses the official package ID
+`ubuntu-latest`, with the launcher label **aix Code**. It uses the official package ID
 `com.t3tools.t3code`, because T3 Connect's Clerk instance only accepts that package's sign-in
 redirect. It cannot be installed alongside the Play Store app, and Android refuses to update one
 with the other because the signing keys differ. Run it manually from
 `main` for the standalone Actions artifact `t3-code-android-<run-id>`, containing
-`T3-Code-<version>.apk`, its checksum, and metadata. The `Fork Release` workflow
+`aix-Code-<version>.apk`, its checksum, and metadata. The `Fork Release` workflow
 (`.github/workflows/fork-release.yml`) reuses this Android build and also builds the Windows
 installer, macOS arm64 zip, Linux x64 CLI runtime, and matching Nix package. Its
 default is build-only: download `t3-code-installers-<version>-<12-character-commit>` from the
-Actions run to test `T3-Code-<version>.apk` and `T3-Code-<version>-x64.exe` without creating a tag,
+Actions run to test `aix-Code-<version>.apk` and `aix-Code-<version>-x64.exe` without creating a tag,
 draft, or GitHub release. If the source has no upstream sync marker, supply the full 40-character
 SHA in `upstream_base`. An authorized stable release uses the same upstream `vX.Y.Z` tag and
-`T3 Code vX.Y.Z` title. The legacy
+`aix Code vX.Y.Z` title. The legacy
 `t3-android-v*` tag route remains available for compatibility; it does not set the canonical
 release version.
 

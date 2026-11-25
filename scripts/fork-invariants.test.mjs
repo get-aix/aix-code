@@ -292,3 +292,33 @@ NodeTest.test("fork documentation links, images, and flake options stay in sync"
     "docs/user/fork.md must document t3 fork-eject",
   );
 });
+
+// Upstream syncs can silently restore T3 Code's name or mark in these seams; the fork must not ship it.
+const brandSeams = [
+  ["apps/web/src/branding.ts", '?? "aix Code"'],
+  ["apps/web/vite.config.ts", 'baseName: "aix Code"'],
+  ["apps/web/index.html", "<title>aix Code</title>"],
+  ["apps/web/public/manifest.webmanifest", '"name": "aix Code"'],
+  ["apps/desktop/src/app/DesktopEnvironment.ts", 'const APP_BASE_NAME = "aix Code";'],
+  ["apps/desktop/package.json", '"productName": "aix Code (Beta)"'],
+  ["scripts/build-desktop-artifact.ts", 'artifactName: "aix-Code-${version}-${arch}.${ext}"'],
+  ["apps/mobile/app.config.ts", 'appName: "aix Code"'],
+  ["flake.nix", 'desktopName = "aix Code (Beta)";'],
+  [".github/scripts/fork-release.cjs", 'const PRODUCT_NAME = "aix Code";'],
+];
+const t3MarkPath = "M33.4509 93V47.56H15.5309V37H64.3309";
+
+NodeTest.test("fork branding seams keep the aix Code name and mark", () => {
+  for (const [file, expected] of brandSeams) {
+    NodeAssert.ok(read(file).includes(expected), `${file} must contain ${expected}`);
+  }
+  for (const file of [
+    "apps/web/src/components/T3Wordmark.tsx",
+    "apps/mobile/src/components/T3Wordmark.tsx",
+    "assets/prod/app-icon.icon/Assets/text.svg",
+    "assets/dev/app-icon.icon/Assets/text.svg",
+    "assets/nightly/app-icon.icon/Assets/text.svg",
+  ]) {
+    NodeAssert.ok(!read(file).includes(t3MarkPath), `${file} must use the aix mark`);
+  }
+});
