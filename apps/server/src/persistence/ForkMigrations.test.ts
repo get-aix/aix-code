@@ -24,15 +24,18 @@ describe("fork migrations", () => {
         SELECT name FROM fork_migrations ORDER BY name
       `;
 
-      assert.deepEqual(migrationManifest.slice(-6), [
-        [97, "IssueTrackerBindings"],
-        [98, "ActiveShellIndexIndexes"],
-        [99, "BackgroundRecoveryIndexes"],
-        [100, "TurnStartReadIndexes"],
-        [101, "DelegatedTaskReadIndexes"],
-        [102, "ThreadItemCounts"],
-      ]);
-      assert.equal(max[0]?.max, 102);
+      assert.deepEqual(
+        migrationManifest.filter(([id]) => id >= 97 && id <= 102),
+        [
+          [97, "IssueTrackerBindings"],
+          [98, "ActiveShellIndexIndexes"],
+          [99, "BackgroundRecoveryIndexes"],
+          [100, "TurnStartReadIndexes"],
+          [101, "DelegatedTaskReadIndexes"],
+          [102, "ThreadItemCounts"],
+        ],
+      );
+      assert.equal(max[0]?.max, migrationManifest.at(-1)?.[0]);
       assert.deepEqual(
         forkRows.map((row) => row.name),
         [...forkNames].sort(),
@@ -71,8 +74,10 @@ describe("fork migrations", () => {
   it.effect("normalizes a full legacy fork ledger with shifted upstream 100..105 rows", () =>
     Effect.gen(function* () {
       const sql = yield* SqlClient.SqlClient;
-      yield* runMigrations();
-      yield* sql`DROP TABLE fork_migrations`;
+      // A legacy fork database predates the upstream migrations after 102.
+      yield* runMigrations({ toMigrationInclusive: 102 });
+      yield* sql`ALTER TABLE projection_projects ADD COLUMN scope TEXT NOT NULL DEFAULT 'personal'`;
+      yield* sql`ALTER TABLE projection_projects ADD COLUMN home_aix_profile TEXT`;
       yield* sql`DELETE FROM effect_sql_migrations WHERE migration_id >= 97`;
       const legacyRows = [
         [97, "ProjectionProjectScope"],
@@ -90,7 +95,10 @@ describe("fork migrations", () => {
       }
 
       assert.isTrue(yield* hasPendingMigrations());
-      assert.deepEqual(yield* runMigrations(), []);
+      assert.deepEqual(
+        (yield* runMigrations()).map(([id, name]) => [id, name]),
+        migrationManifest.filter(([id]) => id > 102).map(([id, name]) => [id, name]),
+      );
       assert.deepEqual(
         yield* sql<{ readonly migration_id: number; readonly name: string }>`
           SELECT migration_id, name FROM effect_sql_migrations ORDER BY migration_id
@@ -124,14 +132,7 @@ describe("fork migrations", () => {
       const executed = yield* runMigrations();
       assert.deepEqual(
         executed.map(([id, name]) => [id, name]),
-        [
-          [97, "IssueTrackerBindings"],
-          [98, "ActiveShellIndexIndexes"],
-          [99, "BackgroundRecoveryIndexes"],
-          [100, "TurnStartReadIndexes"],
-          [101, "DelegatedTaskReadIndexes"],
-          [102, "ThreadItemCounts"],
-        ],
+        migrationManifest.filter(([id]) => id >= 97).map(([id, name]) => [id, name]),
       );
       assert.isFalse(yield* hasPendingMigrations());
     }).pipe(Effect.provide(NodeSqliteClient.layer({ filename: ":memory:" }))),
