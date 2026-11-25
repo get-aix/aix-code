@@ -167,7 +167,7 @@
           deviceToolsPath = lib.makeBinPath (
             with pkgs;
             [
-              nodejs
+              nodejs_26
               ffmpeg
               jdk21_headless
             ]
