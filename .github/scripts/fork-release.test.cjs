@@ -952,10 +952,10 @@ test("merge release notes include upstream T3 Code notes followed by fork change
   const installIdx = notes.indexOf("## Install");
   const metadataIdx = notes.indexOf("## Build metadata");
 
-  assert.ok(upstreamIdx === 0);
-  assert.ok(upstreamIdx < forkIdx);
+  assert.ok(forkIdx === 0);
   assert.ok(forkIdx < changelogIdx);
-  assert.ok(changelogIdx < installIdx);
+  assert.ok(changelogIdx < upstreamIdx);
+  assert.ok(upstreamIdx < installIdx);
   assert.ok(installIdx < metadataIdx);
   assert.match(notes, /Fixed reconnect handling/);
   assert.match(
@@ -1084,7 +1084,8 @@ test("oversized upstream notes with unclosed details are truncated safely while 
   const opens = (notes.match(/<details\b[^>]*>/gi) ?? []).length;
   const closes = (notes.match(/<\/details>/gi) ?? []).length;
   assert.equal(opens, closes);
-  assert.ok(notes.indexOf("</details>") < notes.indexOf("## Fork changes since v0.1.9"));
+  assert.ok(notes.indexOf("## Fork changes since v0.1.9") < notes.indexOf("## Upstream T3 Code"));
+  assert.ok(notes.indexOf("</details>") > notes.indexOf("## Fork changes since v0.1.9"));
   assert.match(notes, /Upstream release notes truncated to fit GitHub's release size limit/);
   assert.match(notes, /feat\(fork\): preserve fork section after truncation/);
   assert.doesNotThrow(() =>

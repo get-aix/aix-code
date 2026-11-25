@@ -542,6 +542,10 @@ function buildForkReleaseNotes({
   });
 
   const sections = [];
+  // Fork changes come first: the upstream notes are long and would bury them.
+  if (forkChangesSection) {
+    sections.push(forkChangesSection);
+  }
   if (isUpstreamMergeRelease) {
     const upstreamUrl = `https://github.com/${UPSTREAM_REPOSITORY}/releases/tag/${encodeURIComponent(upstreamTag)}`;
     const upstreamHeading = `## Upstream T3 Code ([${markdownCode(upstreamTag)}](${upstreamUrl}))`;
@@ -561,9 +565,6 @@ function buildForkReleaseNotes({
     sections.push(`${upstreamHeading}\n\n${upstreamBody}`);
   }
 
-  if (forkChangesSection) {
-    sections.push(forkChangesSection);
-  }
   sections.push(installAndMetadata);
 
   return `${sections.join("\n\n---\n\n")}\n`;
