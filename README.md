@@ -12,9 +12,9 @@
 </p>
 
 > [!NOTE]
-> **aix Code is a community soft fork of [T3 Code](https://github.com/pingdotgg/t3code), not the
-> official app.** It is not affiliated with or endorsed by T3 Tools or the T3 Code maintainers, so
-> please report problems [here](https://github.com/get-aix/t3code/issues), not upstream. It tracks
+> **aix Code is an unofficial fork based on the [T3 Code](https://github.com/pingdotgg/t3code) source
+> code.** It is not affiliated with, endorsed by, or maintained by T3 Tools, Inc., so please report
+> problems [here](https://github.com/get-aix/t3code/issues), not upstream. It tracks
 > upstream stable releases under its own name and logo, but keeps T3 Code's app IDs, `t3` command,
 > and `~/.t3` data directory for compatibility—install it **instead of** T3 Code, not next to it.
 > You can return to upstream cleanly at any time with `t3 fork-eject`.
@@ -23,7 +23,7 @@
   <img src="./.github/readme/fork/hero.png" width="100%" alt="aix Code showing a finished agent thread in a Work project, with the Personal/Work switch at the top of the sidebar">
 </p>
 
-**aix Code** is a community fork of [T3 Code](https://github.com/pingdotgg/t3code), the fast,
+**aix Code** is an unofficial fork of [T3 Code](https://github.com/pingdotgg/t3code), the fast,
 open-source interface for running coding agents on your machine from desktop, web, or mobile. It
 wires T3 Code directly into [aix](https://github.com/get-aix/aix): every
 API-key profile in aix automatically shows up as Claude Code, Codex, and OpenCode agents—complete
@@ -317,12 +317,14 @@ in the [remote access reference](./docs/user/remote-access.md).
   upstream stable syncs conflict-free
 - [Fork release & upstream sync runbook](./docs/operations/fork-release.md)
 - [Android APK signing & builds](./docs/operations/android-fork-apk.md)
-- [Development runbook](./docs/operations/development.md#first-checkout) and
+- [Development runbook](./docs/operations/00_development.md#first-checkout) and
   [NixOS devenv shell](./docs/operations/devenv.md)
 
 ## License
 
 [MIT](./LICENSE). aix Code is maintained by [get-aix](https://github.com/get-aix). It is built on
 [T3 Code](https://github.com/pingdotgg/t3code) by T3 Tools Inc., whose copyright notice the license
-keeps. "T3 Code" and the T3 mark belong to their owners; this fork uses its own name and logo. For
+keeps. The MIT license covers only the source code: "T3 Code", the T3 mark, and T3 branding belong to
+T3 Tools, Inc. (see [TRADEMARK.md](./TRADEMARK.md)), and this unofficial fork uses its own name and
+logo. For
 upstream's own install guide and docs, see the [T3 Code README](https://github.com/pingdotgg/t3code#readme).

@@ -588,6 +588,7 @@ export function useComposerCommandMenu({
         ? matchComposerEnvironmentItems(
             {
               environments: composerCandidates?.environments ?? EMPTY_ENVIRONMENTS,
+              linkedEnvironments: composerCandidates?.linkedEnvironments ?? NO_LINKED_ENVIRONMENTS,
               environmentId,
               query: trigger.query,
             },
@@ -603,7 +604,7 @@ export function useComposerCommandMenu({
         ...environmentItems,
         ...modelItems,
         ...pathSearch.entries.map((entry) => {
-          const parts = entry.path.split("/");
+          const parts = entry.path.normalize("NFC").split("/");
           return {
             id: `path:${entry.path}`,
             type: "path" as const,

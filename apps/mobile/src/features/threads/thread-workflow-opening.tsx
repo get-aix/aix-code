@@ -15,13 +15,13 @@ import { useState } from "react";
 import { Pressable, View } from "react-native";
 
 import { AppText as Text } from "../../components/ui/AppText";
-import { mapHighlightedTokens } from "../../lib/highlights";
 import { environmentThreadDetails } from "../../state/threads";
 import { useAppearancePreferences } from "../settings/appearance/AppearancePreferencesProvider";
 import { useMarkdownCodeHighlight } from "./markdownCodeHighlightState";
 import { SubagentRow } from "./SubagentRow";
 import { WorkLogBlock } from "./work-log-layout";
 import { useOpenLinkedThread } from "./useOpenLinkedThread";
+import { withTokenStarts } from "../../lib/highlights";
 
 const FOLDED_SCRIPT_LINES = 10;
 
@@ -170,13 +170,21 @@ function WorkflowScript(props: { readonly script: string }) {
   const lineCount = script.split("\n").length;
   const canFold = lineCount > FOLDED_SCRIPT_LINES;
   const shownLines = canFold && !expanded ? FOLDED_SCRIPT_LINES : lineCount;
-  const highlighted = lines
-    ? mapHighlightedTokens(lines.slice(0, shownLines), (token, start) => (
-        <Text key={start} style={token.color ? { color: token.color } : undefined}>
-          {token.content}
-        </Text>
-      ))
-    : undefined;
+  const highlighted = (lines ? withTokenStarts(lines) : undefined)
+    ?.slice(0, shownLines)
+    .flatMap((line, lineIndex) => {
+      const separator = lineIndex > 0 ? "\n" : "";
+      return [
+        separator,
+        ...line.map(({ token, start }) => {
+          return (
+            <Text key={start} style={token.color ? { color: token.color } : undefined}>
+              {token.content}
+            </Text>
+          );
+        }),
+      ];
+    });
   return (
     <View className="gap-1">
       <View className="rounded-lg bg-subtle px-3 py-2.5">

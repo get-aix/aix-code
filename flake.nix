@@ -1,5 +1,5 @@
 {
-  description = "Pinned Nix package for aix Code, a community fork of T3 Code";
+  description = "Pinned Nix package for aix Code, an unofficial fork of T3 Code";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -66,7 +66,7 @@
             pname = "t3code-unwrapped";
             inherit version src;
             meta = old.meta // {
-              description = "aix Code, a community fork of T3 Code with aix gateway profiles";
+              description = "aix Code, an unofficial fork of T3 Code with aix gateway profiles";
               homepage = "https://github.com/get-aix/t3code";
               changelog = "https://github.com/get-aix/t3code/commit/${self.rev or revision}";
             };
@@ -80,7 +80,7 @@
               pnpm = pkgs.pnpm_12;
               inherit (old) pnpmWorkspaces;
               fetcherVersion = 5;
-              hash = "sha256-s/vm8Ox4o/AYpNC/amYP1KFWwh7SY5bCmVBuIJn9f/c=";
+              hash = "sha256-5ncmrXOIU3sxrB6XaauC/6PPL4YyHaUO62ST1y1O2B8=";
             };
             # Register x-scheme-handler/t3code in the packaged .desktop file
             # so t3code:// sign-in callbacks work out of the box on Linux.

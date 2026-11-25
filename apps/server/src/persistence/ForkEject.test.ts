@@ -142,7 +142,10 @@ describe("ejectForkDatabase", () => {
         yield* sql<{ readonly migration_id: number; readonly name: string }>`
           SELECT migration_id, name FROM effect_sql_migrations ORDER BY migration_id
         `,
-        migrationManifest.map(([migration_id, name]) => ({ migration_id, name })),
+        // The legacy ledger stops at upstream migration 102; later ones were never applied.
+        migrationManifest
+          .filter(([migration_id]) => migration_id <= 102)
+          .map(([migration_id, name]) => ({ migration_id, name })),
       );
     }).pipe(Effect.provide(NodeSqliteClient.layer({ filename: ":memory:" }))),
   );
