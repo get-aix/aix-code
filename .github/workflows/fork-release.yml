@@ -500,7 +500,7 @@ jobs:
       clerk_cli_oauth_client_id: ""
       relay_url: ""
       label: macOS arm64
-      runner: macos-15
+      runner: macos-26
       platform: mac
       target: zip
       arch: arm64
