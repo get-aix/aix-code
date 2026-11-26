@@ -160,7 +160,7 @@ jobs:
           app-id: ${{ secrets.FORK_SYNC_APP_ID }}
           private-key: ${{ secrets.FORK_SYNC_APP_PRIVATE_KEY }}
           owner: get-aix
-          repositories: t3code
+          repositories: aix-code
           permission-administration: read
           permission-contents: write
           permission-pull-requests: write
@@ -248,7 +248,7 @@ jobs:
           app-id: ${{ secrets.FORK_SYNC_APP_ID }}
           private-key: ${{ secrets.FORK_SYNC_APP_PRIVATE_KEY }}
           owner: get-aix
-          repositories: t3code
+          repositories: aix-code
           permission-actions: write
 
       - name: Verify the integration commit's exact main CI and queue the matching fork release

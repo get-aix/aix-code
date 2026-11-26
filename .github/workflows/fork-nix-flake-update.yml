@@ -25,7 +25,7 @@ jobs:
           app-id: ${{ secrets.FORK_SYNC_APP_ID }}
           private-key: ${{ secrets.FORK_SYNC_APP_PRIVATE_KEY }}
           owner: get-aix
-          repositories: t3code
+          repositories: aix-code
           permission-contents: write
           permission-pull-requests: write
 
