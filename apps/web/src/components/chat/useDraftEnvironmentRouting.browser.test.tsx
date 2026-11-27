@@ -21,7 +21,7 @@ import {
 } from "@t3tools/contracts";
 import { expect, it, vi } from "vite-plus/test";
 
-import { act, render } from "../../../test/render";
+import { act, render as baseRender } from "../../../test/render";
 import { DraftId, useComposerDraftStore } from "../../composerDraftStore";
 import { useDraftEnvironmentRouting } from "./useDraftEnvironmentRouting";
 import { appAtomRegistry, AppAtomRegistryProvider } from "../../rpc/atomRegistry";
@@ -139,6 +139,20 @@ function holdProjectFile() {
   );
   resources.getProjectFileQueryAtom.mockReturnValue(pending);
   return (contents: string) => appAtomRegistry.set(pending, projectFileResult(contents));
+}
+
+async function render(...args: Parameters<typeof baseRender>): ReturnType<typeof baseRender> {
+  const screen = await baseRender(...args);
+  const dispose = screen[Symbol.asyncDispose].bind(screen);
+  return Object.assign(screen, {
+    async [Symbol.asyncDispose]() {
+      try {
+        await dispose();
+      } finally {
+        useComposerDraftStore.getState().clearDraftThread(DraftId.make("fresh-routing-draft"));
+      }
+    },
+  });
 }
 
 function setup() {
