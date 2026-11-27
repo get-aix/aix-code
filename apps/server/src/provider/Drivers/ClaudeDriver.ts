@@ -299,7 +299,13 @@ export const ClaudeDriver: ProviderDriver<ClaudeSettings, ClaudeDriverEnv, Path.
     const lastGoodCapabilities = yield* Ref.make<ClaudeCapabilitiesProbe | undefined>(undefined);
     const capabilitiesProbeCache = yield* Cache.makeWith(
       () =>
-        probeClaudeCapabilities(effectiveConfig, processEnv, stateDir).pipe(
+        (resolveProcessEnvironment === undefined
+          ? Effect.succeed(processEnv)
+          : resolveProcessEnvironment().pipe(Effect.orElseSucceed(() => processEnv))
+        ).pipe(
+          Effect.flatMap((probeEnv) =>
+            probeClaudeCapabilities(effectiveConfig, probeEnv, stateDir),
+          ),
           Effect.flatMap((capabilities) =>
             ClaudeResetCredits.readClaudeOrganizationId(accountConfigPath).pipe(
               Effect.map((workspaceId) => ({

@@ -4305,6 +4305,301 @@ describe("ClaudeAdapterV2 background wake turns", () => {
     ),
   );
 
+  it.effect(
+    "reuses the aix Claude process while credentials are unchanged or background work is active",
+    () =>
+      Effect.gen(function* () {
+        const fs = yield* FileSystem.FileSystem;
+        const homePath = yield* fs.makeTempDirectoryScoped({ prefix: "claude-aix-reuse-" });
+        let closed = 0;
+        let currentAuthToken = "fake-aix-token-initial";
+        const harness = yield* makeWakeHarnessWithOptions({
+          settings: { ...DEFAULT_CLAUDE_SETTINGS, homePath },
+          environment: { CLAUDE_CONFIG_DIR: homePath },
+          close: () =>
+            Effect.sync(() => {
+              closed++;
+            }),
+          freshQueueOnReopen: true,
+          restartProcessForNewTurn: true,
+          resolveProcessEnvironment: () =>
+            Effect.succeed({
+              ANTHROPIC_BASE_URL: "https://gateway.example.test",
+              ANTHROPIC_API_KEY: "",
+              ANTHROPIC_AUTH_TOKEN: currentAuthToken,
+            }),
+        });
+        const turn = (ordinal: number) =>
+          makeClaudeTestTurnInput({
+            threadId: harness.threadId,
+            providerThread: harness.providerThread,
+            now: DateTime.makeUnsafe(0),
+            attemptId: RunAttemptId.make(`aix-reuse-${ordinal}`),
+            text: `Continue ${ordinal}.`,
+            attachments: [],
+            providerTurnOrdinal: ordinal,
+          });
+
+        // Turn 1 starts a background command and finishes.
+        yield* harness.runtime.startTurn(turn(1));
+        const firstOptions = harness.getOpenedOptions();
+        assert.equal(firstOptions?.env?.CLAUDE_CONFIG_DIR, homePath);
+        yield* harness.offerAndWait(wakeTaskStarted);
+        yield* harness.offerAndWait(turnOneResult);
+        yield* harness.awaitTerminal(1);
+        assert.isTrue(yield* harness.hasPendingBackgroundWork);
+
+        // Turn 2 with unchanged credentials and a live effort change reuses the live process without failing.
+        yield* harness.runtime.startTurn({
+          ...turn(2),
+          modelSelection: {
+            instanceId: ClaudeAdapterV2.CLAUDE_DEFAULT_INSTANCE_ID,
+            model: "claude-sonnet-4-6",
+            options: [{ id: "effort", value: "low" }],
+          },
+        });
+        assert.equal(closed, 0);
+        assert.strictEqual(harness.getOpenedOptions(), firstOptions);
+        assert.deepEqual(harness.liveSelectionChanges, [
+          { effortLevel: "low", fastMode: null, ultracode: null },
+        ]);
+        yield* harness.offerAndWait(
+          makeResultFrame({
+            uuid: "00000000-0000-4000-8000-000000009911",
+            result: "Second turn reused live process.",
+          }),
+        );
+        yield* harness.awaitTerminal(2);
+
+        // Turn 3 after credential rotation while background work is still active defers the restart.
+        currentAuthToken = "fake-aix-token-rotated";
+        yield* harness.runtime.startTurn(turn(3));
+        assert.equal(closed, 0);
+        assert.strictEqual(harness.getOpenedOptions(), firstOptions);
+        yield* harness.offerAndWait(wakeNotification);
+        yield* harness.offerAndWait(
+          makeResultFrame({
+            uuid: "00000000-0000-4000-8000-000000009912",
+            result: "Background work finished.",
+          }),
+        );
+        yield* harness.awaitTerminal(3);
+        assert.isFalse(yield* harness.hasPendingBackgroundWork);
+
+        // Turn 4 after background work completes picks up the rotated credential and resumes the same native session.
+        yield* harness.runtime.startTurn(turn(4));
+        assert.equal(closed, 1);
+        assert.equal(
+          harness.getOpenedOptions()?.env?.ANTHROPIC_AUTH_TOKEN,
+          "fake-aix-token-rotated",
+        );
+        assert.equal(harness.getOpenedOptions()?.env?.CLAUDE_CONFIG_DIR, homePath);
+        assert.equal(harness.getOpenedOptions()?.resume, WAKE_NATIVE_SESSION);
+        yield* harness.offerAndWait(
+          makeResultFrame({
+            uuid: "00000000-0000-4000-8000-000000009913",
+            result: "Rotated process completed.",
+          }),
+        );
+        yield* harness.awaitTerminal(4);
+      }).pipe(
+        Effect.scoped,
+        Effect.provide(
+          Layer.mergeAll(
+            IdAllocator.layer,
+            McpProviderSessions.layer,
+            NodeServices.layer,
+            NodeCrypto.layer,
+          ),
+        ),
+      ),
+  );
+
+  it.effect(
+    "re-reads --settings before validating a token-to-key aix rotation and defers rotation while a wakeup is scheduled",
+    () =>
+      Effect.gen(function* () {
+        const fs = yield* FileSystem.FileSystem;
+        const homePath = yield* fs.makeTempDirectoryScoped({ prefix: "claude-aix-token-to-key-" });
+        const settingsFile = NodePath.join(homePath, "launch-settings.json");
+        yield* fs.writeFileString(
+          settingsFile,
+          JSON.stringify({ env: { ANTHROPIC_API_KEY: "stale-key-before-rotation" } }),
+        );
+        let closed = 0;
+        let currentEnv: NodeJS.ProcessEnv = {
+          ANTHROPIC_BASE_URL: "https://gateway.example.test",
+          ANTHROPIC_API_KEY: "",
+          ANTHROPIC_AUTH_TOKEN: "fake-aix-token-1",
+        };
+        const harness = yield* makeWakeHarnessWithOptions({
+          settings: {
+            ...DEFAULT_CLAUDE_SETTINGS,
+            homePath,
+            launchArgs: `--settings ${settingsFile}`,
+          },
+          close: () =>
+            Effect.sync(() => {
+              closed++;
+            }),
+          freshQueueOnReopen: true,
+          restartProcessForNewTurn: true,
+          resolveProcessEnvironment: () => Effect.succeed(currentEnv),
+        });
+        const now = yield* DateTime.now;
+        const turn = (ordinal: number) =>
+          makeClaudeTestTurnInput({
+            threadId: harness.threadId,
+            providerThread: harness.providerThread,
+            now,
+            attemptId: RunAttemptId.make(`aix-token-to-key-${ordinal}`),
+            text: `Turn ${ordinal}.`,
+            attachments: [],
+            providerTurnOrdinal: ordinal,
+          });
+
+        // Turn 1 starts under bearer auth and schedules a wakeup.
+        yield* harness.runtime.startTurn(turn(1));
+        const firstOptions = harness.getOpenedOptions();
+        yield* harness.offerAndWait(
+          claudeSdkFrame({
+            type: "assistant",
+            message: {
+              model: "claude-sonnet-4-6",
+              id: "msg_aix_wakeup",
+              type: "message",
+              role: "assistant",
+              content: [
+                {
+                  type: "tool_use",
+                  id: "toolu_aix_wakeup",
+                  name: "ScheduleWakeup",
+                  input: {
+                    delaySeconds: 60,
+                    reason: "Check build",
+                    prompt: "Check build",
+                    noop: false,
+                  },
+                },
+              ],
+              stop_reason: null,
+              stop_sequence: null,
+              usage: { input_tokens: 1, output_tokens: 1 },
+            },
+            parent_tool_use_id: null,
+            uuid: "00000000-0000-4000-8000-000000009921",
+            session_id: WAKE_NATIVE_SESSION,
+          }),
+        );
+        yield* harness.offerAndWait(
+          claudeSdkFrame({
+            type: "user",
+            message: {
+              role: "user",
+              content: [
+                {
+                  type: "tool_result",
+                  tool_use_id: "toolu_aix_wakeup",
+                  content: "Scheduled.",
+                },
+              ],
+            },
+            parent_tool_use_id: null,
+            uuid: "00000000-0000-4000-8000-000000009922",
+            session_id: WAKE_NATIVE_SESSION,
+            tool_use_result: {
+              scheduledFor: DateTime.toEpochMillis(now) + 60_000,
+              clampedDelaySeconds: 60,
+              wasClamped: false,
+            },
+          }),
+        );
+        yield* harness.offerAndWait(
+          makeResultFrame({
+            uuid: "00000000-0000-4000-8000-000000009923",
+            result: "Scheduled.",
+          }),
+        );
+        yield* harness.awaitTerminal(1);
+
+        // Rotate from bearer token to API key and remove the stale key from --settings on disk.
+        currentEnv = {
+          ANTHROPIC_BASE_URL: "https://api.anthropic.com",
+          ANTHROPIC_API_KEY: "fake-aix-api-key-2",
+          ANTHROPIC_AUTH_TOKEN: "",
+        };
+        yield* fs.writeFileString(settingsFile, JSON.stringify({ env: {} }));
+
+        // Turn 2 while ScheduleWakeup is pending defers rotation so the wakeup is not cancelled.
+        yield* harness.runtime.startTurn(turn(2));
+        assert.equal(closed, 0);
+        assert.strictEqual(harness.getOpenedOptions(), firstOptions);
+        yield* harness.offerAndWait(
+          makeResultFrame({
+            uuid: "00000000-0000-4000-8000-000000009924",
+            result: "Turn 2 kept scheduled wakeup alive.",
+          }),
+        );
+        yield* harness.awaitTerminal(2);
+
+        // Wakeup fires as a provider continuation and finishes without rescheduling.
+        yield* TestClock.adjust("60 seconds");
+        yield* harness.offerAndWait(wakeTurnInit);
+        yield* harness.awaitContinuation(1);
+        yield* harness.runtime.startTurn(
+          makeClaudeTestTurnInput({
+            threadId: harness.threadId,
+            providerThread: harness.providerThread,
+            now: yield* DateTime.now,
+            attemptId: RunAttemptId.make("aix-token-to-key-3"),
+            text: "Check build",
+            attachments: [],
+            providerTurnOrdinal: 3,
+            messageCreatedBy: "agent",
+            messageCreationSource: "provider",
+          }),
+        );
+        assert.equal(closed, 0);
+        yield* harness.offerAndWait(
+          makeAssistantTextFrame({
+            uuid: "00000000-0000-4000-8000-000000009927",
+            text: "Wakeup done.",
+          }),
+        );
+        yield* harness.offerAndWait(
+          makeResultFrame({
+            uuid: "00000000-0000-4000-8000-000000009925",
+            result: "Wakeup done.",
+          }),
+        );
+        yield* harness.awaitTerminal(3);
+        assert.isFalse(yield* harness.hasPendingBackgroundWork, "wakeup should have cleared");
+
+        // Turn 4 re-reads --settings (no stale API key), passes validation, and rotates cleanly.
+        yield* harness.runtime.startTurn(turn(4));
+        assert.equal(harness.getOpenedOptions()?.env?.ANTHROPIC_API_KEY, "fake-aix-api-key-2");
+        assert.equal(closed, 1);
+        assert.equal(harness.getOpenedOptions()?.resume, WAKE_NATIVE_SESSION);
+        yield* harness.offerAndWait(
+          makeResultFrame({
+            uuid: "00000000-0000-4000-8000-000000009926",
+            result: "Rotated to API key.",
+          }),
+        );
+        yield* harness.awaitTerminal(4);
+      }).pipe(
+        Effect.scoped,
+        Effect.provide(
+          Layer.mergeAll(
+            IdAllocator.layer,
+            McpProviderSessions.layer,
+            NodeServices.layer,
+            NodeCrypto.layer,
+          ),
+        ),
+      ),
+  );
+
   describe("ClaudeAdapterV2 session title sync", () => {
     type TitleSyncHarness = Effect.Success<ReturnType<typeof makeWakeHarnessWithOptions>>;
     const startTurn = Effect.fnUntraced(function* (

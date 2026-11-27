@@ -8639,9 +8639,9 @@ export const makeCodexAdapterV2 = Effect.fn("makeCodexAdapterV2")(function* (
           modelSelection: ModelSelection | undefined,
         ) {
           const serviceTier =
-            adapterOptions.resolveRuntime === undefined
-              ? getCodexServiceTierOptionValue(modelSelection)
-              : undefined;
+            adapterOptions.aixManaged === true || adapterOptions.resolveRuntime !== undefined
+              ? undefined
+              : getCodexServiceTierOptionValue(modelSelection);
           if (serviceTier === undefined) return;
           const applied = yield* client
             .request("thread/settings/update", { threadId, serviceTier })

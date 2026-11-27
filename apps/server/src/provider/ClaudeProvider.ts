@@ -890,17 +890,19 @@ export const checkClaudeProviderStatus = Effect.fn("checkClaudeProviderStatus")(
       apiKeySource: capabilities.apiKeySource,
     });
   const usageCheckedAt = capabilities.usageCheckedAt ?? checkedAt;
-  const usageLimits = !capabilities.usage
-    ? makeUnavailableUsageLimits({ checkedAt, reason: "probeFailed" })
-    : scopedLimitNames
-      ? yield* recordClaudeUsageResponse(scopedLimitNames, {
-          response: capabilities.usage,
-          checkedAt: usageCheckedAt,
-        })
-      : claudeUsageResponseToLimits({
-          response: capabilities.usage,
-          checkedAt: usageCheckedAt,
-        }).limits;
+  const usageLimits = aixManaged
+    ? makeUnavailableUsageLimits({ checkedAt, reason: "unsupported" })
+    : !capabilities.usage
+      ? makeUnavailableUsageLimits({ checkedAt, reason: "probeFailed" })
+      : scopedLimitNames
+        ? yield* recordClaudeUsageResponse(scopedLimitNames, {
+            response: capabilities.usage,
+            checkedAt: usageCheckedAt,
+          })
+        : claudeUsageResponseToLimits({
+            response: capabilities.usage,
+            checkedAt: usageCheckedAt,
+          }).limits;
   const resetCredits =
     resolveResetCredits &&
     capabilities.subscriptionType &&

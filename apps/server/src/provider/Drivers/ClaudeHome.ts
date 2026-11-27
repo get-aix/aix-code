@@ -80,6 +80,107 @@ export const resolveClaudeProviderInstanceEnvironment = Effect.fn(
   ];
 });
 
+export interface ClaudeAixEnvironmentSignature {
+  readonly matches: (environment: NodeJS.ProcessEnv) => boolean;
+}
+
+const makeClaudeAixEnvironmentSignature = (
+  environment: NodeJS.ProcessEnv,
+): ClaudeAixEnvironmentSignature => {
+  const baseUrl = environment.ANTHROPIC_BASE_URL ?? "";
+  const apiKey = environment.ANTHROPIC_API_KEY ?? "";
+  const authToken = environment.ANTHROPIC_AUTH_TOKEN ?? "";
+  return {
+    matches: (next) =>
+      (next.ANTHROPIC_BASE_URL ?? "") === baseUrl &&
+      (next.ANTHROPIC_API_KEY ?? "") === apiKey &&
+      (next.ANTHROPIC_AUTH_TOKEN ?? "") === authToken,
+  };
+};
+
+export interface ClaudeAixResolvedTurnEnvironment {
+  readonly environment: NodeJS.ProcessEnv;
+  readonly signature: ClaudeAixEnvironmentSignature | undefined;
+}
+
+export interface ClaudeAixTurnEnvironmentResolver<E> {
+  readonly shouldRestartForRotation: (input: {
+    readonly currentSignature: ClaudeAixEnvironmentSignature | undefined;
+    readonly hasLiveWork: Effect.Effect<boolean>;
+    readonly onDeferred?: Effect.Effect<void>;
+  }) => Effect.Effect<boolean, E>;
+  readonly validateForSpawn: (input: {
+    readonly settings: Pick<ClaudeSettings, "homePath">;
+    readonly cwd: string | undefined;
+    readonly launchSettingsEnvironment: Readonly<Record<string, string>> | undefined;
+    readonly mapConflictError: (cause: unknown) => E;
+  }) => Effect.Effect<ClaudeAixResolvedTurnEnvironment, E, FileSystem.FileSystem | Path.Path>;
+}
+
+/**
+ * Coordinates per-turn aix credential refresh for Claude processes so turns reuse the live CLI
+ * unless gateway credentials actually rotated and no background work or pending wake would be lost.
+ */
+export const makeClaudeAixTurnEnvironmentResolver = <E>(input: {
+  readonly baseEnvironment: NodeJS.ProcessEnv;
+  readonly restartProcessForNewTurn: boolean | undefined;
+  readonly resolveProcessEnvironment: (() => Effect.Effect<NodeJS.ProcessEnv, E>) | undefined;
+}): ClaudeAixTurnEnvironmentResolver<E> => {
+  let cached: ClaudeAixResolvedTurnEnvironment | undefined;
+  const resolveOnce = Effect.fnUntraced(function* () {
+    if (cached !== undefined) return cached;
+    if (input.resolveProcessEnvironment === undefined) {
+      cached = { environment: input.baseEnvironment, signature: undefined };
+      return cached;
+    }
+    const resolved = yield* input.resolveProcessEnvironment();
+    const environment: NodeJS.ProcessEnv =
+      input.baseEnvironment.CLAUDE_CONFIG_DIR === undefined
+        ? resolved
+        : { ...resolved, CLAUDE_CONFIG_DIR: input.baseEnvironment.CLAUDE_CONFIG_DIR };
+    cached = {
+      environment,
+      signature: makeClaudeAixEnvironmentSignature(environment),
+    };
+    return cached;
+  });
+
+  return {
+    shouldRestartForRotation: Effect.fnUntraced(function* ({
+      currentSignature,
+      hasLiveWork,
+      onDeferred,
+    }) {
+      if (input.restartProcessForNewTurn !== true) return false;
+      if (input.resolveProcessEnvironment === undefined) return true;
+      const resolved = yield* resolveOnce();
+      if (currentSignature?.matches(resolved.environment) === true) return false;
+      if (yield* hasLiveWork) {
+        if (onDeferred !== undefined) yield* onDeferred;
+        return false;
+      }
+      return true;
+    }),
+    validateForSpawn: Effect.fnUntraced(function* ({
+      settings,
+      cwd,
+      launchSettingsEnvironment,
+      mapConflictError,
+    }) {
+      const resolved = yield* resolveOnce();
+      if (input.resolveProcessEnvironment !== undefined) {
+        yield* validateClaudeAixSettingsAuth(
+          settings,
+          cwd,
+          resolved.environment,
+          launchSettingsEnvironment,
+        ).pipe(Effect.mapError(mapConflictError));
+      }
+      return resolved;
+    }),
+  };
+};
+
 export const claudeAixSettingsEnvironment = (
   environment: NodeJS.ProcessEnv,
   settingsEnvironment: Readonly<Record<string, string>> = {},

@@ -202,10 +202,11 @@ import { expandHomePath } from "@t3tools/provider-core/server/pathExpansion";
 import { spawnAndCollect } from "@t3tools/provider-core/server/snapshotProbe";
 import { signalProcessGroup } from "@t3tools/provider-core/server/processGroup";
 import {
+  type ClaudeAixEnvironmentSignature,
   claudeAixSettingsEnvironment,
   claudeLocalSettingsDirectory,
-  validateClaudeAixSettingsAuth,
   claudeSignedOutMessage,
+  makeClaudeAixTurnEnvironmentResolver,
   makeClaudeEnvironment,
   mergeClaudeProcessEnvironment,
   resolveClaudeHomePath,
@@ -5756,6 +5757,7 @@ interface ClaudeLiveQueryContext {
   readonly launchArgSettings: ClaudeSdkSettings | undefined;
   readonly query: ClaudeAgentSdkQuerySession;
   readonly queryPolicyKey: string;
+  readonly processEnvironmentSignature: ClaudeAixEnvironmentSignature | undefined;
   selection: CompiledClaudeModelSelection;
   readonly program: string | undefined;
   readonly startedWithApiModelId: string;
@@ -14001,6 +14003,18 @@ export const makeClaudeAdapterV2 = Effect.fn("makeClaudeAdapterV2")(function* (
           );
           const resumeSessionAt = yield* getNativeConversationHeadId(turnInput.providerThread);
           const existing = yield* Ref.get(queryContext);
+          const liveProcessHoldsWakeOrBackgroundWork = Effect.fnUntraced(function* (
+            live: ClaudeLiveQueryContext,
+          ) {
+            return (
+              (yield* liveProcessRunsBackgroundWork(live)) ||
+              scheduledWakeupsByNativeThread.has(live.nativeThreadId) ||
+              (yield* holdsBufferedWake(
+                live.nativeThreadId,
+                (yield* Ref.get(wakeBuffers)).get(live.nativeThreadId)?.messages ?? [],
+              ))
+            );
+          });
           // Continuations drain existing output without prompting; retain the live process regardless of selection.
           if (
             existing !== null &&
@@ -14021,13 +14035,7 @@ export const makeClaudeAdapterV2 = Effect.fn("makeClaudeAdapterV2")(function* (
             resumeSessionAt === undefined
           ) {
             // Decided before the transcript read: with no pending wakeup then, none can fire during it.
-            const keepsWork =
-              (yield* liveProcessRunsBackgroundWork(existing)) ||
-              scheduledWakeupsByNativeThread.has(nativeThreadId) ||
-              (yield* holdsBufferedWake(
-                nativeThreadId,
-                (yield* Ref.get(wakeBuffers)).get(nativeThreadId)?.messages ?? [],
-              ));
+            const keepsWork = yield* liveProcessHoldsWakeOrBackgroundWork(existing);
             if (yield* liveProcessMissedTranscriptMessages(existing)) {
               if (keepsWork) {
                 yield* Effect.logWarning(
@@ -14070,61 +14078,87 @@ export const makeClaudeAdapterV2 = Effect.fn("makeClaudeAdapterV2")(function* (
             existing.startedWithApiModelId !== compiledSelection.apiModelId &&
             claudeProgramWasReplaced(existing.program, yield* readProgram) &&
             !(yield* liveProcessRunsBackgroundWork(existing));
-          if (
-            !startsUpdatedProgram &&
+          const aixTurnEnvironment = makeClaudeAixTurnEnvironmentResolver({
+            baseEnvironment: adapterOptions.environment,
+            restartProcessForNewTurn: adapterOptions.restartProcessForNewTurn,
+            resolveProcessEnvironment: adapterOptions.resolveProcessEnvironment,
+          });
+          const restartForRotatedEnvironment =
             !turnInput.resume &&
             existing !== null &&
             existing.nativeThreadId === nativeThreadId &&
             existing.queryPolicyKey === queryPolicyKey &&
-            !existing.stopping &&
+            !existing.stopping
+              ? yield* aixTurnEnvironment.shouldRestartForRotation({
+                  currentSignature: existing.processEnvironmentSignature,
+                  hasLiveWork: liveProcessHoldsWakeOrBackgroundWork(existing),
+                  onDeferred: Effect.logWarning(
+                    "orchestration-v2.claude-aix-process-kept-for-background-work",
+                    { threadId: turnInput.threadId, nativeThreadId },
+                  ),
+                })
+              : false;
+          // The CLI may exit during async credential refresh or settings reads; drop dead handles.
+          const liveExisting =
+            existing !== null && (yield* Ref.get(queryContext)) === existing ? existing : null;
+          if (
+            !startsUpdatedProgram &&
+            !turnInput.resume &&
+            liveExisting !== null &&
+            liveExisting.nativeThreadId === nativeThreadId &&
+            liveExisting.queryPolicyKey === queryPolicyKey &&
+            !liveExisting.stopping &&
             !replaceStaleProcess &&
-            adapterOptions.restartProcessForNewTurn !== true &&
-            existing.selection.queryIdentity !== compiledSelection.queryIdentity &&
-            canApplyClaudeSelectionLive(existing.selection, compiledSelection) &&
-            (existing.selection.apiModelId === compiledSelection.apiModelId ||
-              existing.openedPermissionMode === queryPolicy.permissionMode)
+            !restartForRotatedEnvironment &&
+            liveExisting.selection.queryIdentity !== compiledSelection.queryIdentity &&
+            canApplyClaudeSelectionLive(liveExisting.selection, compiledSelection) &&
+            (liveExisting.selection.apiModelId === compiledSelection.apiModelId ||
+              liveExisting.openedPermissionMode === queryPolicy.permissionMode)
           ) {
-            yield* applySelectionLive(existing, compiledSelection);
+            yield* applySelectionLive(liveExisting, compiledSelection);
           }
-          // Aix-backed processes must be replaced between turns to pick up credential rotation.
+          // Aix-backed processes are replaced between turns only when gateway credentials rotate.
           if (
             !startsUpdatedProgram &&
             !turnInput.resume &&
-            existing !== null &&
-            existing.nativeThreadId === nativeThreadId &&
-            existing.queryPolicyKey === queryPolicyKey &&
-            !existing.stopping &&
+            liveExisting !== null &&
+            liveExisting.nativeThreadId === nativeThreadId &&
+            liveExisting.queryPolicyKey === queryPolicyKey &&
+            !liveExisting.stopping &&
             !replaceStaleProcess &&
-            adapterOptions.restartProcessForNewTurn !== true &&
-            existing.selection.queryIdentity === compiledSelection.queryIdentity
+            !restartForRotatedEnvironment &&
+            liveExisting.selection.queryIdentity === compiledSelection.queryIdentity
           ) {
             // A denied ExitPlanMode leaves Claude in plan mode. Restore only from plan:
             // Auto/default may reflect a policy restriction that forbids restoring bypass.
-            if (existing.permissionMode === "plan" && existing.openedPermissionMode !== "plan") {
-              existing.permissionMode = yield* existing.query
-                .setPermissionMode(existing.openedPermissionMode)
+            if (
+              liveExisting.permissionMode === "plan" &&
+              liveExisting.openedPermissionMode !== "plan"
+            ) {
+              liveExisting.permissionMode = yield* liveExisting.query
+                .setPermissionMode(liveExisting.openedPermissionMode)
                 .pipe(
-                  Effect.as(existing.openedPermissionMode),
+                  Effect.as(liveExisting.openedPermissionMode),
                   Effect.catchTags({
                     ClaudeAgentSdkQueryRunnerError: (error) =>
-                      existing.openedPermissionMode === "bypassPermissions"
-                        ? existing.query
+                      liveExisting.openedPermissionMode === "bypassPermissions"
+                        ? liveExisting.query
                             .setPermissionMode("default")
                             .pipe(Effect.as("default" as const))
                         : Effect.fail(error),
                   }),
                 );
             }
-            return existing;
+            return liveExisting;
           }
 
           // Replacing this thread's process kills its background work, even with a new native identity.
           if (
-            existing !== null &&
-            (existing.nativeThreadId === nativeThreadId ||
-              existing.lastTurn?.input.threadId === turnInput.threadId) &&
-            !existing.stopping &&
-            (yield* liveProcessRunsBackgroundWork(existing))
+            liveExisting !== null &&
+            (liveExisting.nativeThreadId === nativeThreadId ||
+              liveExisting.lastTurn?.input.threadId === turnInput.threadId) &&
+            !liveExisting.stopping &&
+            (yield* liveProcessRunsBackgroundWork(liveExisting))
           ) {
             return yield* new ClaudeBackgroundWorkBlocksQueryReplacementError();
           }
@@ -14152,38 +14186,40 @@ export const makeClaudeAdapterV2 = Effect.fn("makeClaudeAdapterV2")(function* (
             ],
             { concurrency: "unbounded" },
           );
-          const processEnvironment =
-            adapterOptions.resolveProcessEnvironment === undefined
-              ? adapterOptions.environment
-              : yield* adapterOptions.resolveProcessEnvironment();
-          if (adapterOptions.resolveProcessEnvironment !== undefined) {
-            yield* validateClaudeAixSettingsAuth(
-              adapterOptions.settings,
-              turnInput.runtimePolicy.cwd ?? undefined,
-              processEnvironment,
-              launchArgSettings?.env,
-            ).pipe(
-              Effect.provideService(FileSystem.FileSystem, fileSystem),
-              Effect.provideService(Path.Path, path),
-              Effect.mapError(
-                () =>
+          const { environment: processEnvironment, signature: processEnvironmentSignature } =
+            yield* aixTurnEnvironment
+              .validateForSpawn({
+                settings: adapterOptions.settings,
+                cwd: turnInput.runtimePolicy.cwd ?? undefined,
+                launchSettingsEnvironment: launchArgSettings?.env,
+                mapConflictError: () =>
                   new ClaudeAgentSdkQueryRunnerError({
                     method: "resolveEnvironment",
                     cause: new Error("Claude settings contain conflicting authentication values."),
                   }),
-              ),
-            );
-          }
-          const closedExistingNativeThreadId = existing !== null ? existing.nativeThreadId : null;
+              })
+              .pipe(
+                Effect.provideService(FileSystem.FileSystem, fileSystem),
+                Effect.provideService(Path.Path, path),
+              );
+          const existingToClose =
+            liveExisting !== null && (yield* Ref.get(queryContext)) === liveExisting
+              ? liveExisting
+              : null;
+          const closedExistingNativeThreadId =
+            existingToClose !== null ? existingToClose.nativeThreadId : null;
           clearedNativeSessions.delete(nativeThreadId);
-          if (existing !== null) {
-            existing.stopping = true;
-            yield* existing.query.close.pipe(Effect.ignore);
-            if (existing.nativeThreadId !== nativeThreadId) {
-              yield* clearWakeStateForNativeThread(existing.nativeThreadId);
-              yield* resetBackgroundTaskStateForNativeThreadProcess(existing.nativeThreadId, {
-                status: "idle",
-              });
+          if (existingToClose !== null) {
+            existingToClose.stopping = true;
+            yield* existingToClose.query.close.pipe(Effect.ignore);
+            if (existingToClose.nativeThreadId !== nativeThreadId) {
+              yield* clearWakeStateForNativeThread(existingToClose.nativeThreadId);
+              yield* resetBackgroundTaskStateForNativeThreadProcess(
+                existingToClose.nativeThreadId,
+                {
+                  status: "idle",
+                },
+              );
             }
           }
 
@@ -14308,6 +14344,7 @@ export const makeClaudeAdapterV2 = Effect.fn("makeClaudeAdapterV2")(function* (
             launchArgSettings,
             query: querySession,
             queryPolicyKey,
+            processEnvironmentSignature,
             selection: compiledSelection,
             program,
             startedWithApiModelId: compiledSelection.apiModelId,
